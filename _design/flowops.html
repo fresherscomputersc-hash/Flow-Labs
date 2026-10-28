@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FlowOps — AI Automation Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1440px;height:900px;overflow:hidden;background:#f5f6fa;
+    font-family:'Inter',system-ui,sans-serif;color:#0f1424;-webkit-font-smoothing:antialiased}
+  .app{display:flex;height:900px}
+
+  /* sidebar */
+  .side{width:236px;flex:0 0 236px;background:#fff;border-right:1px solid #e8eaf2;padding:18px 14px;display:flex;flex-direction:column}
+  .brand{display:flex;align-items:center;gap:9px;padding:4px 6px 18px}
+  .brand .lm{width:28px;height:28px;border-radius:8px;background:linear-gradient(140deg,#6366f1,#4f46e5);display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;box-shadow:0 4px 12px -3px rgba(79,70,229,.6)}
+  .brand span{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+  .ws{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid #e8eaf2;border-radius:9px;margin-bottom:16px;background:#fbfbfe}
+  .ws .sq{width:24px;height:24px;border-radius:6px;background:#eef0ff;color:#4f46e5;display:grid;place-items:center;font-size:10px;font-weight:700}
+  .ws .t{font-size:12px;font-weight:500}
+  .ws .s{font-size:9.5px;color:#8a90a6}
+  .ws .c{margin-left:auto;color:#a9aecb;font-size:10px}
+  .ng{margin:0 8px 8px;font-size:9.5px;letter-spacing:.11em;color:#a2a8bd;text-transform:uppercase;font-weight:600}
+  .nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:12.5px;color:#5b6178;text-decoration:none;margin-bottom:2px}
+  .nav a.on{background:#eef0ff;color:#4f46e5;font-weight:500}
+  .nav a b{margin-left:auto;font-size:10px;font-weight:600;background:#eef0ff;color:#4f46e5;padding:2px 6px;border-radius:5px}
+  .nav svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .upgrade{margin-top:auto;border:1px solid #e8eaf2;border-radius:11px;padding:13px;background:linear-gradient(160deg,#f7f8ff,#fff)}
+  .upgrade .u1{font-size:11.5px;font-weight:600;margin-bottom:3px}
+  .upgrade .u2{font-size:10px;color:#8a90a6;line-height:1.45;margin-bottom:9px}
+  .upgrade .bar{height:5px;border-radius:3px;background:#e8eaf2;overflow:hidden;margin-bottom:6px}
+  .upgrade .bar i{display:block;width:68%;height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6)}
+  .upgrade .u3{font-size:9.5px;color:#8a90a6}
+
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .top{height:62px;background:#fff;border-bottom:1px solid #e8eaf2;display:flex;align-items:center;gap:14px;padding:0 24px}
+  .search{display:flex;align-items:center;gap:8px;width:290px;padding:8px 11px;border:1px solid #e8eaf2;border-radius:9px;background:#fafbff;color:#9aa0b8;font-size:11.5px}
+  .search kbd{margin-left:auto;font-family:inherit;font-size:9.5px;border:1px solid #e3e6f0;background:#fff;color:#9aa0b8;padding:2px 5px;border-radius:4px}
+  .top .r{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .avs{display:flex}
+  .avs i{width:26px;height:26px;border-radius:50%;border:2px solid #fff;margin-left:-8px;display:grid;place-items:center;font-size:9px;font-weight:600;color:#fff;font-style:normal}
+  .avs i:first-child{margin-left:0;background:#6366f1}
+  .avs i:nth-child(2){background:#0ea5e9}
+  .avs i:nth-child(3){background:#10b981}
+  .btn{display:inline-flex;align-items:center;gap:6px;background:#4f46e5;color:#fff;font-size:11.5px;font-weight:500;padding:8px 13px;border-radius:8px;box-shadow:0 4px 12px -4px rgba(79,70,229,.7)}
+  .ibtn{width:32px;height:32px;border-radius:8px;border:1px solid #e8eaf2;display:grid;place-items:center;color:#6b7280}
+
+  .body{padding:22px 24px;display:flex;flex-direction:column;gap:16px;height:calc(900px - 62px)}
+  .htitle{display:flex;align-items:flex-end;gap:12px}
+  .htitle h1{font-size:20px;letter-spacing:-.02em;font-weight:600}
+  .htitle p{font-size:11.5px;color:#8a90a6;margin-bottom:2px}
+  .htitle .live{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:10.5px;color:#16a34a;background:#eafaf0;border:1px solid #c8f0d8;padding:5px 10px;border-radius:100px;font-weight:500}
+  .live .d{width:5px;height:5px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .stat{background:#fff;border:1px solid #e8eaf2;border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(16,20,36,.03)}
+  .stat .k{font-size:10px;letter-spacing:.09em;color:#9aa0b8;text-transform:uppercase;font-weight:600}
+  .stat .v{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:6px;display:flex;align-items:baseline;gap:7px}
+  .stat .v em{font-style:normal;font-size:10.5px;font-weight:500;padding:2px 6px;border-radius:5px;background:#eafaf0;color:#16a34a}
+  .stat .v em.dn{background:#fff4e6;color:#d97706}
+
+  .cols{display:grid;grid-template-columns:1fr 322px;gap:16px;flex:1;min-height:0}
+  .panel{background:#fff;border:1px solid #e8eaf2;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 2px rgba(16,20,36,.03)}
+  .ph{display:flex;align-items:center;gap:9px;padding:13px 16px;border-bottom:1px solid #eef0f6}
+  .ph h2{font-size:12.5px;font-weight:600}
+  .ph .sub{font-size:10px;color:#9aa0b8}
+  .ph .tags{margin-left:auto;display:flex;gap:6px}
+  .pill{font-size:9.5px;padding:3px 8px;border-radius:5px;background:#f3f4fa;color:#6b7280;border:1px solid #e8eaf2}
+  .pill.on{background:#eef0ff;color:#4f46e5;border-color:#dcdffb}
+
+  /* canvas */
+  .canvas{flex:1;position:relative;background:
+      radial-gradient(#e3e6f2 1px,transparent 1px) 0 0/18px 18px,#fbfcff;
+      padding:24px}
+  .rowlab{font-size:9.5px;letter-spacing:.1em;color:#a2a8bd;text-transform:uppercase;font-weight:600;margin-bottom:10px}
+  .flow{display:flex;align-items:center;gap:0}
+  .node{background:#fff;border:1px solid #e3e6f2;border-radius:11px;padding:11px 13px;width:176px;
+    box-shadow:0 3px 10px -4px rgba(16,20,36,.14);position:relative}
+  .node .nh{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+  .node .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:10px}
+  .node .nn{font-size:11px;font-weight:600}
+  .node .nd{font-size:9.5px;color:#8a90a6;line-height:1.4}
+  .node.trigger .ic{background:#eef0ff;color:#4f46e5}
+  .node.ai .ic{background:#f3ecff;color:#8b5cf6}
+  .node.out .ic{background:#eafaf0;color:#16a34a}
+  .node.out2 .ic{background:#fff4e6;color:#d97706}
+  .node.on{border-color:#a5b4fc;box-shadow:0 0 0 3px rgba(99,102,241,.14),0 6px 16px -6px rgba(79,70,229,.5)}
+  .wire{width:34px;height:2px;background:#d8dcec;position:relative;flex:0 0 auto}
+  .wire::after{content:"";position:absolute;right:-1px;top:-3px;width:7px;height:7px;border-top:2px solid #d8dcec;border-right:2px solid #d8dcec;transform:rotate(45deg)}
+  .branch{display:flex;flex-direction:column;gap:12px}
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .wirev{width:2px;height:22px;background:#d8dcec;margin-left:0}
+  .split{display:flex;flex-direction:column;justify-content:center;gap:0}
+  .stack{display:flex;flex-direction:column;gap:12px;position:relative;padding-left:22px}
+  .stack::before{content:"";position:absolute;left:0;top:34px;bottom:34px;width:2px;background:#dcdfee;border-radius:2px}
+  .stack .node::before{content:"";position:absolute;left:-22px;top:50%;width:22px;height:2px;background:#dcdfee}
+  .badge-ai{margin-top:8px;display:inline-flex;align-items:center;gap:5px;font-size:9px;color:#8b5cf6;background:#f7f2ff;border:1px solid #e9dcff;padding:2px 7px;border-radius:4px;font-weight:500}
+  .legend{position:absolute;left:24px;bottom:18px;display:flex;gap:16px;font-size:9.5px;color:#9aa0b8}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{width:7px;height:7px;border-radius:2px;font-style:normal}
+
+  /* runs */
+  .runs{flex:1;overflow:hidden;padding:6px 0}
+  .run{display:flex;gap:10px;padding:11px 16px;border-bottom:1px solid #f2f3f9}
+  .run:last-child{border-bottom:none}
+  .run .st{width:6px;height:6px;border-radius:50%;margin-top:5px;flex:0 0 auto}
+  .run .b{min-width:0}
+  .run .t{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .run .m{font-size:9.5px;color:#9aa0b8;margin-top:2px}
+  .run .r{margin-left:auto;font-size:9px;color:#a2a8bd;flex:0 0 auto;padding-top:2px}
+  .runfoot{margin-top:auto;padding:11px 16px;border-top:1px solid #eef0f6;font-size:10px;color:#8a90a6;display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="side">
+    <div class="brand"><span class="lm">F</span><span>FlowOps</span></div>
+
+    <div class="ws">
+      <div class="sq">NL</div>
+      <div><div class="t">Nova Logistics</div><div class="s">Pro workspace</div></div>
+      <div class="c">▾</div>
+    </div>
+
+    <div class="ng">Workspace</div>
+    <nav class="nav">
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</a>
+      <a href="#" class="on"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>Automations<b>12</b></a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg>AI Agents</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M4 17V9M10 17V5M16 17v-5M22 17H2"/></svg>Runs &amp; Logs</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M9 7h6M9 12h6M9 17h3"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>Integrations</a>
+    </nav>
+
+    <div class="ng" style="margin-top:14px">Team</div>
+    <nav class="nav">
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a2 2 0 0 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11 4.6a2 2 0 0 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 11a2 2 0 0 1 0 4z"/></svg>Settings</a>
+    </nav>
+
+    <div class="upgrade">
+      <div class="u1">AI credits</div>
+      <div class="u2">68% of monthly allowance used</div>
+      <div class="bar"><i></i></div>
+      <div class="u3">Resets in 9 days</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="top">
+      <div class="search">⌕ Search automations, runs, agents…<kbd>⌘K</kbd></div>
+      <div class="r">
+        <div class="avs"><i>AR</i><i>MK</i><i>SP</i></div>
+        <div class="ibtn">🔔</div>
+        <div class="btn">＋ New automation</div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="htitle">
+        <div>
+          <h1>Automations</h1>
+          <p>Build, test and monitor AI workflows across your stack.</p>
+        </div>
+        <div class="live"><span class="d"></span> All systems operational</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Active flows</div><div class="v">12 <em>+3 this week</em></div></div>
+        <div class="stat"><div class="k">Runs today</div><div class="v">48,204 <em>+18.4%</em></div></div>
+        <div class="stat"><div class="k">Success rate</div><div class="v">99.4% <em>stable</em></div></div>
+        <div class="stat"><div class="k">Hours saved</div><div class="v">320 <em class="dn">this month</em></div></div>
+      </div>
+
+      <div class="cols">
+        <div class="panel">
+          <div class="ph">
+            <h2>Support triage agent</h2>
+            <span class="sub">· v4 · edited 2h ago</span>
+            <div class="tags"><span class="pill">Draft</span><span class="pill on">Live</span></div>
+          </div>
+
+          <div class="canvas">
+            <div class="rowlab">Workflow</div>
+            <div class="flow">
+              <div class="node trigger on">
+                <div class="nh"><div class="ic">✉</div><div class="nn">New support email</div></div>
+                <div class="nd">Trigger · Zendesk inbox</div>
+                <div class="badge-ai">▹ 48.2k runs</div>
+              </div>
+
+              <div class="wire"></div>
+
+              <div class="node ai">
+                <div class="nh"><div class="ic">✦</div><div class="nn">Classify intent</div></div>
+                <div class="nd">LLM · 9 labels · 96% conf.</div>
+                <div class="badge-ai">▹ avg 640 ms</div>
+              </div>
+
+              <div class="wire"></div>
+
+              <div class="stack" style="gap:12px">
+                <div class="node out" style="width:196px">
+                  <div class="nh"><div class="ic">↩</div><div class="nn">Auto-reply</div></div>
+                  <div class="nd">Send drafted response</div>
+                </div>
+                <div class="node out2" style="width:196px">
+                  <div class="nh"><div class="ic">⇢</div><div class="nn">Escalate to human</div></div>
+                  <div class="nd">Assign to on-call queue</div>
+                </div>
+                <div class="node out" style="width:196px">
+                  <div class="nh"><div class="ic">＋</div><div class="nn">Create CRM record</div></div>
+                  <div class="nd">HubSpot · contact + note</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="rowlab" style="margin-top:34px">Test run</div>
+            <div class="node" style="width:420px;border-style:dashed;background:#fff">
+              <div class="nh"><div class="ic" style="background:#eef0ff;color:#4f46e5">▷</div><div class="nn">Simulate with sample ticket</div></div>
+              <div class="nd">“My shipment #88213 hasn’t moved in 3 days — can someone check?” → <span style="color:#4f46e5;font-weight:500">Shipping delay · 0.97</span></div>
+            </div>
+
+            <div class="legend">
+              <span><i style="background:#4f46e5"></i>Trigger</span>
+              <span><i style="background:#8b5cf6"></i>AI step</span>
+              <span><i style="background:#16a34a"></i>Action</span>
+              <span><i style="background:#d97706"></i>Human in loop</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><h2>Live runs</h2><span class="sub" style="margin-left:auto">last 5 min</span></div>
+          <div class="runs">
+            <div class="run"><span class="st" style="background:#16a34a"></span><div class="b"><div class="t">Auto-replied · Order status</div><div class="m">Zendesk · 0.8s</div></div><span class="r">now</span></div>
+            <div class="run"><span class="st" style="background:#16a34a"></span><div class="b"><div class="t">Auto-replied · Refund policy</div><div class="m">Zendesk · 0.6s</div></div><span class="r">4s</span></div>
+            <div class="run"><span class="st" style="background:#d97706"></span><div class="b"><div class="t">Escalated · Angry customer</div><div class="m">Queue: Tier 2 · 1.2s</div></div><span class="r">12s</span></div>
+            <div class="run"><span class="st" style="background:#16a34a"></span><div class="b"><div class="t">CRM record created</div><div class="m">HubSpot · 0.4s</div></div><span class="r">21s</span></div>
+            <div class="run"><span class="st" style="background:#16a34a"></span><div class="b"><div class="t">Auto-replied · Delivery ETA</div><div class="m">Zendesk · 0.7s</div></div><span class="r">35s</span></div>
+            <div class="run"><span class="st" style="background:#ef4444"></span><div class="b"><div class="t">Retry · LLM timeout</div><div class="m">Recovered on 2nd try</div></div><span class="r">48s</span></div>
+            <div class="run"><span class="st" style="background:#16a34a"></span><div class="b"><div class="t">Auto-replied · Wrong address</div><div class="m">Zendesk · 0.9s</div></div><span class="r">1m</span></div>
+            <div class="run"><span class="st" style="background:#16a34a"></span><div class="b"><div class="t">CRM record created</div><div class="m">HubSpot · 0.3s</div></div><span class="r">1m</span></div>
+            <div class="run"><span class="st" style="background:#16a34a"></span><div class="b"><div class="t">Auto-replied · Invoice copy</div><div class="m">Zendesk · 0.5s</div></div><span class="r">2m</span></div>
+          </div>
+          <div class="runfoot"><span style="width:5px;height:5px;border-radius:50%;background:#16a34a"></span> Streaming · 1,284 runs in the last hour</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

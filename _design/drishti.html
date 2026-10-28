@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drishti — Transit Operations Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1440px;height:900px;overflow:hidden;background:#070c15;
+    font-family:'Inter',system-ui,sans-serif;color:#e6edf7;-webkit-font-smoothing:antialiased}
+  .app{display:flex;height:900px}
+
+  /* rail */
+  .rail{width:72px;flex:0 0 72px;background:#080d16;border-right:1px solid #16223a;display:flex;flex-direction:column;align-items:center;padding:16px 0 20px}
+  .rail .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(140deg,#22d3ee,#0e7490);
+    display:grid;place-items:center;font-weight:700;font-size:13px;color:#04121c;margin-bottom:26px;box-shadow:0 0 22px rgba(34,211,238,.5)}
+  .rail .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#5d7290;margin-bottom:10px}
+  .rail .ic.on{background:rgba(34,211,238,.13);color:#22d3ee;box-shadow:inset 0 0 0 1px rgba(34,211,238,.3)}
+  .rail svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .rail .spacer{flex:1}
+
+  /* main */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{height:66px;display:flex;align-items:center;gap:14px;padding:0 24px;border-bottom:1px solid #16223a;background:rgba(8,13,22,.6)}
+  .topbar h1{font-size:15px;font-weight:600;letter-spacing:.06em}
+  .topbar h1 span{color:#7c93b3;font-weight:400}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .select{display:flex;align-items:center;gap:22px;padding:8px 12px;border:1px solid #1d2c47;border-radius:9px;font-size:12.5px;color:#b7c6dc;background:#0c1524}
+  .ibtn{width:36px;height:36px;border-radius:9px;border:1px solid #1d2c47;background:#0c1524;display:grid;place-items:center;color:#8aa0bd;position:relative}
+  .ibtn b{position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px #ef4444}
+
+  .body{padding:20px 24px;display:grid;grid-template-columns:392px 1fr 340px;gap:18px;height:calc(900px - 66px)}
+
+  /* KPI */
+  .kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .kpi{border-radius:14px;padding:16px 18px;border:1px solid #1b2942;background:linear-gradient(165deg,#0f1a2c,#0b1322);position:relative;overflow:hidden}
+  .kpi.teal{border-color:rgba(34,211,238,.45);box-shadow:inset 0 0 60px rgba(34,211,238,.12),0 0 24px -8px rgba(34,211,238,.5)}
+  .kpi.amber{border-color:rgba(245,185,66,.45);box-shadow:inset 0 0 60px rgba(245,185,66,.1),0 0 24px -8px rgba(245,185,66,.4)}
+  .kpi .lab{font-size:11.5px;letter-spacing:.13em;color:#8aa0bd;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+  .tag{margin-left:auto;font-size:10px;letter-spacing:.04em;text-transform:none;padding:3px 9px;border-radius:6px;background:rgba(148,163,184,.12);color:#94a3b8}
+  .tag.g{background:rgba(52,211,153,.14);color:#34d399}
+  .tag.a{background:rgba(245,185,66,.16);color:#f5b942}
+  .kpi .val{font-size:38px;font-weight:600;letter-spacing:-.02em;margin-top:8px;font-family:'Inter',sans-serif}
+  .kpi .val small{font-size:20px;font-weight:400;color:#9fb0c9}
+
+  /* panels */
+  .panel{border-radius:14px;border:1px solid #16233b;background:#0a1220;display:flex;flex-direction:column;overflow:hidden}
+  .phead{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #16233b}
+  .phead h2{font-size:12px;letter-spacing:.11em;color:#b8c8de;font-weight:600;text-transform:uppercase}
+  .phead .dots{margin-left:auto;color:#4d6484;letter-spacing:2px;font-size:14px;line-height:1}
+  .left{display:flex;flex-direction:column;gap:18px}
+
+  /* alerts */
+  .alerts{padding:12px;display:flex;flex-direction:column;gap:9px}
+  .alert{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;background:#0e1929;border:1px solid #1b2c47}
+  .badge{font-size:9.5px;font-weight:600;letter-spacing:.08em;padding:4px 8px;border-radius:5px;background:rgba(56,189,248,.16);color:#5ec8f2;border:1px solid rgba(56,189,248,.25);flex:0 0 auto}
+  .alert .txt{min-width:0}
+  .alert .t1{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .alert .t2{font-size:10.5px;color:#7b90ad;margin-top:2px}
+  .status{margin-left:auto;font-size:9.5px;letter-spacing:.08em;padding:4px 9px;border-radius:5px;background:rgba(245,185,66,.13);color:#e5b45c;border:1px solid rgba(245,185,66,.22);display:flex;align-items:center;gap:6px;flex:0 0 auto}
+  .chev{color:#e5b45c;font-size:10px}
+
+  /* chart */
+  .chartwrap{flex:1;padding:8px 14px 12px;display:flex;flex-direction:column}
+  .chartwrap svg{width:100%;flex:1}
+  .axis{font-size:9px;fill:#5d7290;font-family:'JetBrains Mono',monospace}
+  .axis.pad{fill-rule:evenodd}
+
+  /* map */
+  .map{position:relative;background:#08101d}
+  .map svg{width:100%;height:100%;display:block}
+  .legend{position:absolute;right:14px;bottom:14px;background:rgba(9,16,28,.94);border:1px solid #1b2c47;border-radius:10px;padding:11px 13px;backdrop-filter:blur(6px)}
+  .legend .l0{font-size:10px;letter-spacing:.12em;color:#9fb0c9;margin-bottom:8px;text-transform:uppercase}
+  .legend .row{display:flex;align-items:center;gap:7px;font-size:10.5px;color:#a9bcd4;margin-bottom:5px}
+  .d{width:7px;height:7px;border-radius:50%}
+  .map .city{font-size:9.5px;fill:#7e93b0}
+
+  /* right */
+  .right{display:flex;flex-direction:column;gap:18px}
+  .risk{padding:14px 16px 18px}
+  .risk .r0{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px dashed #1b2c47}
+  .r0 .sq{width:34px;height:34px;border-radius:9px;border:1px solid #24344f;display:grid;place-items:center;color:#8aa0bd}
+  .r0 .n{font-size:12.5px;font-weight:600}
+  .r0 .s{font-size:10.5px;color:#7b90ad;margin-top:2px}
+  .score{margin-top:16px;display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:12px;
+    background:linear-gradient(120deg,rgba(239,68,68,.22),rgba(239,68,68,.08));border:1px solid rgba(239,68,68,.35)}
+  .score .big{font-size:44px;font-weight:700;color:#ff6b6b;letter-spacing:-.03em;line-height:1}
+  .score .l1{font-size:15px;color:#ffa3a3;font-weight:500}
+  .score .l2{font-size:11px;color:#c98b8b;margin-top:2px}
+  .gradbar{height:9px;border-radius:5px;margin-top:14px;background:linear-gradient(90deg,#22d3ee,#38bdf8 35%,#f5b942 70%,#ef4444)}
+  .gradbar i{display:block;width:100%;height:100%;position:relative}
+  .gradbar b{position:absolute;top:-4px;left:72%;width:2px;height:17px;background:#fff;border-radius:2px;box-shadow:0 0 8px #fff}
+
+  .bars{padding:16px;display:flex;align-items:flex-end;justify-content:space-around;gap:10px;flex:1}
+  .bar{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+  .bar .pct{font-size:11px;color:#c7d5e8}
+  .bar .col{width:100%;max-width:46px;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,#53d7f2,#2b8fd0)}
+  .bar .nm{font-size:9.5px;color:#8497b2;text-align:center;line-height:1.25}
+  .bar:nth-child(2) .col{background:linear-gradient(180deg,#ffd166,#e8a422)}
+  .bar:nth-child(3) .col{background:linear-gradient(180deg,#8b7cf6,#5c4fd0)}
+  .bar:nth-child(4) .col{background:linear-gradient(180deg,#ff8a8a,#e05555)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="rail">
+    <div class="logo">D</div>
+    <div class="ic on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20h-2"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></div>
+    <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></div>
+    <div class="spacer"></div>
+    <div class="ic"><svg viewBox="0 0 24 24"><path d="M15 17H5a2 2 0 0 1 0-4h1.5V9a5.5 5.5 0 0 1 11 0v4H19v4h-4"/></svg></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h1>DRISHTI <span>— OSRTC OPERATIONS INTELLIGENCE</span></h1>
+      <div class="tb-right">
+        <div class="select"><span>Dashboard</span><span style="color:#6c81a0">▾</span></div>
+        <div class="ibtn"><b></b><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M10.5 20a2 2 0 0 0 3 0"/></svg></div>
+        <div class="ibtn"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 11h.1a2 2 0 1 1 0 4h-.1z"/></svg></div>
+      </div>
+    </div>
+
+    <div class="body">
+
+      <div class="kpis">
+        <div class="kpi teal">
+          <div class="lab">Fleet Availability <span class="tag g">↗ 4.2%</span></div>
+          <div class="val">88<small>%</small></div>
+        </div>
+        <div class="kpi amber">
+          <div class="lab">Revenue at Risk <span class="tag a">Alert ⚠</span></div>
+          <div class="val"><small>₹</small>9.76<small>L</small></div>
+        </div>
+        <div class="kpi">
+          <div class="lab">Tomorrow Boardings <span class="tag">Predict</span></div>
+          <div class="val">30,661</div>
+        </div>
+        <div class="kpi">
+          <div class="lab">Tomorrow Boardings</div>
+          <div class="val">30,661</div>
+        </div>
+      </div>
+
+      <div class="left">
+        <div class="panel">
+          <div class="phead"><h2>Alert Feed</h2><span class="dots">•••</span></div>
+          <div class="alerts">
+            <div class="alert">
+              <span class="badge">! URGENCY</span>
+              <div class="txt"><div class="t1">Delayed Route 102</div><div class="t2">Vehicle issue for Time 3:30 pm</div></div>
+              <span class="status">STATUS <span class="chev">›</span></span>
+            </div>
+            <div class="alert">
+              <span class="badge">! URGENCY</span>
+              <div class="txt"><div class="t1">Vehicle Issue: Bus 4567</div><div class="t2">Vehicle issue for Time 3:30 pm</div></div>
+              <span class="status">STATUS <span class="chev">›</span></span>
+            </div>
+            <div class="alert">
+              <span class="badge">! URGENCY</span>
+              <div class="txt"><div class="t1">Vehicle Issue: Bus 4567</div><div class="t2">Vehicle issue for Time 3:30 pm</div></div>
+              <span class="status">STATUS <span class="chev">›</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="flex:1">
+          <div class="phead"><h2>Holt-Winters Seasonal Demand Forecast</h2><span class="dots">•••</span></div>
+          <div class="chartwrap">
+            <svg viewBox="0 0 360 250" preserveAspectRatio="none">
+              <!-- grid -->
+              <g stroke="#152238" stroke-width="1">
+                <line x1="34" y1="18" x2="350" y2="18"/><line x1="34" y1="66" x2="350" y2="66"/>
+                <line x1="34" y1="114" x2="350" y2="114"/><line x1="34" y1="162" x2="350" y2="162"/>
+                <line x1="34" y1="210" x2="350" y2="210"/>
+              </g>
+              <!-- history band -->
+              <path d="M34,74 L34,210 L212,210 L212,74 Z" fill="rgba(56,120,200,.10)"/>
+              <!-- forecast fan -->
+              <path d="M212,110 L350,26 L350,70 L212,150 Z" fill="rgba(245,185,66,.18)"/>
+              <path d="M212,118 L350,44 L350,56 L212,138 Z" fill="rgba(245,185,66,.35)"/>
+              <!-- actual line -->
+              <path d="M34,150 C44,60 52,190 62,96 C72,40 80,180 92,120 C102,70 110,170 122,88 C132,44 140,160 152,110 C162,60 172,150 182,92 C192,48 202,132 212,86"
+                    fill="none" stroke="#4db3f5" stroke-width="2"/>
+              <!-- dashed predicted -->
+              <path d="M212,86 C226,60 240,96 254,58 C268,34 282,72 296,44 C310,26 330,58 350,38"
+                    fill="none" stroke="#f5b942" stroke-width="1.8" stroke-dasharray="5 4"/>
+              <!-- center line -->
+              <path d="M212,120 C226,96 240,128 254,92 C268,70 282,104 296,78 C310,62 330,90 350,72"
+                    fill="none" stroke="#2dd4bf" stroke-width="1.4" opacity=".85"/>
+              <!-- axis labels -->
+              <g class="axis">
+                <text x="8" y="22">250</text><text x="8" y="70">200</text><text x="14" y="118">150</text>
+                <text x="14" y="166">100</text><text x="18" y="214">50</text><text x="26" y="228">0</text>
+                <text x="30" y="244">Jan 28</text><text x="82" y="244">Mar 28</text><text x="134" y="244">Jan 20</text>
+                <text x="186" y="244">Feb 19</text><text x="232" y="244">Mar 20</text><text x="278" y="244">Apr 21</text>
+                <text x="320" y="244">May 21</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP -->
+      <div class="panel map">
+        <div class="phead"><h2>Real Time Transit Telemetry Map</h2><span class="dots">•••</span></div>
+        <svg viewBox="0 0 620 620" preserveAspectRatio="xMidYMid slice">
+          <rect width="620" height="620" fill="#0a1526"/>
+          <!-- district boundary texture -->
+          <g stroke="#16273f" stroke-width="1" fill="none">
+            <path d="M60,120 L180,70 L300,110 L360,60 L470,110 L560,80 L580,190 L520,260 L560,340 L500,420 L540,500 L420,560 L300,520 L200,570 L120,500 L60,420 L100,320 L50,240 Z"/>
+            <path d="M120,200 L240,160 L330,210 L420,170 L500,230 L470,330 L380,380 L300,330 L210,390 L150,320 Z"/>
+            <path d="M200,110 L250,220 L190,300 L260,400 L230,500"/>
+            <path d="M330,110 L360,230 L300,300 L380,400 L350,510"/>
+            <path d="M470,140 L430,250 L470,340 L420,450"/>
+          </g>
+          <!-- roads -->
+          <g stroke="#1d3350" stroke-width="1.6" fill="none">
+            <path d="M20,300 L600,240"/>
+            <path d="M120,600 L200,20"/>
+            <path d="M420,20 L380,600"/>
+            <path d="M20,470 L600,520"/>
+          </g>
+          <!-- route lines -->
+          <g fill="none" stroke-width="2.2" stroke-linecap="round">
+            <path d="M150,430 L240,380 L330,300 L420,250 L520,170" stroke="#34d399"/>
+            <path d="M180,520 L270,440 L340,380 L400,320 L470,290" stroke="#34d399"/>
+            <path d="M120,250 L210,300 L300,240 L400,200 L500,220" stroke="#f5b942"/>
+            <path d="M260,560 L300,470 L330,380 L380,300 L430,230" stroke="#ef4444"/>
+          </g>
+          <!-- cities -->
+          <g class="city">
+            <text x="60" y="140">Kamp harla</text>
+            <text x="20" y="300">Tug?oivanl</text>
+            <text x="70" y="450">Poma</text>
+            <text x="388" y="150">Cuttack</text>
+            <text x="400" y="470">Bhubaneswar</text>
+            <text x="300" y="560">Bhubaneswar</text>
+            <text x="520" y="120">Nilatri</text>
+          </g>
+          <!-- stops: green -->
+          <g>
+            <circle cx="150" cy="430" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="150" cy="430" r="2.6" fill="#34d399"/>
+            <circle cx="240" cy="380" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="240" cy="380" r="2.6" fill="#34d399"/>
+            <circle cx="330" cy="300" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="330" cy="300" r="2.6" fill="#34d399"/>
+            <circle cx="420" cy="250" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="420" cy="250" r="2.6" fill="#34d399"/>
+            <circle cx="520" cy="170" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="520" cy="170" r="2.6" fill="#34d399"/>
+            <circle cx="270" cy="440" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="270" cy="440" r="2.6" fill="#34d399"/>
+            <circle cx="400" cy="320" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="400" cy="320" r="2.6" fill="#34d399"/>
+            <circle cx="470" cy="290" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="470" cy="290" r="2.6" fill="#34d399"/>
+            <circle cx="380" cy="300" r="9" fill="#0d1f2e" stroke="#34d399" stroke-width="2"/><circle cx="380" cy="300" r="2.6" fill="#34d399"/>
+          </g>
+          <!-- amber -->
+          <g>
+            <circle cx="120" cy="250" r="8" fill="#0d1f2e" stroke="#f5b942" stroke-width="2"/><circle cx="120" cy="250" r="2.4" fill="#f5b942"/>
+            <circle cx="210" cy="300" r="8" fill="#0d1f2e" stroke="#f5b942" stroke-width="2"/><circle cx="210" cy="300" r="2.4" fill="#f5b942"/>
+            <circle cx="300" cy="240" r="8" fill="#0d1f2e" stroke="#f5b942" stroke-width="2"/><circle cx="300" cy="240" r="2.4" fill="#f5b942"/>
+            <circle cx="400" cy="200" r="8" fill="#0d1f2e" stroke="#f5b942" stroke-width="2"/><circle cx="400" cy="200" r="2.4" fill="#f5b942"/>
+            <circle cx="500" cy="220" r="8" fill="#0d1f2e" stroke="#f5b942" stroke-width="2"/><circle cx="500" cy="220" r="2.4" fill="#f5b942"/>
+            <circle cx="430" cy="230" r="8" fill="#0d1f2e" stroke="#f5b942" stroke-width="2"/><circle cx="430" cy="230" r="2.4" fill="#f5b942"/>
+          </g>
+          <!-- red -->
+          <g>
+            <circle cx="260" cy="560" r="8" fill="#20111a" stroke="#ef4444" stroke-width="2"/><circle cx="260" cy="560" r="2.4" fill="#ef4444"/>
+            <circle cx="300" cy="470" r="8" fill="#20111a" stroke="#ef4444" stroke-width="2"/><circle cx="300" cy="470" r="2.4" fill="#ef4444"/>
+            <circle cx="330" cy="380" r="8" fill="#20111a" stroke="#ef4444" stroke-width="2"/><circle cx="330" cy="380" r="2.4" fill="#ef4444"/>
+          </g>
+          <circle cx="470" cy="290" r="20" fill="none" stroke="#34d399" stroke-width="1.2" opacity=".35"/>
+        </svg>
+
+        <div class="legend">
+          <div class="l0">Status</div>
+          <div class="row"><span class="d" style="background:#34d399"></span> On time</div>
+          <div class="row"><span class="d" style="background:#f5b942"></span> Delay</div>
+          <div class="row" style="margin:0"><span class="d" style="background:#ef4444"></span> Maintenance</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="panel">
+          <div class="phead"><h2>Fleet Breakdown</h2><span class="dots">•••</span></div>
+          <div class="risk">
+            <div class="r0">
+              <div class="sq"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6"><path d="M12 3 3 8v8l9 5 9-5V8z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></div>
+              <div><div class="n">Risk Score</div><div class="s">Risk Risk Breakdown</div></div>
+              <div style="margin-left:auto;color:#4d6484">ⓘ</div>
+            </div>
+            <div class="score">
+              <div class="big">28</div>
+              <div><div class="l1">High</div><div class="l2">Risk</div></div>
+            </div>
+            <div class="gradbar"><i><b></b></i></div>
+          </div>
+        </div>
+
+        <div class="panel" style="flex:1">
+          <div class="phead"><h2 style="font-size:13.5px;letter-spacing:0;text-transform:none;font-weight:600">Fleet Breakdown Risk</h2></div>
+          <div style="padding:10px 16px 0;font-size:10.5px;color:#7b90ad">● Attributing Factors</div>
+          <div class="bars">
+            <div class="bar"><span class="pct">45%</span><div class="col" style="height:150px"></div><span class="nm">Engine<br>Hours</span></div>
+            <div class="bar"><span class="pct">25%</span><div class="col" style="height:88px"></div><span class="nm">Brake<br>Wear</span></div>
+            <div class="bar"><span class="pct">20%</span><div class="col" style="height:70px"></div><span class="nm">Transmission<br>Health</span></div>
+            <div class="bar"><span class="pct">10%</span><div class="col" style="height:34px"></div><span class="nm">Tire<br>Pressure</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
