@@ -14,13 +14,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#07070a;
-    --line:rgba(255,255,255,.08);
-    --text:#f4f4f6;
-    --muted:#9a9aa8;
-    --accent:#7c5cff;
-    --accent-2:#22d3ee;
-    --radius:18px;
+    --bg:#030302;
+    --surface:#0a0a08;
+    --line:rgba(20,61,26,.18);
+    --text:#f2f0ec;
+    --muted:#8a9085;
+    --accent:#A31c1b;
+    --accent-2:#143d1a;
+    --radius:14px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
@@ -38,8 +39,8 @@
   /* ---------- background ---------- */
   .glow{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
   .glow::before,.glow::after{content:"";position:absolute;border-radius:50%;filter:blur(120px);opacity:.32}
-  .glow::before{width:620px;height:620px;background:#5b3dff;top:-240px;left:-160px;animation:drift 18s ease-in-out infinite alternate}
-  .glow::after{width:520px;height:520px;background:#0e7490;bottom:-220px;right:-140px;animation:drift 22s ease-in-out infinite alternate-reverse}
+  .glow::before{width:620px;height:620px;background:#143d1a;top:-240px;left:-160px;animation:drift 18s ease-in-out infinite alternate}
+  .glow::after{width:520px;height:520px;background:#0f3a12;bottom:-220px;right:-140px;animation:drift 22s ease-in-out infinite alternate-reverse}
   @keyframes drift{to{transform:translate3d(60px,50px,0) scale(1.15)}}
   .grid-fade{
     position:fixed;inset:0;z-index:-1;pointer-events:none;
@@ -62,16 +63,16 @@
   .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:100px;font-size:.9rem;font-weight:500;
     text-decoration:none;border:1px solid var(--line);color:var(--text);background:rgba(255,255,255,.03);transition:.25s}
   .btn:hover{background:rgba(255,255,255,.09);transform:translateY(-1px)}
-  .btn-primary{background:linear-gradient(120deg,var(--accent),#4f46e5 55%,var(--accent-2));border:none;color:#fff;
-    box-shadow:0 8px 30px -10px rgba(124,92,255,.7)}
-  .btn-primary:hover{background:linear-gradient(120deg,#8b6dff,#5b52f0 55%,#38dff5);transform:translateY(-2px)}
+  .btn-primary{background:linear-gradient(120deg,var(--accent),#7a181b 55%,var(--accent-2));border:none;color:#fff;
+    box-shadow:0 8px 30px -10px rgba(163,28,27,.7)}
+  .btn-primary:hover{background:linear-gradient(120deg,#b8252d,#A31c1b 55%,#143d1a);transform:translateY(-2px)}
   .btn-sm{padding:9px 16px;font-size:.84rem}
 
   /* ---------- hero ---------- */
   .hero{padding:104px 0 84px;text-align:center}
   .pill{display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border-radius:100px;border:1px solid var(--line);
     background:rgba(255,255,255,.03);font-size:.78rem;color:var(--muted);margin-bottom:26px}
-  .dot{width:6px;height:6px;border-radius:50%;background:#3ee08f;box-shadow:0 0 10px #3ee08f}
+  .dot{width:6px;height:6px;border-radius:50%;background:#A31c1b;box-shadow:0 0 10px #A31c1b}
   .hero h1{font-size:clamp(2.4rem,6.2vw,4.5rem);line-height:1.03;font-weight:700;max-width:16ch;margin:0 auto}
   .grad{background:linear-gradient(100deg,#fff 10%,var(--accent) 55%,var(--accent-2) 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
   .hero p.lead{margin:26px auto 0;max-width:56ch;color:var(--muted);font-size:clamp(1rem,1.6vw,1.13rem);line-height:1.65}
@@ -90,7 +91,7 @@
   .work-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
   .work{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:var(--radius);
     overflow:hidden;background:linear-gradient(170deg,rgba(255,255,255,.045),rgba(255,255,255,.012));transition:.3s}
-  .work:hover{transform:translateY(-5px);border-color:rgba(124,92,255,.45);box-shadow:0 24px 60px -30px rgba(124,92,255,.8)}
+  .work:hover{transform:translateY(-5px);border-color:rgba(20,61,26,.45);box-shadow:0 24px 60px -30px rgba(20,61,26,.6)}
   .thumb{aspect-ratio:16/10;overflow:hidden;position:relative;background:#0b0b12}
   .thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;transition:transform .5s ease}
   .work:hover .thumb img{transform:scale(1.04)}
@@ -112,12 +113,12 @@
   .card{border:1px solid var(--line);border-radius:var(--radius);padding:30px 26px 28px;
     background:linear-gradient(170deg,rgba(255,255,255,.045),rgba(255,255,255,.012));transition:.3s;position:relative;overflow:hidden}
   .card::after{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;transition:.3s;
-    background:radial-gradient(400px circle at var(--x,50%) var(--y,0%),rgba(124,92,255,.15),transparent 60%)}
-  .card:hover{transform:translateY(-4px);border-color:rgba(124,92,255,.4)}
+    background:radial-gradient(400px circle at var(--x,50%) var(--y,0%),rgba(20,61,26,.18),transparent 60%)}
+  .card:hover{transform:translateY(-4px);border-color:rgba(20,61,26,.4)}
   .card:hover::after{opacity:1}
   .icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
-    background:rgba(124,92,255,.12);border:1px solid rgba(124,92,255,.25);margin-bottom:20px}
-  .icon svg{width:21px;height:21px;stroke:#b9a8ff;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    background:rgba(20,61,26,.14);border:1px solid rgba(20,61,26,.35);margin-bottom:20px}
+  .icon svg{width:21px;height:21px;stroke:#d8e0d4;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
   .card h3{font-size:1.12rem;font-weight:600;margin-bottom:10px}
   .card p{color:var(--muted);font-size:.92rem;line-height:1.65}
 
@@ -126,13 +127,13 @@
     border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,.015)}
   .step{padding:32px 26px;border-right:1px solid var(--line)}
   .step:last-child{border-right:none}
-  .num{font-family:'Space Grotesk',sans-serif;font-size:.78rem;color:var(--accent-2);letter-spacing:.1em;margin-bottom:14px;display:block}
+  .num{font-family:'Space Grotesk',sans-serif;font-size:.78rem;color:#143d1a;letter-spacing:.1em;margin-bottom:14px;display:block}
   .step h3{font-size:1rem;margin-bottom:9px;font-weight:600}
   .step p{color:var(--muted);font-size:.88rem;line-height:1.6}
 
   /* ---------- cta ---------- */
   .cta-box{border:1px solid var(--line);border-radius:26px;padding:66px 34px;text-align:center;
-    background:radial-gradient(ellipse at 50% 0%,rgba(124,92,255,.22),transparent 65%),rgba(255,255,255,.015)}
+    background:radial-gradient(ellipse at 50% 0%,rgba(20,61,26,.15),transparent 65%),rgba(10,10,8,.015)}
   .cta-box h2{font-size:clamp(1.8rem,4vw,3rem);line-height:1.1;margin-bottom:16px}
   .cta-box p{color:var(--muted);max-width:48ch;margin:0 auto 32px;line-height:1.7}
   .cta-mail{display:block;margin-top:22px;font-size:.9rem;color:var(--muted)}
@@ -150,6 +151,103 @@
   /* ---------- reveal ---------- */
   .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
   .reveal.in{opacity:1;transform:none}
+
+  /* ---------- trust bar ---------- */
+  .trust{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+  .trust span{font-size:.78rem;color:#8a9085;letter-spacing:.04em}
+  .trust b{color:#f2f0ec;font-weight:600;font-size:.95rem;display:block;font-family:'Space Grotesk',sans-serif}
+
+  /* ---------- ai lab strip ---------- */
+  .ai-lab{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+  .ai-lab p{font-size:.78rem;color:#8a9085;margin-bottom:12px;letter-spacing:.12em;text-transform:uppercase}
+  .ai-lab-chips{display:flex;flex-wrap:wrap;gap:10px}
+  .ai-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:100px;font-size:.82rem;
+    color:#c9cfc7;background:rgba(20,61,26,.1);border:1px solid rgba(20,61,26,.3)}
+  .ai-chip .live{width:6px;height:6px;border-radius:50%;background:#A31c1b}
+
+  /* ---------- why flow ---------- */
+  .why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+  .why-item{border:1px solid var(--line);border-radius:var(--radius);padding:24px 20px;
+    background:linear-gradient(170deg,rgba(20,61,26,.1),rgba(10,10,8,.015))}
+  .why-item h4{font-family:'Space Grotesk',sans-serif;font-size:1rem;margin-bottom:8px}
+  .why-item h4 span{color:#A31c1b}
+  .why-item p{color:var(--muted);font-size:.88rem;line-height:1.6}
+
+  /* ---------- idea form modal ---------- */
+  .modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;
+    background:rgba(3,3,2,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    opacity:0;visibility:hidden;transition:opacity .35s ease,visibility .35s}
+  .modal.open{opacity:1;visibility:visible}
+  .modal-card{position:relative;width:min(560px,100%);max-height:92vh;overflow-y:auto;border-radius:22px;
+    border:1px solid rgba(163,28,27,.3);background:linear-gradient(165deg,#0d0d0b,#050504 60%);
+    padding:34px 30px 30px;box-shadow:0 40px 120px -30px rgba(163,28,27,.35);
+    transform:translateY(26px) scale(.96);opacity:0;transition:transform .55s cubic-bezier(.2,.9,.3,1.15),opacity .4s ease}
+  .modal.open .modal-card{transform:none;opacity:1}
+  .modal-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;cursor:pointer;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);font-size:1.1rem;transition:.2s}
+  .modal-close:hover{color:var(--text);border-color:rgba(163,28,27,.5);transform:rotate(90deg)}
+  .modal h3{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;margin-bottom:6px}
+  .modal .meme-line{font-size:.85rem;color:#8a9085;margin-bottom:22px}
+  .modal .meme-line b{color:#A31c1b;font-weight:600}
+  .field{margin-bottom:16px;opacity:0;transform:translateY(14px)}
+  .modal.open .field{animation:fieldIn .5s ease forwards}
+  .modal.open .field:nth-child(1){animation-delay:.15s}
+  .modal.open .field:nth-child(2){animation-delay:.22s}
+  .modal.open .field:nth-child(3){animation-delay:.29s}
+  .modal.open .field:nth-child(4){animation-delay:.36s}
+  .modal.open .field:nth-child(5){animation-delay:.43s}
+  .modal.open .field:nth-child(6){animation-delay:.5s}
+  @keyframes fieldIn{to{opacity:1;transform:none}}
+  .field label{display:block;font-size:.8rem;font-weight:500;color:#c9cfc7;margin-bottom:7px;letter-spacing:.02em}
+  .field label span{color:#A31c1b}
+  .field input,.field textarea,.field select{width:100%;padding:13px 15px;border-radius:12px;font-size:.95rem;
+    font-family:'Inter',sans-serif;color:var(--text);background:rgba(255,255,255,.03);
+    border:1px solid var(--line);transition:.25s;min-height:46px}
+  .field textarea{min-height:110px;resize:vertical;line-height:1.6}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:rgba(163,28,27,.65);
+    background:rgba(163,28,27,.05);box-shadow:0 0 0 3px rgba(163,28,27,.15)}
+  .field input::placeholder,.field textarea::placeholder{color:#5d5d68}
+  .chips-row{display:flex;flex-wrap:wrap;gap:9px}
+  .chip-opt{padding:9px 16px;border-radius:100px;font-size:.84rem;cursor:pointer;user-select:none;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);transition:.2s;min-height:40px}
+  .chip-opt:hover{border-color:rgba(163,28,27,.4);color:var(--text)}
+  .chip-opt.sel{background:rgba(163,28,27,.16);border-color:#A31c1b;color:#f2f0ec;transform:scale(1.04)}
+  .err{display:none;font-size:.78rem;color:#e07a7a;margin-top:6px}
+  .err.show{display:block;animation:shake .35s ease}
+  @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .submit-btn{width:100%;padding:15px;border:none;border-radius:100px;font-size:.98rem;font-weight:600;cursor:pointer;
+    color:#fff;background:linear-gradient(120deg,#A31c1b,#7a181d 55%,#143d1a);transition:.25s;
+    box-shadow:0 10px 34px -12px rgba(163,28,27,.7);min-height:48px;position:relative;overflow:hidden}
+  .submit-btn:hover{transform:translateY(-2px);box-shadow:0 14px 40px -12px rgba(163,28,27,.85)}
+  .submit-btn:disabled{opacity:.6;cursor:wait;transform:none}
+  .submit-btn .spin{display:none;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-inline:auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .submit-btn.loading .label{display:none}
+  .submit-btn.loading .spin{display:block}
+  .form-note{margin-top:14px;font-size:.76rem;color:#5d5d68;text-align:center}
+  /* success state */
+  .success{display:none;text-align:center;padding:26px 4px 8px}
+  .success.show{display:block;animation:fieldIn .5s ease}
+  .check{width:74px;height:74px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(20,61,26,.25);border:2px solid #1f5a2a}
+  .check svg{width:36px;height:36px;stroke:#3ee08f;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:48;stroke-dashoffset:48;animation:draw .6s .2s ease forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .success h3{margin-bottom:8px}
+  .success p{color:var(--muted);font-size:.92rem;line-height:1.7;max-width:38ch;margin-inline:auto}
+  .success .meme-line{margin-top:14px;color:#8a9085}
+  .success .meme-line b{color:#A31c1b}
+  .success button{margin-top:20px}
+  @media(prefers-reduced-motion:reduce){
+    .modal,.modal-card,.field,.chip-opt,.submit-btn,.check svg{transition:none!important;animation:none!important}
+    .modal.open .field{opacity:1;transform:none}
+    .check svg{stroke-dashoffset:0}
+  }
+  @media(max-width:820px){
+    .trust{gap:18px}
+    .modal-card{padding:28px 20px 24px}
+  }
 
   @media(max-width:980px){
     .work-grid{grid-template-columns:1fr;max-width:520px;margin-inline:auto}
@@ -176,6 +274,7 @@
         <a href="#work">Work</a>
         <a href="#services">Services</a>
         <a href="#process">Process</a>
+        <a href="#why">Why us</a>
         <a href="#contact">Contact</a>
       </div>
       <a href="#contact" class="btn btn-primary btn-sm">Start a project</a>
@@ -196,6 +295,12 @@
     <div class="hero-cta">
       <a href="#contact" class="btn btn-primary">Start a project →</a>
       <a href="#work" class="btn">See our work</a>
+    </div>
+    <div class="trust">
+      <span><b>10+</b>projects shipped</span>
+      <span><b>2</b>founders, one stack</span>
+      <span><b>14</b>GitHub repos</span>
+      <span><b>48h</b>reply, always</span>
     </div>
     <div class="chips">
       <span class="chip">Websites</span>
@@ -244,6 +349,45 @@
             <div class="wlink plain">Built in-house <span>·</span></div>
           </div>
         </article>
+
+        <article class="work reveal">
+          <div class="thumb"><img src="assets/work-interviewcopilot.svg" alt="INTERVIEW-COPILOT — AI interview assistant interface" loading="lazy"></div>
+          <div class="wbody">
+            <div class="wtop"><h3>INTERVIEW-COPILOT</h3><span class="meta">AI COPILOT</span></div>
+            <p>An AI interview companion that helps candidates prepare, rehearse and improve — real-time coaching with structured feedback.</p>
+            <div class="wtags"><span>AI assistant</span><span>Python</span><span>Coaching</span></div>
+            <div class="wlink plain">Open source <span>·</span></div>
+          </div>
+        </article>
+
+        <article class="work reveal">
+          <div class="thumb"><img src="assets/work-bhoomi.svg" alt="BHOOMI — land intelligence stack with maps and verification" loading="lazy"></div>
+          <div class="wbody">
+            <div class="wtop"><h3>BHOOMI Series</h3><span class="meta">GEO + DATA</span></div>
+            <p>BhumiStack, BHOOMI and Bhuverify — a land-intelligence stack: maps, verification and a data platform for property workflows.</p>
+            <div class="wtags"><span>Python</span><span>Geo data</span><span>Verification</span></div>
+            <div class="wlink plain">Built in-house <span>·</span></div>
+          </div>
+        </article>
+
+        <article class="work reveal">
+          <div class="thumb"><img src="assets/work-carboncoach.svg" alt="Carbon Coach — sustainability tracker dashboard" loading="lazy"></div>
+          <div class="wbody">
+            <div class="wtop"><h3>Carbon Coach</h3><span class="meta">SUSTAINABILITY</span></div>
+            <p>A TypeScript app that tracks and coaches personal carbon footprints — clean UX, live metrics and weekly progress nudges.</p>
+            <div class="wtags"><span>Web app</span><span>TypeScript</span><span>Analytics</span></div>
+            <div class="wlink plain">Open source <span>·</span></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="ai-lab reveal">
+        <p>Also in the lab</p>
+        <div class="ai-lab-chips">
+          <span class="ai-chip"><span class="live"></span>CivicPulseAI</span>
+          <span class="ai-chip"><span class="live"></span>ML-MLOps</span>
+          <span class="ai-chip"><span class="live"></span>btc-sentiment-analysis</span>
+        </div>
       </div>
     </div>
   </section>
@@ -260,14 +404,6 @@
       <div class="cards">
         <article class="card reveal">
           <div class="icon">
-            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 4v5"/></svg>
-          </div>
-          <h3>Websites</h3>
-          <p>Fast, responsive marketing sites, landing pages and web apps — built to look sharp and convert.</p>
-        </article>
-
-        <article class="card reveal">
-          <div class="icon">
             <svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4v1a4 4 0 0 1 0 8v1a4 4 0 0 1-8 0v-1a4 4 0 0 1 0-8V7a4 4 0 0 1 4-4Z"/><path d="M12 8v8"/></svg>
           </div>
           <h3>AI</h3>
@@ -280,6 +416,14 @@
           </div>
           <h3>Automation</h3>
           <p>Kill the repetitive work — integrations, bots and pipelines that connect the tools you already use.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 4v5"/></svg>
+          </div>
+          <h3>Websites</h3>
+          <p>Fast, responsive marketing sites, landing pages and web apps — built to look sharp and convert.</p>
         </article>
 
         <article class="card reveal">
@@ -327,6 +471,36 @@
     </div>
   </section>
 
+  <!-- WHY FLOW -->
+  <section id="why">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Why us</p>
+        <h2>Why Flow, not the other guys.</h2>
+        <p>Most agencies outsource half the work. We don't. Two founders, one stack, everything shipped in-house.</p>
+      </div>
+
+      <div class="why-grid reveal">
+        <div class="why-item">
+          <h4><span>01</span> Founder-led, not freelancer-led</h4>
+          <p>You talk to the people building it. No account managers, no handoffs, no "our developer will get back to you".</p>
+        </div>
+        <div class="why-item">
+          <h4><span>02</span> Shipped, not just designed</h4>
+          <p>Real products live on our portfolios — Droovee, Drishti, BHOOMI. We build things that run in production.</p>
+        </div>
+        <div class="why-item">
+          <h4><span>03</span> Honest scope, fixed price</h4>
+          <p>Clear deliverables, clear timeline, clear price before we write a line of code. No surprise invoices.</p>
+        </div>
+        <div class="why-item">
+          <h4><span>04</span> Still there after launch</h4>
+          <p>Handover, support and small fixes included — so it keeps working long after go-live.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- CONTACT -->
   <section id="contact">
     <div class="wrap">
@@ -356,6 +530,79 @@
   </div>
 </footer>
 
+<!-- IDEA FORM MODAL -->
+<div class="modal" id="ideaModal" role="dialog" aria-modal="true" aria-labelledby="ideaTitle">
+  <div class="modal-card">
+    <button class="modal-close" id="modalClose" aria-label="Close form">✕</button>
+
+    <div id="formView">
+      <h3 id="ideaTitle">Got an idea? Spill it. 🤌</h3>
+      <p class="meme-line">From <b>“bhai ek idea hai”</b> to shipped product — tell us what you're cooking.</p>
+
+      <form id="ideaForm" novalidate>
+        <div class="field">
+          <label for="fName">What do we call you? <span>*</span></label>
+          <input id="fName" name="name" type="text" placeholder="Rahul / Rahul-from-the-group-chat" autocomplete="name" required>
+          <div class="err" id="errName">Name se bulaoge na? 😅 Enter something.</div>
+        </div>
+
+        <div class="field">
+          <label for="fContact">Email or phone <span>*</span></label>
+          <input id="fContact" name="contact" type="text" placeholder="you@email.com or +91..." autocomplete="email" required>
+          <div class="err" id="errContact">How do we reply without this? 📡</div>
+        </div>
+
+        <div class="field">
+          <label>What are we building? <span>*</span></label>
+          <div class="chips-row" id="typeChips" role="radiogroup" aria-label="Project type">
+            <span class="chip-opt" data-val="Website" role="radio" aria-checked="false" tabindex="0">Website</span>
+            <span class="chip-opt" data-val="AI tool" role="radio" aria-checked="false" tabindex="0">AI tool</span>
+            <span class="chip-opt" data-val="Automation" role="radio" aria-checked="false" tabindex="0">Automation</span>
+            <span class="chip-opt" data-val="Software" role="radio" aria-checked="false" tabindex="0">Software</span>
+            <span class="chip-opt" data-val="Not sure yet" role="radio" aria-checked="false" tabindex="0">Not sure yet 😅</span>
+          </div>
+          <div class="err" id="errType">Pick one — even “Not sure yet” counts. 🫠</div>
+        </div>
+
+        <div class="field">
+          <label for="fIdea">The idea (Hinglish welcome) <span>*</span></label>
+          <textarea id="fIdea" name="idea" placeholder="bhai ek app hai jisme user apni photo daale aur AI review de… (yes, write it exactly like that)" required></textarea>
+          <div class="err" id="errIdea">Empty idea box? That's just a box. 📦</div>
+        </div>
+
+        <div class="field">
+          <label for="fBudget">Ballpark budget (₹)</label>
+          <select id="fBudget" name="budget">
+            <option value="">No clue, shock me</option>
+            <option value="under25k">Under 25k</option>
+            <option value="25k-1L">25k – 1L</option>
+            <option value="1L+">1L+</option>
+            <option value="discuss">Let's discuss first</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <button type="submit" class="submit-btn" id="submitBtn">
+            <span class="label">Send the idea 🚀</span>
+            <span class="spin" aria-hidden="true"></span>
+          </button>
+          <p class="form-note">No spam. No “we'll get back in 3 weeks”. Reply in 48h, promise.</p>
+        </div>
+      </form>
+    </div>
+
+    <div class="success" id="successView">
+      <div class="check" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>
+      </div>
+      <h3>Idea received. 🎉</h3>
+      <p>We'll slide into your inbox within 48 hours with honest next steps — scope, timeline, price.</p>
+      <p class="meme-line">Meanwhile: <b>go grab a chai</b>, your idea just got a whole lot more real. ☕</p>
+      <button class="btn btn-primary" id="successClose">Back to site</button>
+    </div>
+  </div>
+</div>
+
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -381,6 +628,102 @@
       card.style.setProperty('--x', (ev.clientX - r.left) + 'px');
       card.style.setProperty('--y', (ev.clientY - r.top) + 'px');
     });
+  });
+
+  /* ---------- idea form modal ---------- */
+  const modal = document.getElementById('ideaModal');
+  const formView = document.getElementById('formView');
+  const successView = document.getElementById('successView');
+  const ideaForm = document.getElementById('ideaForm');
+  const submitBtn = document.getElementById('submitBtn');
+  let projectType = '';
+
+  function openModal() {
+    formView.style.display = '';
+    successView.classList.remove('show');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('fName').focus(), 450);
+  }
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // All "Start a project" buttons open the form
+  document.querySelectorAll('a.btn-primary').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      if (btn.getAttribute('href') === '#contact' || btn.textContent.includes('Start')) {
+        e.preventDefault();
+        openModal();
+      }
+    });
+  });
+
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('successClose').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+
+  // chips (single select, keyboard accessible)
+  document.querySelectorAll('#typeChips .chip-opt').forEach(chip => {
+    const pick = () => {
+      document.querySelectorAll('#typeChips .chip-opt').forEach(c => {
+        c.classList.remove('sel'); c.setAttribute('aria-checked', 'false');
+      });
+      chip.classList.add('sel'); chip.setAttribute('aria-checked', 'true');
+      projectType = chip.dataset.val;
+      document.getElementById('errType').classList.remove('show');
+    };
+    chip.addEventListener('click', pick);
+    chip.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  });
+
+  // validation on blur (per skill: validate on blur, error near field)
+  ['fName', 'fContact', 'fIdea'].forEach(id => {
+    document.getElementById(id).addEventListener('blur', (e) => {
+      const err = document.getElementById('err' + id.slice(1));
+      err.classList.toggle('show', !e.target.value.trim());
+    });
+  });
+
+  ideaForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('fName');
+    const contact = document.getElementById('fContact');
+    const idea = document.getElementById('fIdea');
+    let ok = true;
+
+    const check = (input, errId, valid) => {
+      document.getElementById(errId).classList.toggle('show', !valid);
+      if (!valid) ok = false;
+    };
+    check(name, 'errName', name.value.trim());
+    check(contact, 'errContact', contact.value.trim());
+    check(idea, 'errIdea', idea.value.trim());
+    document.getElementById('errType').classList.toggle('show', !projectType);
+    if (!projectType) ok = false;
+
+    if (!ok) {
+      const firstErr = document.querySelector('.err.show');
+      if (firstErr) firstErr.previousElementSibling?.focus?.();
+      return;
+    }
+
+    // loading state (skill: loading feedback)
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    setTimeout(() => {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      formView.style.display = 'none';
+      successView.classList.add('show');
+      ideaForm.reset();
+      document.querySelectorAll('#typeChips .chip-opt').forEach(c => {
+        c.classList.remove('sel'); c.setAttribute('aria-checked', 'false');
+      });
+      projectType = '';
+    }, 1400);
   });
 </script>
 </body>
