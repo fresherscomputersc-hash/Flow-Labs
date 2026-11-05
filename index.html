@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="assets/site.config.js"></script>
 <style>
   :root{
     --bg:#030302;
@@ -86,6 +87,23 @@
   .sec-head{max-width:660px;margin-bottom:46px}
   .sec-head h2{font-size:clamp(1.9rem,3.6vw,2.8rem);line-height:1.1;margin-bottom:16px}
   .sec-head p{color:var(--muted);line-height:1.7}
+
+  /* ---------- who we help ---------- */
+  .who-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .who{border:1px solid var(--line);border-radius:var(--radius);padding:26px 22px;
+    background:linear-gradient(170deg,rgba(255,255,255,.045),rgba(255,255,255,.012));transition:.3s;
+    display:flex;flex-direction:column;gap:10px}
+  .who:hover{transform:translateY(-4px);border-color:rgba(163,28,27,.45);
+    box-shadow:0 22px 55px -28px rgba(163,28,27,.5)}
+  .who h3{font-size:1.02rem;font-weight:600;display:flex;align-items:center;gap:9px}
+  .who h3 svg{width:17px;height:17px;stroke:#d8e0d4;stroke-width:1.7;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  .who p{color:var(--muted);font-size:.87rem;line-height:1.6}
+  .who .fix{margin-top:auto;font-size:.78rem;color:#c9cfc7;background:rgba(20,61,26,.12);
+    border:1px solid rgba(20,61,26,.3);border-radius:8px;padding:8px 12px;line-height:1.5}
+  .who .fix b{color:#f2f0ec;font-weight:600}
+  @media(max-width:980px){.who-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:640px){.who-grid{grid-template-columns:1fr}}
 
   /* ---------- work ---------- */
   .work-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
@@ -207,6 +225,7 @@
   .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:rgba(163,28,27,.65);
     background:rgba(163,28,27,.05);box-shadow:0 0 0 3px rgba(163,28,27,.15)}
   .field input::placeholder,.field textarea::placeholder{color:#5d5d68}
+  .hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;opacity:0;overflow:hidden}
   .chips-row{display:flex;flex-wrap:wrap;gap:9px}
   .chip-opt{padding:9px 16px;border-radius:100px;font-size:.84rem;cursor:pointer;user-select:none;
     border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);transition:.2s;min-height:40px}
@@ -259,6 +278,27 @@
     .step:last-child{border-bottom:none}
     section{padding:64px 0}
   }
+
+  /* ---------- mobile nav ---------- */
+  .nav-toggle{display:none;background:none;border:1px solid var(--line);border-radius:10px;
+    padding:9px 10px;cursor:pointer;flex-direction:column;gap:5px}
+  .nav-toggle span{display:block;width:20px;height:2px;border-radius:2px;background:var(--text);transition:.25s}
+  .nav-toggle.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .nav-toggle.open span:nth-child(2){opacity:0}
+  .nav-toggle.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  @media(max-width:820px){
+    .nav-toggle{display:flex}
+    .nav-links{
+      display:none;
+      position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;gap:4px;
+      background:rgba(7,7,10,.97);backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);padding:12px 18px 18px;
+    }
+    .nav-links.open{display:flex}
+    .nav-links a{padding:12px 6px;border-bottom:1px solid rgba(20,61,26,.12);font-size:.95rem}
+    .nav-links a:last-child{border-bottom:none}
+    nav{position:relative}
+  }
 </style>
 </head>
 <body>
@@ -270,13 +310,17 @@
   <div class="wrap">
     <nav>
       <a href="#top" class="logo"><span class="mark">FL</span> The Flow Labs</a>
-      <div class="nav-links">
+      <div class="nav-links" id="navLinks">
         <a href="#work">Work</a>
+        <a href="#industries">Industries</a>
         <a href="#services">Services</a>
         <a href="#process">Process</a>
         <a href="#why">Why us</a>
         <a href="#contact">Contact</a>
       </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
       <a href="#contact" class="btn btn-primary btn-sm">Start a project</a>
     </nav>
   </div>
@@ -289,8 +333,9 @@
     <span class="pill"><span class="dot"></span> Taking on new projects</span>
     <h1>From <span class="grad">“bhai ek idea hai”</span> to reality.</h1>
     <p class="lead">
-      We design and build websites, AI tools, automations and custom software.
-      You bring the idea — we ship the thing.
+      We build websites, AI assistants, automations and custom software for clinics,
+      gyms, salons and real estate brands — and products for founders. Measured,
+      fixed-price, shipped. You bring the idea, we ship the thing.
     </p>
     <div class="hero-cta">
       <a href="#contact" class="btn btn-primary">Start a project →</a>
@@ -298,8 +343,8 @@
     </div>
     <div class="trust">
       <span><b>10+</b>projects shipped</span>
-      <span><b>2</b>founders, one stack</span>
-      <span><b>14</b>GitHub repos</span>
+      <span><b>24h</b>teardown on request, free</span>
+      <span><b>Fixed price</b>agreed before code starts</span>
       <span><b>48h</b>reply, always</span>
     </div>
     <div class="chips">
@@ -309,6 +354,48 @@
       <span class="chip">Software</span>
     </div>
   </div>
+
+  <!-- WHO WE HELP -->
+  <section id="industries">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Who we help</p>
+        <h2>Built for businesses that run on bookings.</h2>
+        <p>Clinics, gyms, salons and real estate teams lose money in the same four places.
+           We find the leak, measure it, and fix it — starting with a free teardown.</p>
+      </div>
+
+      <div class="who-grid">
+        <article class="who reveal">
+          <h3><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.4 5.2 5.2 0 0 1 21.3 12c-1.8 4.3-9.3 9-9.3 9Z"/></svg>Clinics &amp; dentists</h3>
+          <p>Patients phone with the same ten questions every day, and enquiries that arrive
+             after 6pm wait for the morning. Your reviews sell the chair, the front desk books it.</p>
+          <div class="fix"><b>We build:</b> patient FAQ assistant + 24/7 intake recall flow — answers in seconds, at 2am, in your languages.</div>
+        </article>
+
+        <article class="who reveal">
+          <h3><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10a3 3 0 0 1 3-3h5v10H6a3 3 0 0 1-3-3ZM21 10a3 3 0 0 0-3-3h-5v10h5a3 3 0 0 0 3-3Z"/></svg>Gyms &amp; studios</h3>
+          <p>Members review you at 11pm and walk in for tours a week later. Trial requests
+             scatter across phone, DM and WhatsApp — most never get the second call.</p>
+          <div class="fix"><b>We build:</b> trial-slot landing pages + automated follow-up so your team only talks to members already leaning yes.</div>
+        </article>
+
+        <article class="who reveal">
+          <h3><svg viewBox="0 0 24 24"><circle cx="8" cy="6" r="3"/><path d="M11 20H6a2 2 0 0 1-2-2v-1a4 4 0 0 1 8 0v1a2 2 0 0 1-1 2ZM18 5v6M15 8h6"/></svg>Salons &amp; spas</h3>
+          <p>Bookings live in DMs and missed calls while competitors with a simple site
+             outrank you. Expats google first — with no site, you're not in the results.</p>
+          <div class="fix"><b>We build:</b> fast one-page sites with real booking links — your reviews point somewhere they can convert.</div>
+        </article>
+
+        <article class="who reveal">
+          <h3><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M5 10v10h14V10M9 20v-6h6v6"/></svg>Real estate</h3>
+          <p>Leads enter via portals, forms and WhatsApp and never meet in one pool.
+             A vendor form submitted at 9pm waits until 11am for its first reply.</p>
+          <div class="fix"><b>We build:</b> one shared lead pool + 60-second response flows — from enquiry to slot booking without a person awake.</div>
+        </article>
+      </div>
+    </div>
+  </section>
 
   <!-- WORK -->
   <section id="work">
@@ -549,7 +636,7 @@
         <div class="field">
           <label for="fContact">Email or phone <span>*</span></label>
           <input id="fContact" name="contact" type="text" placeholder="you@email.com or +91..." autocomplete="email" required>
-          <div class="err" id="errContact">How do we reply without this? 📡</div>
+          <div class="err" id="errContact">Enter a valid email (you@company.com) or phone (+91...) — how else do we reply? 📡</div>
         </div>
 
         <div class="field">
@@ -581,12 +668,17 @@
           </select>
         </div>
 
+        <div class="field hp" aria-hidden="true">
+          <label for="fCompany">Company</label>
+          <input id="fCompany" name="company" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
         <div class="field">
           <button type="submit" class="submit-btn" id="submitBtn">
             <span class="label">Send the idea 🚀</span>
             <span class="spin" aria-hidden="true"></span>
           </button>
-          <p class="form-note">No spam. No “we'll get back in 3 weeks”. Reply in 48h, promise.</p>
+          <p class="form-note" id="formNote">No spam. No “we'll get back in 3 weeks”. Reply in 48h, promise.</p>
         </div>
       </form>
     </div>
@@ -610,6 +702,22 @@
   addEventListener('scroll', () => {
     header.classList.toggle('scrolled', scrollY > 10);
   }, { passive: true });
+
+  /* ---------- mobile nav ---------- */
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  navToggle.addEventListener('click', () => {
+    const open = navLinks.classList.toggle('open');
+    navToggle.classList.toggle('open', open);
+    navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  navLinks.addEventListener('click', (e) => {
+    if (e.target.tagName === 'A') {
+      navLinks.classList.remove('open');
+      navToggle.classList.remove('open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    }
+  });
 
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e, i) => {
@@ -687,21 +795,73 @@
     });
   });
 
-  ideaForm.addEventListener('submit', (e) => {
+  // validation on blur (error near field)
+  ['fName', 'fIdea'].forEach(id => {
+    document.getElementById(id).addEventListener('blur', (e) => {
+      const errEl = document.getElementById('err' + id.slice(1));
+      errEl.classList.toggle('show', !e.target.value.trim());
+    });
+  });
+  document.getElementById('fContact').addEventListener('blur', (e) => {
+    errContact.classList.toggle('show', !validContact(e.target.value));
+  });
+  const errContact = document.getElementById('errContact');
+
+  // ---- backend: Supabase (site.config.js) + never-lose-a-lead fallback ----
+  const cfg = (typeof window !== 'undefined' && window.SITE_CONFIG) || {};
+  const supabaseReady = cfg && cfg.supabaseUrl && cfg.supabaseAnonKey &&
+    !cfg.supabaseUrl.includes('YOURPROJECT') && !cfg.supabaseUrl.includes('yourproject');
+  const leadSrc = new URLSearchParams(location.search).get('src') || 'site';
+
+  function validContact(v) {
+    const s = v.trim();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return true;   // email
+    const digits = s.replace(/[^\d]/g, '');
+    return digits.length >= 8;                                   // phone
+  }
+  const err = (id) => document.getElementById(id);
+  const note = err('formNote');
+  const formBtn = err('submitBtn');
+
+  function mailtoLink(name, cont, type, idea, budget) {
+    const body = `Name: ${name}\nContact: ${cont}\nProject: ${type}\nBudget: ${budget || '-'}\nSource: ${leadSrc}\n\nIdea:\n${idea}`;
+    return 'mailto:theflowlabs01@gmail.com?subject=' +
+      encodeURIComponent('New project idea — The Flow Labs') +
+      '&body=' + encodeURIComponent(body);
+  }
+
+  async function postLead(payload) {
+    const url = cfg.supabaseUrl.replace(/\/+$/, '') + '/rest/v1/site_leads';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': cfg.supabaseAnonKey,
+        'Authorization': 'Bearer ' + cfg.supabaseAnonKey,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+    if (res.status !== 201 && res.status !== 200) {
+      throw new Error('supabase ' + res.status);
+    }
+  }
+
+  ideaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = document.getElementById('fName');
-    const contact = document.getElementById('fContact');
-    const idea = document.getElementById('fIdea');
+    const nameC = document.getElementById('fName');
+    const contactC = document.getElementById('fContact');
+    const ideaC = document.getElementById('fIdea');
     let ok = true;
 
     const check = (input, errId, valid) => {
-      document.getElementById(errId).classList.toggle('show', !valid);
+      err(errId).classList.toggle('show', !valid);
       if (!valid) ok = false;
     };
-    check(name, 'errName', name.value.trim());
-    check(contact, 'errContact', contact.value.trim());
-    check(idea, 'errIdea', idea.value.trim());
-    document.getElementById('errType').classList.toggle('show', !projectType);
+    check(nameC, 'errName', nameC.value.trim());
+    check(contactC, 'errContact', validContact(contactC.value));
+    check(ideaC, 'errIdea', ideaC.value.trim());
+    err('errType').classList.toggle('show', !projectType);
     if (!projectType) ok = false;
 
     if (!ok) {
@@ -710,12 +870,11 @@
       return;
     }
 
-    // loading state (skill: loading feedback)
-    submitBtn.disabled = true;
-    submitBtn.classList.add('loading');
-    setTimeout(() => {
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('loading');
+    // honeypot: bots silently "succeed"
+    const hp = document.getElementById('fCompany').value.trim();
+    const showSuccess = () => {
+      formBtn.disabled = false;
+      formBtn.classList.remove('loading');
       formView.style.display = 'none';
       successView.classList.add('show');
       ideaForm.reset();
@@ -723,7 +882,45 @@
         c.classList.remove('sel'); c.setAttribute('aria-checked', 'false');
       });
       projectType = '';
-    }, 1400);
+      note.textContent = 'No spam. No fake promises. Real reply in 48h.';
+    };
+
+    const submit = async () => {
+      formBtn.disabled = true;
+      formBtn.classList.add('loading');
+      const payload = {
+        name: nameC.value.trim(),
+        contact: contactC.value.trim(),
+        project_type: projectType,
+        idea: ideaC.value.trim(),
+        budget: document.getElementById('fBudget').value || null,
+        source: leadSrc,
+        user_agent: (navigator.userAgent || '').slice(0, 250)
+      };
+      try {
+        if (supabaseReady) {
+          await postLead(payload);
+          showSuccess();
+        } else {
+          // backend not configured yet: drop into the owner's inbox directly
+          const a = document.createElement('a');
+          a.href = mailtoLink(payload.name, payload.contact, payload.project_type, payload.idea, payload.budget);
+          a.click();
+          showSuccess();
+        }
+      } catch (ex) {
+        // never lose a lead: offer a one-tap prefilled email
+        formBtn.disabled = false;
+        formBtn.classList.remove('loading');
+        note.innerHTML =
+          'Auto-send failed — nothing was lost. <a href="' +
+          mailtoLink(payload.name, payload.contact, payload.project_type, payload.idea, payload.budget) +
+          '" style="color:#c3b6ff">Tap here to email us this exact idea →</a>';
+      }
+    };
+
+    if (hp) { showSuccess(); return; }
+    submit();
   });
 </script>
 </body>
