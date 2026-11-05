@@ -88,23 +88,6 @@
   .sec-head h2{font-size:clamp(1.9rem,3.6vw,2.8rem);line-height:1.1;margin-bottom:16px}
   .sec-head p{color:var(--muted);line-height:1.7}
 
-  /* ---------- who we help ---------- */
-  .who-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-  .who{border:1px solid var(--line);border-radius:var(--radius);padding:26px 22px;
-    background:linear-gradient(170deg,rgba(255,255,255,.045),rgba(255,255,255,.012));transition:.3s;
-    display:flex;flex-direction:column;gap:10px}
-  .who:hover{transform:translateY(-4px);border-color:rgba(163,28,27,.45);
-    box-shadow:0 22px 55px -28px rgba(163,28,27,.5)}
-  .who h3{font-size:1.02rem;font-weight:600;display:flex;align-items:center;gap:9px}
-  .who h3 svg{width:17px;height:17px;stroke:#d8e0d4;stroke-width:1.7;fill:none;
-    stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
-  .who p{color:var(--muted);font-size:.87rem;line-height:1.6}
-  .who .fix{margin-top:auto;font-size:.78rem;color:#c9cfc7;background:rgba(20,61,26,.12);
-    border:1px solid rgba(20,61,26,.3);border-radius:8px;padding:8px 12px;line-height:1.5}
-  .who .fix b{color:#f2f0ec;font-weight:600}
-  @media(max-width:980px){.who-grid{grid-template-columns:1fr 1fr}}
-  @media(max-width:640px){.who-grid{grid-template-columns:1fr}}
-
   /* ---------- work ---------- */
   .work-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
   .work{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:var(--radius);
@@ -312,7 +295,6 @@
       <a href="#top" class="logo"><span class="mark">FL</span> The Flow Labs</a>
       <div class="nav-links" id="navLinks">
         <a href="#work">Work</a>
-        <a href="#industries">Industries</a>
         <a href="#services">Services</a>
         <a href="#process">Process</a>
         <a href="#why">Why us</a>
@@ -356,55 +338,13 @@
     </div>
   </div>
 
-  <!-- WHO WE HELP -->
-  <section id="industries">
-    <div class="wrap">
-      <div class="sec-head reveal">
-        <p class="eyebrow">Who we help</p>
-        <h2>Built for businesses that run on bookings.</h2>
-        <p>Clinics, gyms, salons and real estate teams lose money in the same four places.
-           We find the leak, measure it, and fix it — starting with a free teardown.</p>
-      </div>
-
-      <div class="who-grid">
-        <article class="who reveal">
-          <h3><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.7-9.3-9A5.2 5.2 0 0 1 12 6.4 5.2 5.2 0 0 1 21.3 12c-1.8 4.3-9.3 9-9.3 9Z"/></svg>Clinics &amp; dentists</h3>
-          <p>Patients phone with the same ten questions every day, and enquiries that arrive
-             after 6pm wait for the morning. Your reviews sell the chair, the front desk books it.</p>
-          <div class="fix"><b>We build:</b> patient FAQ assistant + 24/7 intake recall flow — answers in seconds, at 2am, in your languages.</div>
-        </article>
-
-        <article class="who reveal">
-          <h3><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10a3 3 0 0 1 3-3h5v10H6a3 3 0 0 1-3-3ZM21 10a3 3 0 0 0-3-3h-5v10h5a3 3 0 0 0 3-3Z"/></svg>Gyms &amp; studios</h3>
-          <p>Members review you at 11pm and walk in for tours a week later. Trial requests
-             scatter across phone, DM and WhatsApp — most never get the second call.</p>
-          <div class="fix"><b>We build:</b> trial-slot landing pages + automated follow-up so your team only talks to members already leaning yes.</div>
-        </article>
-
-        <article class="who reveal">
-          <h3><svg viewBox="0 0 24 24"><circle cx="8" cy="6" r="3"/><path d="M11 20H6a2 2 0 0 1-2-2v-1a4 4 0 0 1 8 0v1a2 2 0 0 1-1 2ZM18 5v6M15 8h6"/></svg>Salons &amp; spas</h3>
-          <p>Bookings live in DMs and missed calls while competitors with a simple site
-             outrank you. Expats google first — with no site, you're not in the results.</p>
-          <div class="fix"><b>We build:</b> fast one-page sites with real booking links — your reviews point somewhere they can convert.</div>
-        </article>
-
-        <article class="who reveal">
-          <h3><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8M5 10v10h14V10M9 20v-6h6v6"/></svg>Real estate</h3>
-          <p>Leads enter via portals, forms and WhatsApp and never meet in one pool.
-             A vendor form submitted at 9pm waits until 11am for its first reply.</p>
-          <div class="fix"><b>We build:</b> one shared lead pool + 60-second response flows — from enquiry to slot booking without a person awake.</div>
-        </article>
-      </div>
-    </div>
-  </section>
-
   <!-- WORK -->
   <section id="work">
     <div class="wrap">
       <div class="sec-head reveal">
         <p class="eyebrow">Selected work</p>
-        <h2>Things we’ve designed &amp; built.</h2>
-        <p>Real products, real interfaces. Each one started as a messy idea in a chat window.</p>
+        <h2>Built in the lab. Shipped for real.</h2>
+        <p>Every product here started life as “bhai ek idea hai” at 2AM. None of them started as a PowerPoint.</p>
       </div>
 
       <div class="work-grid">
@@ -485,8 +425,8 @@
     <div class="wrap">
       <div class="sec-head reveal">
         <p class="eyebrow">What we do</p>
-        <h2>Solutions, not just ideas.</h2>
-        <p>Every project starts with a real problem. We pick the right stack, keep the scope honest, and build something that runs in production.</p>
+        <h2>What we’re dangerously good at.</h2>
+        <p>Pick your poison — then relax while your competitors pretend they were “always planning this”.</p>
       </div>
 
       <div class="cards">
@@ -495,7 +435,7 @@
             <svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4v1a4 4 0 0 1 0 8v1a4 4 0 0 1-8 0v-1a4 4 0 0 1 0-8V7a4 4 0 0 1 4-4Z"/><path d="M12 8v8"/></svg>
           </div>
           <h3>AI</h3>
-          <p>Chat assistants, document intelligence and AI features wired into your existing product or workflow.</p>
+          <p>Chat assistants and AI features that talk to your customers at 3AM — no salary hike, no Monday moods.</p>
         </article>
 
         <article class="card reveal">
@@ -503,7 +443,7 @@
             <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M9 6h6a3 3 0 0 1 3 3v3"/></svg>
           </div>
           <h3>Automation</h3>
-          <p>Kill the repetitive work — integrations, bots and pipelines that connect the tools you already use.</p>
+          <p>The robots handle the boring stuff. Excel worship: cancelled. Your team gets their evenings back.</p>
         </article>
 
         <article class="card reveal">
@@ -511,7 +451,7 @@
             <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M8 4v5"/></svg>
           </div>
           <h3>Websites</h3>
-          <p>Fast, responsive marketing sites, landing pages and web apps — built to look sharp and convert.</p>
+          <p>Loads before the user blinks. Looks so good your competitor screenshots it for "revision 3".</p>
         </article>
 
         <article class="card reveal">
@@ -519,7 +459,7 @@
             <svg viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13 5l-2 14"/></svg>
           </div>
           <h3>Software</h3>
-          <p>Custom internal tools, dashboards and products — from first sketch to a maintainable codebase.</p>
+          <p>Internal tools your team actually uses. RIP <em>final_final_v3_REAL.xlsx</em> — you fought bravely.</p>
         </article>
       </div>
     </div>
@@ -531,7 +471,7 @@
       <div class="sec-head reveal">
         <p class="eyebrow">How it works</p>
         <h2>Simple process. No drama.</h2>
-        <p>Short feedback loops, clear updates, and something you can click on early.</p>
+        <p>You talk, we scope, and you’re clicking a real thing within days — not “next quarter”. Fewer meetings, more shipping.</p>
       </div>
 
       <div class="steps reveal">
@@ -565,7 +505,7 @@
       <div class="sec-head reveal">
         <p class="eyebrow">Why us</p>
         <h2>Why Flow, not the other guys.</h2>
-        <p>Most agencies outsource half the work. We don't. Two founders, one stack, everything shipped in-house.</p>
+        <p>Most agencies quietly outsource half the work to someone’s “jiju ka team”. We don’t. Two founders, one stack, everything shipped in-house.</p>
       </div>
 
       <div class="why-grid reveal">
@@ -593,8 +533,8 @@
   <section id="contact">
     <div class="wrap">
       <div class="cta-box reveal">
-        <h2>Got an idea? Let’s make it real.</h2>
-        <p>Tell us what you’re building — a website, an AI tool, an automation, or something nobody has named yet. We’ll reply with honest next steps.</p>
+        <h2>Got an idea? Spill.</h2>
+        <p>Tell us what you're building — a website, an AI thing, an automation, or a masterpiece nobody has a category for yet. Worst case, you steal our ideas and tell people you thought of it first.</p>
         <a href="mailto:theflowlabs01@gmail.com?subject=Project%20enquiry%20—%20The%20Flow%20Labs" class="btn btn-primary">Email us →</a>
         <div class="cta-mail">
           or DM us on <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
