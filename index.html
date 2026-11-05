@@ -845,6 +845,13 @@
       try {
         if (supabaseReady) {
           await postLead(payload);
+          // owner email alert via /api/notify - best effort, never blocks
+          // the visitor flow and never loses the lead (already in Supabase)
+          fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(() => {});
           showSuccess();
         } else {
           // backend not configured yet: drop into the owner's inbox directly
