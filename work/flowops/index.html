@@ -16,10 +16,10 @@
 <meta name="twitter:title" content="FlowOps: AI ticket triage built by The Flow Labs" />
 <meta name="twitter:description" content="FlowOps is an AI triage layer for support teams built in-house by The Flow Labs: classifies tickets, drafts replies, escalates what needs a human." />
 <meta name="twitter:image" content="https://the-flow-labs.vercel.app/assets/work-droovee.png" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%237c5cff'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-size='15' font-weight='bold' fill='%23fff' text-anchor='middle'%3EFL%3C/text%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23C8552B'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-size='15' font-weight='bold' fill='%23fff' text-anchor='middle'%3EFL%3C/text%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="/assets/site.config.js"></script>
 <link rel="stylesheet" href="/assets/site.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "The Flow Labs", "url": "https://the-flow-labs.vercel.app/", "email": "theflowlabs01@gmail.com", "image": "https://the-flow-labs.vercel.app/assets/work-droovee.png"}</script>
@@ -50,28 +50,43 @@
 </header>
 
 <main id="top">
-<div class="page-hero"><div class="wrap"><div class="wrap"><div class="crumbs"><a href="/">Home</a> <span aria-hidden="true">›</span> <a href="/work/">Work</a> <span aria-hidden="true">›</span> <span>FlowOps</span></div></div>
+<div class="page-hero"><div class="wrap">
+    <div class="crumbs"><a href="/">Home</a> <span aria-hidden="true">›</span> <a href="/work/">Work</a> <span aria-hidden="true">›</span> <span>FlowOps</span></div>
     <span class="pill"><span class="dot"></span> AUTOMATION · Built in-house</span>
-    
     <h1>FlowOps: AI triage for support teams</h1>
     <p class="sub">An AI layer that classifies every incoming support ticket, drafts the reply and escalates only what truly needs a human.</p>
   </div>
 </div>
-<section><div class="wrap"><div class="prose"><p><strong>Status:</strong> built in-house, production system. <!-- TODO-OWNER: add any publicly shareable usage or volume figures. --></p><h2>What it is</h2><p>FlowOps sits in front of a support team. Every ticket that arrives is classified by intent and urgency, a reply draft is generated for the routine ones, and sensitive or complex cases get routed to a human with context already attached.</p><h2>The problem</h2><ul><li>Support agents spend hours on the same five questions, every day.</li><li>Urgent cases hide in queues shaped like first-name-alphabetical order.</li><li>Nobody knows what customers are actually complaining about, this week, versus last.</li></ul><h2>Approach</h2><ul><li><strong>Classification.</strong> Intent, urgency and language detected per ticket.</li><li><strong>Drafting.</strong> Routine replies drafted for quick human approval.</li><li><strong>Escalation.</strong> Sensitive cases escalate with a summary, so the agent starts warm.</li><li><strong>Insight.</strong> Ticket trends surfaced weekly: what is spiking, what is new.</li></ul><h2>Stack</h2><ul><li>AI classification and drafting pipeline</li><li>Integration layer for existing support channels</li><li>Ops console UI</li></ul><h2>What it proves about us</h2><p>This is the exact architecture behind our <a href="/services/ai-automation-bhubaneswar/">AI automation</a> and <a href="/services/ai-chatbot-development/">AI chatbot</a> services: classify, draft, escalate. Built by us, NOT outsourced to someone’s “jiju ka team”.</p></div></div></section>  <section id="contact" style="padding-top:60px"><div class="wrap"><div class="cta-box reveal"><h2>Want this sitting in front of your support inbox?</h2><p>Tell us where tickets come from today. We will scope a triage layer around your reality.</p><a href="/contact/" class="btn btn-primary">Start a project →</a><div class="cta-mail">or <a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a>&nbsp;·&nbsp; <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram DM</a></div></div></div></section>
+<section><div class="wrap"><div class="prose"><p><strong>Status:</strong> built in-house, production system. <!-- TODO-OWNER: add any publicly shareable usage or volume figures. --></p><h2>What it is</h2><p>FlowOps sits in front of a support team. Every ticket that arrives is classified by intent and urgency, a reply draft is generated for the routine ones, and sensitive or complex cases get routed to a human with context already attached.</p><h2>The problem</h2><ul><li>Support agents spend hours on the same five questions, every day.</li><li>Urgent cases hide in queues shaped like first-name-alphabetical order.</li><li>Nobody knows what customers are actually complaining about, this week, versus last.</li></ul><h2>Approach</h2><ul><li><strong>Classification.</strong> Intent, urgency and language detected per ticket.</li><li><strong>Drafting.</strong> Routine replies drafted for quick human approval.</li><li><strong>Escalation.</strong> Sensitive cases escalate with a summary, so the agent starts warm.</li><li><strong>Insight.</strong> Ticket trends surfaced weekly: what is spiking, what is new.</li></ul><h2>Stack</h2><ul><li>AI classification and drafting pipeline</li><li>Integration layer for existing support channels</li><li>Ops console UI</li></ul><h2>What it proves about us</h2><p>This is the exact architecture behind our <a href="/services/ai-automation-bhubaneswar/">AI automation</a> and <a href="/services/ai-chatbot-development/">AI chatbot</a> services: classify, draft, escalate. Built entirely in-house by our engineering team, with full accountability and zero third-party subcontracting.</p></div></div></section>  <section id="contact" style="padding-top:60px"><div class="wrap"><div class="cta-box reveal"><h2>Interested in intelligent support triage?</h2><p>Tell us how customer support inquiries reach your team. We will scope an AI triage pipeline tailored to your workflow.</p><a href="/contact/" class="btn btn-primary">Start a project</a><div class="cta-mail">or email <a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a>&nbsp;·&nbsp; <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram DM</a></div></div></div></section>
 </main>
 
 <footer>
-  <div class="wrap foot">
-    <div class="logo" style="font-size:.95rem"><span class="mark">FL</span> The Flow Labs</div>
-    <small>© <span id="year"></span> The Flow Labs. Built by us, obviously.</small>
-    <div class="socials">
-      <a href="/work/">Work</a>
-      <a href="/services/">Services</a>
-      <a href="/about/">About</a>
-      <a href="/blog/">Blog</a>
-      <a href="/privacy-policy/">Privacy</a>
-      <a href="/contact/">Contact</a>
-      <a href="mailto:theflowlabs01@gmail.com">Email</a>
+  <div class="wrap">
+    <div class="star-accent" aria-hidden="true">
+      <div class="star-accent-symbol"></div>
+    </div>
+
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <a href="/work/">Work</a>
+        <a href="/services/">Services</a>
+        <a href="/about/">About</a>
+        <a href="/blog/">Blog</a>
+        <a href="/contact/">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Connect</h4>
+        <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
+        <a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a>
+        <span class="footer-note">Bhubaneswar, Odisha, India</span>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="/privacy-policy/">Privacy Policy</a>
+        <span class="footer-note">© <span id="year"></span> The Flow Labs.</span>
+        <span class="footer-note">All rights reserved.</span>
+      </div>
     </div>
   </div>
 </footer>
