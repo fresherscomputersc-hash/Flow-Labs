@@ -1,113 +1,117 @@
 # theflowlabs.online — Deliverability Setup (owner steps, ~45 min total)
 
-Goal: cold outreach from `hello@theflowlabs.online` (or founder@) with SPF/DKIM/DMARC,
-so emails land in INBOXES. The old Gmail address (theflowlabs01@gmail.com) goes back to
-being the lead-alert receiver and support address ONLY. No more cold sends from it.
+GOAL: cold outreach from `hello@theflowlabs.online` that lands in inboxes, at ₹0 cost.
+Zoho's Forever Free plan was discontinued (Nov 2025), so we use the free replacement:
+**Cloudflare Email Routing (free forwarding) + a FRESH Gmail account for sending.**
 
-Estimated time: 20 min Vercel + 15 min Zoho + 10 min DNS paste + waiting for propagation.
+⚠️ Do NOT reuse theflowlabs01@gmail.com for outreach. It sent 300+ cold emails with a
+10-15% bounce rate; its reputation is burnt for this job. It stays as the support/alert
+address. We create one brand-new Gmail account purely for outreach sending.
 
 ---
 
 ## PART 1 — Vercel: attach the domain (10 min)
 
 1. Vercel dashboard → the project → **Settings → Domains → Add** → `theflowlabs.online`
-   (add both `theflowlabs.online` and `www.theflowlabs.online`; set the apex as primary,
-   www redirects to it).
-2. Vercel will show you DNS records to add. Typical values (yours may differ slightly,
-   Vercel's dashboard text is the source of truth):
+   (also add `www.theflowlabs.online`; set the apex as primary).
+2. Note the DNS records Vercel asks for (typically: A `@` → `76.76.21.21`,
+   CNAME `www` → `cname.vercel-dns.com`). You will re-enter these in Cloudflare in Part 2,
+   because Cloudflare will manage the zone.
+3. Do NOT redirect the site anywhere yet.
 
+PING ME when the domain is added in Vercel — I flip the site canonicals (BASE constant
+→ theflowlabs.online, regen 19 pages + sitemap) and redeploy.
+
+## PART 2 — Cloudflare: DNS + Email Routing (15 min, free)
+
+1. Create a free account at cloudflare.com → **Add a domain** → `theflowlabs.online`
+   → choose the **Free plan**.
+2. Cloudflare shows two nameservers. Go to your registrar (where you bought the domain)
+   → replace the default nameservers with Cloudflare's two. (This is normal; the domain
+   still points wherever the DNS records say.)
+3. In Cloudflare DNS, re-add the site records from Part 1:
    | Type | Name | Value |
    |---|---|---|
    | A | `@` | `76.76.21.21` |
    | CNAME | `www` | `cname.vercel-dns.com` |
+   (proxied = OFF / "DNS only" for these two, Vercel handles SSL better that way)
+4. **Email** tab → **Email Routing** → enable → add destination address:
+   your NEW Gmail (step below) → Cloudflare sends a verification email → confirm.
+5. Create the address: Custom address `hello@theflowlows.online` → action: forward to
+   the new Gmail. Also enable **catch-all** → forward everything → new Gmail (so
+   replies to any@ still reach you).
+   Cloudflare auto-adds its MX + SPF records for routing. Leave those untouched.
 
-3. Do NOT click "redirect to vercel.app" anywhere; leave the vercel.app URL as a secondary.
+## PART 3 — Fresh Gmail identity (10 min, free)
 
-After DNS propagates (minutes to a few hours), https://theflowlabs.online serves the site.
-PING ME when done — I flip the site's canonical URLs from theflow-labs.vercel.app to
-theflowlabs.online (one constant + regen of all pages + sitemap) and redeploy.
+1. Create a NEW Gmail account (e.g. `theflowlabs.outreach@gmail.com` — pick something
+   clean and brandable). This account exists ONLY for the outreach engine.
+2. In it: Gmail → Settings → **Accounts and Import** → **Send mail as** → add
+   `hello@theflowlabs.online` → "Treat as alias" ✓ → send via **Gmail servers**
+   (smtp.gmail.com NOT required; use the "Send through Gmail" option).
+   Gmail sends a confirmation to hello@… → it arrives via Cloudflare routing → click it.
+3. Result: you send from hello@theflowlabs.online, replies land in the new Gmail.
 
-## PART 2 — Zoho Mail free mailbox (15 min)
+## PART 4 — DNS records for SENDING reputation (paste in Cloudflare)
 
-1. zoho.com/mail → **Forever Free Plan** (up to 5 users, custom domain, free).
-2. Add domain `theflowlabs.online`. Choose region: **India (IN) datacenter** (you're in India).
-3. Create ONE user: `hello@theflowlabs.online`. (Keep it single. One warm mailbox beats two cold ones.)
-4. Zoho's wizard will show a **verification TXT code** and an **SPF record**. Copy-paste
-   them into the DNS sheet below (Part 3). The SPF include depends on your datacenter:
-   - India: `include:zoho.in`  (US: `include:zohomail.com`, EU: `include:zoho.eu`)
-   - Use exactly what Zoho's admin console displays.
+| Type | Name | Value | Notes |
+|---|---|---|---|
+| TXT | `@` | `v=spf1 include:_spf.google.com ~all` | SPF: Gmail may send as us |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:hello@theflowlabs.online` | DMARC, start lenient |
 
-## PART 3 — DNS records at your registrar (10 min paste)
+(DKIM on the custom domain is not possible without Workspace; SPF alignment + Gmail
+infrastructure is what the free path gives. It is a big upgrade over a burnt address.
+If cold email becomes our main revenue engine, the ₹100/mo Zoho Mail Lite upgrade adds
+full DKIM — decide in a month, not now.)
 
-Add these to theflowlabs.online's DNS zone (Namecheap/GoDaddy/Hostinger — same shapes):
+## PART 5 — Warm-up (the part everyone skips, then cries about)
 
-| # | Type | Host/Name | Value | Notes |
-|---|---|---|---|---|
-| 1 | TXT | `@` | (Zoho domain-verification code from wizard) | verifies ownership |
-| 2 | MX | `@` | `mx.zoho.in` (priority 10) | mail routing (IN datacenter) |
-| 3 | MX | `@` | `mx2.zoho.in` (priority 20) | |
-| 4 | MX | `@` | `mx3.zoho.in` (priority 50) | |
-| 5 | TXT | `@` | `v=spf1 include:zoho.in ~all` | SPF: who may send for us |
-| 6 | TXT | `zmail._domainkey` | (2048-bit DKIM key: Zoho Admin → Mail → DKIM → generate, then copy the TXT) | DKIM: signed mail |
-| 7 | TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:hello@theflowlabs.online` | DMARC: start at p=none |
-
-Wait — CONFLICT ALERT: if you point MX at Zoho, mail to @theflowlabs.online stops going
-anywhere else. That is correct and intended: the site never needs to receive mail on this
-domain. Gmail stays the alerts/support address.
-
-After saving, wait for propagation, then in Zoho Admin verify the domain + DKIM.
-
-## PART 4 — Warm-up (the part everyone skips, then cries about)
-
-Mailboxes have reputations like credit scores. Schedule, hard rules:
+The NEW account has zero reputation: treat the first 14 days as a credit-building game.
 
 | Days | Volume/day | What |
 |---|---|---|
-| 1-5 | 5-8 | Warm-up: email friends/own accounts, reply to lead-alerts, reply threads. Real conversations. |
-| 6-10 | 10-12 | Start LEADS: only our 62 verified + newly verified. Max 20 total/day. |
-| 11-14 | 15-20 | Full cadence. NEVER above 20/day even when it works. |
-| forever | ≤20/day | Also: ≥4h between batches, never on Sunday. |
+| 1-5 | 5-8 | Warm-up: emails to your own accounts/friends, replies, real threads. No cold. |
+| 6-10 | 10-12 | First cold sends: ONLY verified emails (the 62 + new discoveries). |
+| 11-14 | 15-20 | Full cadence. |
+| forever | ≤20/day | ≥4h between batches, never Sunday, never a 300-blast again. |
 
-Additional hard rules:
-- 1 follow-up on Day 3, 1 on Day 7, then STOP. Most replies arrive on touch #2.
-- No mass-paste. Every send goes through drafts (engine) or manually, one at a time.
-- If Gmail ever warns about a sending limit on the OLD account, that account is done for
-  outreach. Do not keep squeezing it.
+- Follow-up on Day 3 and Day 7 in the same thread, then STOP. Replies come on touch #2.
+- Every send = one draft at a time. No mass-paste, ever.
 
-## PART 5 — Follow-up cadence templates (paste into drafts engine)
+## PART 6 — Follow-up cadence templates (same as before)
 
-Touch 1 = the existing 10 style drafts (or batch-2 drafts later).
-Touch 2 (Day 3), same thread (REPLY, not new email):
+Touch 2 (Day 3, REPLY in same thread):
 
-> Subject: (same thread - just reply)
->
 > Namaste/Hi [name] team,
 >
-> Following up once, because [number: 9.2s / Not Secure / 1,015 KB] doesn't shrink while I wait.
+> Following up once, because [9.2s / the Not Secure badge / 1,015 KB] doesn't shrink while I wait.
 > The 1-page fix plan is still written and still free. Reply "send it" and it's in your
 > inbox within the hour.
 >
-> After this, one more note next week, then I'll stop. Promise.
+> After this, one more note next week, then I stop. Promise.
 >
 > - The Flow Labs, hello@theflowlabs.online
 
-Touch 3 (Day 7), same thread, 4 lines max:
+Touch 3 (Day 7, same thread, 4 lines max):
 
 > Last one from me. The plan exists, it's free, and it costs you one reply.
 > If timing's wrong, tell me when to check back and I actually will.
-> Either way: reply STOP and I vanish. [The Flow Labs]
+> Either way: reply STOP and I vanish.
+> - The Flow Labs
 
-## PART 6 — What I do once you say the records are added
+## PART 7 — What I do on your ping
 
-1. Flip BASE in `tools/site/build.py` → regen 19 pages + sitemap + robots → redeploy.
-2. Update `icp.json` from_email → `hello@theflowlabs.online` so new drafts carry it.
-3. Re-run email discovery on the no-email leads (Phase A) so the warm mailbox has a queue.
-4. Set up SPF/DKIM/DMARC validation check (mail-tester free report) before the first real send.
+1. Domain added in Vercel → I flip `BASE` → regen all pages + sitemap → redeploy.
+2. New Gmail ready → I update `icp.json` from_email to hello@theflowlabs.online.
+3. You bring the other machine's `tools/lead-factory/data` folder → I dedupe the 300+
+   against this repo's 161, mark bounced addresses suppressed, and re-verify the rest.
+4. Phase A email discovery re-run → the warm mailbox gets a fresh verified queue.
 
-## TODO-OWNER (only you can do these)
+## TODO-OWNER
 
-- [ ] Add domain in Vercel dashboard (Part 1)
-- [ ] Create Zoho account + user (Part 2)
-- [ ] Paste DNS records at registrar (Part 3)
-- [ ] Generate DKIM in Zoho admin (Part 3, row 6)
-- [ ] Complete warm-up schedule (Part 4)
+- [ ] Add domain in Vercel (Part 1)
+- [ ] Cloudflare zone + nameservers + Email Routing (Part 2)
+- [ ] New Gmail + send-as hello@ (Part 3)
+- [ ] SPF + DMARC records (Part 4)
+- [ ] Respect the warm-up ladder (Part 5)
+- [ ] Copy the lead-factory data folder from the other machine
