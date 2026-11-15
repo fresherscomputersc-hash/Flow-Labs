@@ -8,16 +8,24 @@ Live demo: `theflowlabs.online/qr` (passcode 5620, admin `admin@qrbiz.test` / `A
 
 ## Part 1: Unfinished tasks
 
-### 1. Session/login fix - code done, deploy pending (top priority)
-- What: admins could not log in through `theflowlabs.online/qr`. Two bugs found and both fixed in code:
-  - Bug A: session cookie was set via Next's `cookies()` store, which Vercel's edge strips on proxied responses. Fixed by attaching the cookie to the response object (commit `341d63e`, already pushed).
-  - Bug B (deeper): Vercel free tier runs multiple serverless instances, each with its own ephemeral `/tmp` database. A DB-backed session row created by the login request does not exist in the instance serving the next request. Fixed by switching to stateless HMAC-signed session cookies keyed on the admin email (commit `1e591e7`, local only, NOT pushed).
-- Status: build green, local smoke green (passcode 200, login 200 + signed cookie, admin console 200, businesses 200, logout clears cookie).
-- Remaining: `git push origin main` from `E:\qr-platform`, wait ~4 min for Vercel redeploy, then retest through `www.theflowlabs.online/qr`: passcode 5620 -> login -> console opens.
-- Optional hardening: set `SESSION_SECRET` in Vercel env vars (falls back to a demo constant otherwise).
+### 1. Session/login fix - DONE, live-verified (2026-11-15)
+- Both bugs fixed and deployed: proxy cookie strip (response-level cookies) + ephemeral per-instance DBs (stateless HMAC-signed sessions keyed on email).
+- Live verification full green on both `www.theflowlabs.online/qr` and the app's own domain: passcode 200, login 200, console 200, businesses 200.
+- Optional hardening still open: set `SESSION_SECRET` in Vercel env vars (value generated for the user; falls back to a demo constant until set).
 
 ### 2. Independent QR business run (plan in Part 3)
-- Everything needed to run the QR product as its own business, without the Flow Labs website wrapper.
+- Decisions taken (2026-11-15): rename Vercel project (name `qrflow` was globally taken by another tenant; Vercel assigned `qr-sooty-phi`), no domain purchase yet, persistence via Neon Postgres (user could not do Oracle).
+- Port status: DONE and LIVE. Zero callsite changes achieved via a sync bridge:
+  - `lib/db/pg-worker.mjs`: worker thread owns the postgres.js connection; boot failures self-report through shared memory.
+  - `lib/db/pg-bridge.mjs`: synchronous better-sqlite3-compatible facade over shared memory (Atomics), with lazy schema/seed boot, transactions + savepoint nesting, 12s response timeout.
+  - `lib/db/client.ts`: dual mode (DATABASE_URL -> Neon bridge; unset -> SQLite as before). Local dev unchanged.
+  - `db/schema.postgres.sql`: ported schema (businesses before leads; page_versions before pages; circular FKs via trailing ALTERs).
+  - `scripts/migrate.mjs` + `scripts/seed.mjs`: both run in either mode (seed await-codemodded, syntax-checked).
+- Neon migrated + seeded (project `frosty-hill-62190485`, production branch `br-delicate-bar-azfa2nes`, region Singapore): 18 tables, 5 demo businesses, 3 leads, audit trail, staff accounts. Connection string lives in `E:\qr-platform\.env.local` (gitignored); clean copy for Vercel at `E:\qr-platform\DATABASE-URL-FOR-VERCEL.txt` (gitignored, safe to delete after setup).
+- Live verification FULL GREEN on `https://qr-sooty-phi.vercel.app/qr` (2026-11-15): passcode 200, login 200, admin console/businesses/requests/analytics/settings 200, public `/b/fdtvjd3k` 200 with Spice Route data from Neon. Data is persistent.
+- Production root-cause notes: Vercel env var must be the raw URL WITHOUT quotes (the .env.local copy has quotes; Next strips them locally, Vercel does not); worker crashed silently at boot before fix, producing 30s timeouts.
+- `QR_DEBUG=1` is currently set in Vercel (temporary bring-up switch that echoes 500 error details to API responses). REMOVE it once stable: Vercel env vars -> delete QR_DEBUG -> redeploy.
+- Flow Labs proxy updated to `qr-sooty-phi.vercel.app` (commit `b45b25f`); proxy verification pending at the time of writing.
 
 ### 3. Frozen / deferred items (need your go-ahead)
 - DNS fixes on `theflowlabs.online` (steps in `DNS-SETUP.md`, 3 items: SPF merge, DMARC p=none replace, Vercel apex-primary flip). Frozen with the cold-email pause.
