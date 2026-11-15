@@ -54,15 +54,24 @@ PING ME when the domain is added in Vercel — I flip the site canonicals (BASE 
 
 ## PART 4 — DNS records for SENDING reputation (paste in Cloudflare)
 
+⚠️ UPDATE (verified live on 2026-11-14): your zone currently has Cloudflare's
+routing SPF and a GoDaddy-inherited DMARC (`p=quarantine`, reports going to
+onsecureserver.net). Both need fixing BEFORE the first cold send, or Gmail-sent
+mail as hello@ can fail alignment and get quarantined by receivers.
+
 | Type | Name | Value | Notes |
 |---|---|---|---|
-| TXT | `@` | `v=spf1 include:_spf.google.com ~all` | SPF: Gmail may send as us |
-| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:hello@theflowlabs.online` | DMARC, start lenient |
+| TXT | `@` | `v=spf1 include:_spf.mx.cloudflare.net include:_spf.google.com ~all` | REPLACE the existing SPF TXT (merge: routing + Gmail may send as us). Only ONE SPF record allowed on a name |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:hello@theflowlabs.online` | REPLACE the existing `_dmarc` TXT (p=quarantine + no aligned DKIM = our own mail gets quarantined; start at p=none) |
 
 (DKIM on the custom domain is not possible without Workspace; SPF alignment + Gmail
 infrastructure is what the free path gives. It is a big upgrade over a burnt address.
 If cold email becomes our main revenue engine, the ₹100/mo Zoho Mail Lite upgrade adds
 full DKIM — decide in a month, not now.)
+
+Also in Vercel (Settings → Domains): make the APEX `theflowlabs.online` the PRIMARY
+domain and `www` the redirect. Right now www is primary and apex 308-redirects to it,
+which fights our canonical tags (they declare the apex). One click fixes it.
 
 ## PART 5 — Warm-up (the part everyone skips, then cries about)
 
