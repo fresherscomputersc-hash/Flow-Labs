@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/qr",
-      "destination": "https://qr-the-flow-labs.vercel.app/qr"
+      "destination": "https://qr-sooty-phi.vercel.app/qr"
     },
     {
       "source": "/qr/:path*",
-      "destination": "https://qr-the-flow-labs.vercel.app/qr/:path*"
+      "destination": "https://qr-sooty-phi.vercel.app/qr/:path*"
     }
   ]
 }
