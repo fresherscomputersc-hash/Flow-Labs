@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
     });
 
     const lines = [
-      'New lead from the-flow-labs.vercel.app',
+      'New lead from theflowlabs.online',
       '',
       'Name: ' + name,
       'Contact: ' + contact,

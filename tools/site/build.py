@@ -10,7 +10,7 @@ Style/JS live in assets/site.css and assets/site.js (shared with index.html).
 from __future__ import annotations
 import io, os, json
 
-BASE  = "https://the-flow-labs.vercel.app"
+BASE  = "https://theflowlabs.online"
 OG_IMG = BASE + "/assets/work-droovee.png"
 YEAR  = "2026-11-05"
 
@@ -18,7 +18,7 @@ YEAR  = "2026-11-05"
 ORG = {
     "@context": "https://schema.org", "@type": "Organization",
     "name": "The Flow Labs", "url": BASE + "/",
-    "email": "theflowlabs01@gmail.com", "image": OG_IMG,
+    "email": "hello@theflowlabs.online", "image": OG_IMG,
     "description": "Founder-led engineering studio building AI automation, websites, business workflow automation and custom software for growing businesses in Bhubaneswar, Odisha and across India.",
     "areaServed": [{"@type": "City", "name": "Bhubaneswar"},
                    {"@type": "State", "name": "Odisha"},
@@ -64,7 +64,7 @@ def cta(h2, p):
             '<div class="cta-box reveal">'
             f'<h2>{h2}</h2><p>{p}</p>'
             '<a href="/contact/" class="btn btn-primary">Start a project</a>'
-            '<div class="cta-mail">or email <a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a>'
+            '<div class="cta-mail">or email <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>'
             '&nbsp;·&nbsp; <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram DM</a>'
             '</div></div></div></section>')
 
@@ -129,7 +129,7 @@ CONTACT_JS = r"""
 
   function mailtoLink(name, cont, type, idea, budget) {
     const body = `Name: ${name}\nContact: ${cont}\nProject Category: ${type}\nEstimated Budget: ${budget || '-'}\nSource: ${leadSrc}\n\nProject Requirements:\n${idea}`;
-    return 'mailto:theflowlabs01@gmail.com?subject=' +
+    return 'mailto:hello@theflowlabs.online?subject=' +
       encodeURIComponent('New project inquiry | The Flow Labs') +
       '&body=' + encodeURIComponent(body);
   }
@@ -301,7 +301,7 @@ CONTACT_OTHER = '''
 <section><div class="wrap">
   <div class="prose">
     <h2>Direct channels</h2>
-    <p><strong>Email:</strong> <a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a> (include a brief overview of your project, and we will take it from there)</p>
+    <p><strong>Email:</strong> <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a> (include a brief overview of your project, and we will take it from there)</p>
     <p><strong>Instagram:</strong> <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">@the.flow.labs</a> (direct messaging for quick questions)</p>
     <p>Based in <strong>Bhubaneswar, Odisha</strong>, working with businesses across India. Remote-first collaboration, with in-person meetings when helpful.</p>
   </div>
@@ -955,7 +955,7 @@ def page_privacy():
          "What we collect when you enquire, why, how long we keep it and how to make us forget you.")
     b = (
         '<section><div class="wrap"><div class="prose">'
-        '<p>Last updated: ' + YEAR + '. This applies to the-flow-labs.vercel.app and every enquiry you '
+        '<p>Last updated: ' + YEAR + '. This applies to theflowlabs.online and every enquiry you '
         'send us from it.</p>'
         '<h2>What we collect</h2>'
         '<ul>'
@@ -977,7 +977,7 @@ def page_privacy():
         'reasonable period passes without contact), we delete the enquiry record.</p>'
         '<h2>Your choices</h2>'
         '<ul>'
-        '<li>Ask us anything about your data: <a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a>.</li>'
+        '<li>Ask us anything about your data: <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>.</li>'
         '<li>Ask us to delete your enquiry and we will do it, no interrogation.</li>'
         '<li>Send enquiries without the form: just email or DM us directly.</li>'
         '</ul>'
@@ -1072,7 +1072,7 @@ def article1():
         'a lasting operational advantage for your business.</p>'
         '<p>Want to scope your first automation without jargon? '
         '<a href="/services/ai-automation-bhubaneswar/">Here is how we handle it</a>, or call us directly: '
-        '<a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a>.</p>'
+        '<a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>.</p>'
         '</div></div></section>'
         + cta("Ready to automate your first operational workflow?",
               "Identify the repetitive process that consumes your team's time. We will scope an effective solution with an upfront fixed quote."))
@@ -1179,7 +1179,7 @@ def article3():
         'is a stage, not the show.</p>'
         '<p>Want this planned with you directly? <a href="/services/web-development-bhubaneswar/">Here is our '
         'web development service</a>, or start a conversation at '
-        '<a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a>.</p>'
+        '<a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>.</p>'
         '</div></div></section>'
         + cta("Planning your next web application or site?",
               "Tell us what the site needs to achieve. We will help prioritize features, define the scope, and build it for performance."))
@@ -1280,7 +1280,7 @@ TEMPLATE = '''<!DOCTYPE html>
       <div class="footer-col">
         <h4>Connect</h4>
         <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-        <a href="mailto:theflowlabs01@gmail.com">theflowlabs01@gmail.com</a>
+        <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
         <span class="footer-note">Bhubaneswar, Odisha, India</span>
       </div>
       <div class="footer-col">
@@ -1311,7 +1311,7 @@ def emit():
             s = SERVICE_META[p["path"]]
             jlds.append({"@context": "https://schema.org", "@type": "Service",
                          "name": s["name"], "description": p["description"],
-                         "provider": {"@type": "Organization", "name": "The Flow Labs", "url": BASE + "/", "email": "theflowlabs01@gmail.com"},
+                         "provider": {"@type": "Organization", "name": "The Flow Labs", "url": BASE + "/", "email": "hello@theflowlabs.online"},
                          "areaServed": [{"@type": "City", "name": "Bhubaneswar"},
                                         {"@type": "State", "name": "Odisha"},
                                         {"@type": "Country", "name": "India"}],

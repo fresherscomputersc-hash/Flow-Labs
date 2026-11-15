@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://the-flow-labs.vercel.app/sitemap.xml
+Sitemap: https://theflowlabs.online/sitemap.xml
