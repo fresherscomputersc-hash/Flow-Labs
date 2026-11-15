@@ -26,6 +26,8 @@ Live demo: `theflowlabs.online/qr` (passcode 5620, admin `admin@qrbiz.test` / `A
 - Production root-cause notes: Vercel env var must be the raw URL WITHOUT quotes (the .env.local copy has quotes; Next strips them locally, Vercel does not); worker crashed silently at boot before fix, producing 30s timeouts.
 - `QR_DEBUG=1` is currently set in Vercel (temporary bring-up switch that echoes 500 error details to API responses). REMOVE it once stable: Vercel env vars -> delete QR_DEBUG -> redeploy.
 - Flow Labs proxy updated to `qr-sooty-phi.vercel.app` (commit `b45b25f`); proxy verification pending at the time of writing.
+- BasePath URL fix (2026-11-15): QR destinations and the QRPanel link now generate `/qr/b/...`. A platform-level Vercel rewrite `/b/:path*` -> `/qr/b/:path*` in the app's `vercel.json` keeps existing printed QR codes and bare-domain `/b/<code>` links working.
+- Performance fix (2026-11-15): Neon is in `ap-southeast-1`, Vercel functions ran in `iad1` (US East) -> ~320 ms/query; analytics (~100 queries) took 28 s. Fixed by pinning functions to `sin1` (`regions` in app `vercel.json`) and batching the daily scans series from 30 queries into 1.
 
 ### 3. Frozen / deferred items (need your go-ahead)
 - DNS fixes on `theflowlabs.online` (steps in `DNS-SETUP.md`, 3 items: SPF merge, DMARC p=none replace, Vercel apex-primary flip). Frozen with the cold-email pause.
