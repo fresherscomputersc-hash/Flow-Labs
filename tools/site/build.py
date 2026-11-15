@@ -341,6 +341,8 @@ def work_hub():
     for path, name, status, desc, tag in [
         ("/work/droovee/", "Droovee", "LIVE PRODUCT",
          "Chauffeur booking platform for Bhubaneswar. Verified drivers, transparent pricing, instant trip requests.", "assets/work-droovee.png"),
+        ("/work/qr-platform/", "QR Business Platform", "LIVE PRODUCT",
+         "One stable QR code per business resolves to a fast, always-current mobile page. Centrally managed, tracked per scan. Passcode demo on this site.", "assets/work-qrplatform.svg"),
         ("/work/drishti/", "Drishti", "OPERATIONS AI",
          "Fleet operations console for a state transport corporation: live telemetry, demand forecasting and risk scoring.", "assets/work-drishti.png"),
         ("/work/flowops/", "FlowOps", "AUTOMATION",
@@ -621,6 +623,60 @@ def page_chatbots():
 def work_page(path, status, crumb_label, hero_parts, body):
     return dict(path=path, title=None, og_title=None, description=None,
                 crumbs=crumb, hero=hero_parts, body=body)
+
+def page_qr_platform():
+    crumb = [("/", "Home"), ("/work/", "Work"), (None, "QR Business Platform")]
+    h = (crumb, "LIVE PRODUCT · Managed QR pages",
+         'QR Business Platform: one scan, one page, every business',
+         "A centrally operated multi-business QR platform built by our founders. Each participating business gets a stable QR code and a fast, mobile-friendly digital page that customers reach by scanning. No business-owner dashboard, no customer accounts: our team runs it end to end.")
+    b = (
+        '<section><div class="wrap">'
+        '<div class="prose">'
+        '<p><strong>Status:</strong> live product. A passcode-protected demo runs right on this site at '
+        '<a href="/qr/">theflowlabs.online/qr</a> - ask us for the demo passcode and explore the real console. '
+        'Demo data is synthetic and resets on boot.</p>'
+        '<h2>What it is</h2>'
+        '<p>Many small businesses have no usable web presence, or a slow one buried three clicks deep. '
+        'The QR Business Platform gives each business one stable printed QR code that resolves to a '
+        'lightning-fast mobile page: menu, services, photos, timings, contact and offers. When the content '
+        'changes, the QR code does not, so printed materials never go stale.</p>'
+        '<h2>The problem</h2>'
+        '<ul>'
+        '<li>Small businesses print menus and pamphlets that are outdated the week after printing.</li>'
+        '<li>Building a real website is too expensive or too slow for many local businesses, so they stay unreachable online.</li>'
+        '<li>Owners do not want another dashboard to maintain; they want someone to just keep it current.</li>'
+        '</ul>'
+        '<h2>How it works</h2>'
+        '<p>Our internal team creates and maintains each business page in a central console: businesses, '
+        'locations, content sections, media, leads and publish states. Customers scan the stable QR code, '
+        'the platform resolves it to the right business page, and every scan, view, click and contact tap '
+        'is tracked so the business learns what customers actually look at. Publishing is versioned with '
+        'approval, rollback and an audit trail.</p>'
+        '<h2>Stack</h2>'
+        '<ul><li>Next.js 15 (App Router) with TypeScript</li>'
+        '<li>SQLite via better-sqlite3, Postgres-portable schema, zod validation everywhere</li>'
+        '<li>Server-side QR artwork generation (SVG/PNG) so codes are stable and printable</li>'
+        '<li>Role-based staff auth, scan/view/click analytics, versioned publishing with audit</li>'
+        '<li>Deployed on Vercel, served under this website at /qr</li></ul>'
+        '<h2>What it proves about us</h2>'
+        '<p>We ship complete products, not prototypes: multi-role auth, versioned content, analytics, '
+        'an audit log and a verified end-to-end suite. The same engineering goes into a '
+        '<a href="/services/custom-software-development-bhubaneswar/">custom platform</a> we build for you.</p>'
+        '</div></div></section>'
+        + faq([
+            ("Can I see the platform live?", "Yes. The demo runs on this website at /qr and is passcode-protected. Ask us for the demo passcode; you get the real console with synthetic demo data."),
+            ("Is this an off-the-shelf SaaS?", "It is our own managed product: we operate the console and keep each business page current. For businesses that want to self-manage, we scope a custom version instead."),
+            ("Can you build something similar for my business?", "Yes - multi-location pages, menus, booking pages or private portals are a core service. Tell us the workflow and we scope it fixed-price."),
+        ])
+        + cta("Want one stable QR page that never goes stale?",
+              "Whether it is a managed QR platform or your own custom portal, tell us how your customers find you. We build the system that keeps it current.")
+    )
+    return dict(path="/work/qr-platform/",
+                title="QR Business Platform: Managed QR Pages Case Study | The Flow Labs",
+                og_title="QR Business Platform by The Flow Labs",
+                description="A multi-business QR platform built by The Flow Labs: one stable QR code per business, fast mobile pages, central management and per-scan analytics. Live demo on this site.",
+                crumbs=crumb, hero=h, body=b)
+
 
 def page_droovee():
     crumb = [("/", "Home"), ("/work/", "Work"), (None, "Droovee")]
@@ -1192,7 +1248,7 @@ def article3():
 PAGES += [
     page_ai_automation(), page_web_dev(), page_custom_software(), page_chatbots(),
     page_droovee(), page_drishti(), page_flowops(), page_interview_copilot(),
-    page_bhuverify(), page_carbon_coach(),
+    page_bhuverify(), page_carbon_coach(), page_qr_platform(),
     page_about(), page_contact(), page_privacy(),
     blog_index(), article1(), article2(), article3(),
 ]

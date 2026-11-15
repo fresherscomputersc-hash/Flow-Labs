@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/qr",
+      "destination": "https://qr-the-flow-labs.vercel.app/qr"
+    },
+    {
+      "source": "/qr/:path*",
+      "destination": "https://qr-the-flow-labs.vercel.app/qr/:path*"
+    }
+  ]
+}
