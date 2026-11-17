@@ -67,6 +67,19 @@ const takeSlot = (ip) => {
   return { ok: true };
 };
 
+// A failed upstream call must not cost the visitor their 5-minute slot,
+// otherwise the retry message is "one scan every five minutes" after an
+// outage that was not their fault.
+const refundSlot = (ip) => {
+  const hits = ipHits.get(ip);
+  if (hits && hits.length) {
+    hits.pop();
+    if (hits.length) ipHits.set(ip, hits);
+    else ipHits.delete(ip);
+  }
+  if (dayCount > 0) dayCount -= 1;
+};
+
 const normalizeUrl = (raw) => {
   let value = String(raw || '').trim();
   if (!value) return null;
@@ -169,6 +182,123 @@ const gradeFor = (score) => {
   return 'E';
 };
 
+// ------------------------------------------------------------
+// Fallback: markup-only scan when PageSpeed is unavailable.
+// Fetches the raw HTML, verifies what can be verified without
+// Lighthouse, and labels the result as an estimate. Redirects are
+// followed manually so every hop is re-checked against the private
+// host block in normalizeUrl().
+// ------------------------------------------------------------
+const fetchHtml = async (url) => {
+  let current = url;
+  for (let hop = 0; hop < 3; hop += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const started = Date.now();
+    let res;
+    try {
+      res = await fetch(current, {
+        signal: controller.signal,
+        redirect: 'manual',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; FlowLabsLabReport/1.0; +https://www.theflowlabs.online/lab-report/)',
+          Accept: 'text/html,application/xhtml+xml'
+        }
+      });
+    } catch (e) {
+      clearTimeout(timer);
+      return null;
+    }
+    const ttfb = Date.now() - started;
+
+    if (res.status >= 300 && res.status < 400) {
+      clearTimeout(timer);
+      const next = res.headers.get('location');
+      if (!next) return null;
+      let resolved;
+      try { resolved = new URL(next, current).toString(); } catch (e) { return null; }
+      const safe = normalizeUrl(resolved);
+      if (!safe) return null;
+      current = safe.url;
+      continue;
+    }
+
+    const type = String(res.headers.get('content-type') || '');
+    if (!res.ok || type.indexOf('text/html') === -1) {
+      clearTimeout(timer);
+      return null;
+    }
+
+    const html = (await res.text()).slice(0, 900000);
+    clearTimeout(timer);
+    return { html, ttfb, finalUrl: current };
+  }
+  return null;
+};
+
+const heuristicScan = async (target) => {
+  const page = await fetchHtml(target.url);
+  if (!page) return null;
+
+  const html = page.html;
+  const title = ((html.match(/<title[^>]*>([\s\S]{0,300}?)<\/title>/i) || [])[1] || '').trim();
+  const desc = ((html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']{0,400})["']/i) || [])[1] || '').trim();
+  const h1Count = (html.match(/<h1[\s>]/gi) || []).length;
+  const imgs = html.match(/<img[\s>][^>]*>/gi) || [];
+  const noAlt = imgs.filter((tag) => !/alt\s*=/i.test(tag)).length;
+  const scripts = (html.match(/<script[\s>]/gi) || []).length;
+  const hasViewport = /<meta[^>]+name=["']viewport["']/i.test(html);
+  const hasLang = /<html[^>]+lang=/i.test(html);
+  const kb = Math.round(html.length / 1024);
+
+  const speed = Math.max(0, Math.min(100, 100
+    - (page.ttfb > 1200 ? 45 : page.ttfb > 600 ? 25 : page.ttfb > 300 ? 10 : 0)
+    - (kb > 400 ? 25 : kb > 200 ? 12 : 0)
+    - (scripts > 25 ? 15 : scripts > 12 ? 7 : 0)));
+
+  const a11y = Math.max(0, Math.min(100, 100
+    - (hasLang ? 0 : 25)
+    - (imgs.length ? Math.min(40, Math.round((noAlt / imgs.length) * 40)) : 0)
+    - (h1Count === 0 ? 15 : 0)));
+
+  const seo = Math.max(0, Math.min(100, 100
+    - (title ? 0 : 30)
+    - (title && (title.length < 15 || title.length > 70) ? 8 : 0)
+    - (desc ? 0 : 25)
+    - (h1Count === 1 ? 0 : 10)
+    - (hasViewport ? 0 : 10)));
+
+  const findings = [];
+  if (page.ttfb > 600) findings.push('The page took ' + (page.ttfb / 1000).toFixed(1) + 's to start responding.');
+  if (kb > 200) findings.push('The HTML alone is ' + kb + ' KB before images load.');
+  if (!desc) findings.push('No meta description, so search results look empty.');
+  if (!title) findings.push('The page title is missing.');
+  if (noAlt) findings.push(noAlt + ' image' + (noAlt === 1 ? ' has' : 's have') + ' no alt text.');
+  if (!hasLang) findings.push('The html tag has no lang attribute for screen readers.');
+  if (!hasViewport) findings.push('No mobile viewport tag, so phones zoom out.');
+  if (!findings.length) findings.push('Markup basics are clean. Speed detail needs the deeper scan.');
+  findings.unshift('Estimated from the page markup — the full PageSpeed scan was unavailable.');
+
+  const scores = [
+    { label: 'Performance', value: speed },
+    { label: 'Accessibility', value: a11y },
+    { label: 'Search', value: seo }
+  ];
+  const overall = Math.round((speed + a11y + seo) / 3);
+
+  return {
+    ok: true,
+    host: target.host.replace(/^www\./, ''),
+    url: page.finalUrl,
+    grade: gradeFor(overall),
+    overall,
+    scores,
+    findings: findings.slice(0, 4),
+    mode: 'heuristic',
+    scannedAt: new Date().toISOString()
+  };
+};
+
 const collectFindings = (categories) => {
   const findings = [];
   const seen = new Set();
@@ -240,6 +370,19 @@ module.exports = async (req, res) => {
     data = await upstream.json();
   } catch (e) {
     clearTimeout(timer);
+    const fallback = await heuristicScan(target);
+    if (fallback) {
+      await cachePut(target.url, fallback);
+      return json(res, 200, fallback, { 'X-Lab-Cache': 'miss-heuristic' });
+    }
+    refundSlot(ip);
+    // 429 from Google means the PSI quota is exhausted, not that the URL is bad.
+    if (/psi 429/.test(String((e && e.message) || ''))) {
+      return json(res, 503, {
+        ok: false,
+        error: 'The scanner is out of free scans for now. Email hello@theflowlabs.online and we will run it by hand.'
+      }, { 'Retry-After': '3600' });
+    }
     return json(res, 503, { ok: false, error: 'The scanner is busy. Try again in a minute.' });
   }
   clearTimeout(timer);
@@ -265,6 +408,12 @@ module.exports = async (req, res) => {
   if (bp !== null) scores.push({ label: 'Best practices', value: bp });
 
   if (!scores.length) {
+    const fallback = await heuristicScan(target);
+    if (fallback) {
+      await cachePut(target.url, fallback);
+      return json(res, 200, fallback, { 'X-Lab-Cache': 'miss-heuristic' });
+    }
+    refundSlot(ip);
     return json(res, 503, { ok: false, error: 'The scanner returned no scores for that URL.' });
   }
 

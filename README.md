@@ -148,7 +148,9 @@ Run `supabase-schema.sql` in the Supabase SQL Editor. It is idempotent and creat
 Then create the admin auth user in **Authentication → Users**, insert their email into `admin_users`, and disable public signups.
 
 ### The Lab Report
-`/lab-report/` is a free public URL scanner powered by `/api/audit.js`. It runs on zero paid services: Google PageSpeed Insights (keyless), Vercel Hobby, and the Supabase free tier for the 24-hour cache. Rate limits: 1 request per IP per 5 minutes, 500 per day. Scans are cached for 24 hours and never attached to an enquiry. See `api/audit.js` for the full guardrail list.
+`/lab-report/` is a free public URL scanner powered by `/api/audit.js`. It runs on zero paid services: Google PageSpeed Insights, Vercel Hobby, and the Supabase free tier for the 24-hour cache. Rate limits: 1 request per IP per 5 minutes, 500 per day. Scans are cached for 24 hours and never attached to an enquiry.
+
+**Set `PSI_KEY`.** Google's keyless endpoint shares one quota across every anonymous caller, so it is regularly exhausted. With a key (free, 25,000 requests/day) the full Lighthouse scan always runs. Without one, the endpoint degrades to a markup-only estimate — response time, page weight and the SEO/accessibility basics that live in the HTML — clearly labelled as an estimate in the findings. A failed upstream call never consumes the visitor's 5-minute slot.
 
 ### Email address visibility
 The live address `hello@theflowlabs.online` is assembled client-side from `data-email`/`data-user`/`data-domain` attributes so Cloudflare's Email Address Obfuscation cannot rewrite it. The `noscript` fallback prints `hello [at] theflowlabs [dot] online`. For the plain-text `mailto:` and footer link to render correctly without JavaScript, also toggle the Cloudflare setting off: **Dashboard → Security → Scrape Shield → Email Address Obfuscation = Off**.
