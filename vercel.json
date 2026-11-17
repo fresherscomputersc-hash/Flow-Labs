@@ -1,4 +1,14 @@
 {
+  "headers": [
+    {
+      "source": "/flow-hq/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/qr",
@@ -7,6 +17,53 @@
     {
       "source": "/qr/:path*",
       "destination": "https://qr-sooty-phi.vercel.app/qr/:path*"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/flow-hq",
+      "destination": "/flow-hq/",
+      "permanent": false
+    },
+    {
+      "source": "/services/ai-automation-bhubaneswar",
+      "destination": "/services/ai-automation/",
+      "permanent": true
+    },
+    {
+      "source": "/services/ai-automation-bhubaneswar/:path*",
+      "destination": "/services/ai-automation/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/services/web-development-bhubaneswar",
+      "destination": "/services/web-development/",
+      "permanent": true
+    },
+    {
+      "source": "/services/web-development-bhubaneswar/:path*",
+      "destination": "/services/web-development/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/services/custom-software-development-bhubaneswar",
+      "destination": "/services/custom-software-development/",
+      "permanent": true
+    },
+    {
+      "source": "/services/custom-software-development-bhubaneswar/:path*",
+      "destination": "/services/custom-software-development/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ai-automation-for-bhubaneswar-businesses",
+      "destination": "/blog/ai-automation-for-small-businesses/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ai-automation-for-bhubaneswar-businesses/:path*",
+      "destination": "/blog/ai-automation-for-small-businesses/:path*",
+      "permanent": true
     }
   ]
 }

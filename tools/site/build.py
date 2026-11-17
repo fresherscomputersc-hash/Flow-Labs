@@ -10,7 +10,7 @@ Style/JS live in assets/site.css and assets/site.js (shared with index.html).
 from __future__ import annotations
 import io, os, json
 
-BASE  = "https://theflowlabs.online"
+BASE  = "https://www.theflowlabs.online"
 OG_IMG = BASE + "/assets/work-droovee.png"
 YEAR  = "2026-11-05"
 
@@ -19,10 +19,11 @@ ORG = {
     "@context": "https://schema.org", "@type": "Organization",
     "name": "The Flow Labs", "url": BASE + "/",
     "email": "hello@theflowlabs.online", "image": OG_IMG,
-    "description": "Founder-led engineering studio building AI automation, websites, business workflow automation and custom software for growing businesses in Bhubaneswar, Odisha and across India.",
-    "areaServed": [{"@type": "City", "name": "Bhubaneswar"},
-                   {"@type": "State", "name": "Odisha"},
-                   {"@type": "Country", "name": "India"}],
+    "description": "Founder-led engineering studio building interfaces, systems and applied intelligence for growing businesses. Fixed-price delivery, four builds a month, source code handed over on every project.",
+    "founder": [{"@type": "Person", "name": "Smruti Ranjan", "jobTitle": "Founder"},
+                {"@type": "Person", "name": "Biswash", "jobTitle": "Co-Founder"},
+                {"@type": "Person", "name": "Arpita", "jobTitle": "Co-Founder"}],
+    "areaServed": [{"@type": "Country", "name": "India"}],
     "sameAs": ["https://www.instagram.com/the.flow.labs/"],
 }
 
@@ -39,15 +40,19 @@ def crumb_jsonld(items):
         els.append(el)
     return {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": els}
 
-def hero(crumbs_items, pill, h1, sub):
+def hero(crumbs_items, pill, h1, sub, cms=None):
     c_items = ' <span aria-hidden="true">›</span> '.join(
         f'<a href="{u}">{lbl}</a>' if u else f'<span>{lbl}</span>'
         for u, lbl in crumbs_items)
     crumbs = f'<div class="crumbs">{c_items}</div>\n    '
-    p = f'<span class="pill"><span class="dot"></span> {pill}</span>\n    ' if pill else ""
+    cms = cms or {}
+    label_attr = f' data-cms="{cms["label"]}"' if cms.get("label") else ""
+    title_attr = f' data-cms="{cms["title"]}"' if cms.get("title") else ""
+    sub_attr = f' data-cms="{cms["sub"]}"' if cms.get("sub") else ""
+    p = f'<span class="pill"><span class="dot"></span> <span{label_attr}>{pill}</span></span>\n    ' if pill else ""
     return (f'<div class="page-hero"><div class="wrap">\n    {crumbs}{p}'
-            f'<h1>{h1}</h1>\n'
-            f'    <p class="sub">{sub}</p>\n  </div>\n</div>')
+            f'<h1{title_attr}>{h1}</h1>\n'
+            f'    <p class="sub"{sub_attr}>{sub}</p>\n  </div>\n</div>')
 
 def faq(qas):
     return ('<section class="page-faq"><div class="wrap">'
@@ -65,7 +70,7 @@ def cta(h2, p):
             f'<h2>{h2}</h2><p>{p}</p>'
             '<a href="/contact/" class="btn btn-primary">Start a project</a>'
             '<div class="cta-mail">or email <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>'
-            '&nbsp;·&nbsp; <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram DM</a>'
+            '&nbsp;·&nbsp; <a href="/lab-report/">run a free Lab Report</a>'
             '</div></div></div></section>')
 
 def minis(items):
@@ -297,13 +302,35 @@ ENQUIRY_FORM = '''
 </div>
 '''
 
+SLOT_METER = '''
+<div class="slot-meter" data-slots data-month="2026-12" style="margin:0 auto 28px">
+  <span class="slot-dot" aria-hidden="true"></span>
+  <span class="slot-label">Build slots · <span data-slots-label>December</span></span>
+  <span class="slot-count"><b data-slots-taken>2</b> of <span data-slots-total>4</span> taken</span>
+  <span class="slot-bars" data-slots-bars aria-hidden="true"></span>
+  <span class="slot-note">We take four builds a month. Two December seats are already reserved.</span>
+</div>
+'''
+
+EMAIL_CARD = '''
+<div class="contact-email-card">
+  <div>
+    <span class="label">Direct email</span>
+    <span data-email data-user="hello" data-domain="theflowlabs.online">hello</span>
+    <noscript><span>hello [at] theflowlabs [dot] online</span></noscript>
+  </div>
+  <button class="copy-mail" type="button" data-copy-email data-user="hello" data-domain="theflowlabs.online">Copy address</button>
+</div>
+'''
+
 CONTACT_OTHER = '''
 <section><div class="wrap">
   <div class="prose">
     <h2>Direct channels</h2>
-    <p><strong>Email:</strong> <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a> (include a brief overview of your project, and we will take it from there)</p>
-    <p><strong>Instagram:</strong> <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">@the.flow.labs</a> (direct messaging for quick questions)</p>
-    <p>Based in <strong>Bhubaneswar, Odisha</strong>, working with businesses across India. Remote-first collaboration, with in-person meetings when helpful.</p>
+    <p><strong>Email:</strong> <a href="mailto:hello@theflowlabs.online" data-cms="contact-email">hello@theflowlabs.online</a> — include a brief overview of your project and we will take it from there.</p>
+    <p><strong>Instagram:</strong> <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">@the.flow.labs</a> for quick questions.</p>
+    <p><strong>Studio:</strong> The Flow Labs, Bhubaneswar, Odisha, India. We work remotely with teams across India and abroad, with in-person meetings when they genuinely help.</p>
+    <p>Ordering a website, a system or an AI workflow? Tell us the problem, not the solution — we will tell you which of the three layers actually fixes it.</p>
   </div>
 </div></section>
 '''
@@ -312,66 +339,173 @@ CONTACT_OTHER = '''
 
 def services_hub():
     crumb = [("/", "Home"), (None, "Services")]
-    h = (crumb, None,
-         "Engineering services, built in-house.",
-         "Four core disciplines we deliver with deep technical craft. Clear deliverables, weekly demo milestones, and fixed pricing agreed upfront.")
+    h = (crumb, "Interfaces · Systems · Intelligence",
+         'Engineering services, <span class="grad">built in-house.</span>',
+         "Three layers, one team. Open a layer to see what is actually inside it, what it costs to start, and the problem it is meant to solve.")
+    price = lambda p, note: (f'<div class="stack-price">{p}<small>SCOPED PER PROJECT</small></div>'
+                             f'<p class="stack-meta" style="margin-top:0.9rem">{note}</p>')
     b = (
         '<section><div class="wrap">'
-        '<div class="mini-grid reveal">'
-        '<div class="mini"><h4>AI automation</h4><p>Workflows, agents and document pipelines that eliminate repetitive operational tasks from your team’s day.</p><p style="margin-top:10px"><a href="/services/ai-automation-bhubaneswar/" >AI automation in Bhubaneswar →</a></p></div>'
-        '<div class="mini"><h4>AI chatbot development</h4><p>Assistants trained on your business documentation that answer customer inquiries 24/7 and route complex cases to your team.</p><p style="margin-top:10px"><a href="/services/ai-chatbot-development/" >AI chatbot development →</a></p></div>'
-        '<div class="mini"><h4>Web development</h4><p>Fast, responsive websites and web apps for businesses and startups. Looks sharp. Loads faster.</p><p style="margin-top:10px"><a href="/services/web-development-bhubaneswar/" >Web development →</a></p></div>'
-        '<div class="mini"><h4>Custom software</h4><p>Internal tools, dashboards and management systems built around how your business actually works.</p><p style="margin-top:10px"><a href="/services/custom-software-development-bhubaneswar/" >Custom software →</a></p></div>'
+        '<div class="stack" style="margin-top:0">'
+
+        '<div class="stack-item open">'
+        '<button class="stack-head" type="button" aria-expanded="true" aria-controls="s-layer-1">'
+        '<span class="stack-num">01</span><span class="stack-name">Interfaces</span>'
+        '<span class="stack-promise">The screens your customers actually touch.</span>'
+        '<span class="stack-plus" aria-hidden="true">+</span></button>'
+        '<div class="stack-body" id="s-layer-1"><div><div class="stack-grid">'
+        '<div><h5>Inside the layer</h5><ul>'
+        '<li>Business websites and landing pages</li>'
+        '<li>Web apps, portals and booking flows</li>'
+        '<li>Design systems and component libraries</li>'
+        '<li>Performance, SEO foundation and accessibility passes</li>'
+        '<li>Maintenance and content updates</li></ul></div>'
+        '<div><h5>Signs you need it</h5><ul>'
+        '<li>The site is slow on a phone</li>'
+        '<li>Visitors arrive but nobody enquires</li>'
+        '<li>You need a portal, not a brochure</li>'
+        '<li>Nobody on the team can update the site</li></ul></div>'
+        '<div>' + price("Custom", "Typical build <b>2–4 weeks</b>. Fixed quote after one call.")
+        + '<div class="stack-links"><a href="/services/web-development/">Full Interfaces page →</a></div></div>'
+        '</div></div></div></div>'
+
+        '<div class="stack-item">'
+        '<button class="stack-head" type="button" aria-expanded="false" aria-controls="s-layer-2">'
+        '<span class="stack-num">02</span><span class="stack-name">Systems</span>'
+        '<span class="stack-promise">The engine under the interface.</span>'
+        '<span class="stack-plus" aria-hidden="true">+</span></button>'
+        '<div class="stack-body" id="s-layer-2"><div><div class="stack-grid">'
+        '<div><h5>Inside the layer</h5><ul>'
+        '<li>Internal tools and operations consoles</li>'
+        '<li>Management dashboards and reporting</li>'
+        '<li>APIs, integrations and data pipelines</li>'
+        '<li>Role-based access and audit trails</li>'
+        '<li>Migration off spreadsheets and legacy tools</li></ul></div>'
+        '<div><h5>Signs you need it</h5><ul>'
+        '<li>Off-the-shelf software fights your process</li>'
+        '<li>Three tools hold the same customer record</li>'
+        '<li>A weekly report takes a person a full day</li>'
+        '<li>Only one person understands the spreadsheet</li></ul></div>'
+        '<div>' + price("Custom", "Typical build <b>4–10 weeks</b>, shipped in phases.")
+        + '<div class="stack-links"><a href="/services/custom-software-development/">Full Systems page →</a></div></div>'
+        '</div></div></div></div>'
+
+        '<div class="stack-item">'
+        '<button class="stack-head" type="button" aria-expanded="false" aria-controls="s-layer-3">'
+        '<span class="stack-num">03</span><span class="stack-name">Intelligence</span>'
+        '<span class="stack-promise">The part that decides, drafts and routes.</span>'
+        '<span class="stack-plus" aria-hidden="true">+</span></button>'
+        '<div class="stack-body" id="s-layer-3"><div><div class="stack-grid">'
+        '<div><h5>Inside the layer</h5><ul>'
+        '<li>AI triage, drafting and routing</li>'
+        '<li>Assistants grounded in your own documents</li>'
+        '<li>Document and data extraction pipelines</li>'
+        '<li>Workflow automation across your existing tools</li>'
+        '<li>Evaluation, guardrails and cost ceilings</li></ul></div>'
+        '<div><h5>Signs you need it</h5><ul>'
+        '<li>The same questions get answered daily</li>'
+        '<li>Staff copy data between systems</li>'
+        '<li>Leads arrive on four channels and nobody owns them</li>'
+        '<li>A chatbot made things up and burned your trust</li></ul></div>'
+        '<div>' + price("Custom", "Typical build <b>2–6 weeks</b>. Priced per workflow, not per token.")
+        + '<div class="stack-links"><a href="/services/ai-automation/">AI automation →</a>'
+        '<a href="/services/ai-chatbot-development/">AI assistants →</a></div></div>'
+        '</div></div></div></div>'
+
         '</div>'
-        '<div class="prose reveal" style="margin-top:30px"><h2>Not sure which fits?</h2>'
-        '<p>A clear guide: if your challenge is <b>repetition</b>, it is automation. If it is <b>visibility</b> and lead generation, it is a website. If it is an internal workflow <b>managed across spreadsheets</b>, it is custom software. If you are unsure, reach out and we will help determine the right solution.</p></div>'
-        '</div></section>')
+
+        '<button class="compare-toggle" type="button" data-compare aria-expanded="false" aria-controls="compareTable">Compare the three layers <span aria-hidden="true">+</span></button>'
+        '<div class="compare-table" id="compareTable"><table>'
+        '<thead><tr><th>Question</th><th>Interfaces</th><th>Systems</th><th>Intelligence</th></tr></thead>'
+        '<tbody>'
+        '<tr><td>What it solves</td><td>How it looks and converts</td><td>How the business runs</td><td>What happens without a human</td></tr>'
+        '<tr><td>Starting point</td><td>Custom quote</td><td>Custom quote</td><td>Custom quote</td></tr>'
+        '<tr><td>Typical timeline</td><td>2–4 weeks</td><td>4–10 weeks</td><td>2–6 weeks</td></tr>'
+        '<tr><td>Best first project</td><td>New site or portal</td><td>Ops tool, CRM, dashboard</td><td>One repetitive workflow</td></tr>'
+        '<tr><td>Needs the other layers?</td><td>Not always</td><td>Usually needs an interface</td><td>Almost always needs both</td></tr>'
+        '</tbody></table></div>'
+
+        '<div class="chooser" data-chooser style="margin-top:40px">'
+        '<p class="chooser-q">Not sure which layer you are actually asking for?</p>'
+        '<div class="chooser-opts">'
+        '<button type="button" data-layer="interfaces" data-answer="&lt;strong&gt;Start with Interfaces.&lt;/strong&gt; You need something people look at and trust. We scope the pages, write the structure, build it, and hand over a site you can edit.">We need a site or a portal</button>'
+        '<button type="button" data-layer="systems" data-answer="&lt;strong&gt;Start with Systems.&lt;/strong&gt; Your process is the product. We map the workflow, replace the spreadsheets, and build the tool your team will actually use.">Our process is held together by spreadsheets</button>'
+        '<button type="button" data-layer="intelligence" data-answer="&lt;strong&gt;Start with Intelligence.&lt;/strong&gt; Pick the one workflow that eats the most hours. We automate that, measure it, then expand — instead of rebuilding everything at once.">We answer the same things all day</button>'
+        '</div>'
+        '<div class="chooser-result" data-chooser-result role="status" aria-live="polite"></div>'
+        '</div>'
+
+        '<div class="prose reveal" style="margin-top:48px"><h2>How a project runs</h2></div>'
+        + steps() +
+        '<div class="prose" style="margin-top:34px">'
+        '<h2>What every project includes</h2>'
+        '<ul>'
+        '<li>A written scope and a fixed price before any code starts.</li>'
+        '<li>Weekly demos on a real, clickable build.</li>'
+        '<li>Source code, deployment access and documentation handed over at the end.</li>'
+        '<li>A post-launch support window for fixes and small refinements.</li>'
+        '</ul>'
+        '<h2>Four builds a month</h2>'
+        '<p>That is the ceiling for a three-person team that does not subcontract. When the month is full we '
+        'keep a waiting list instead of quietly spreading thin. Current availability is on the '
+        '<a href="/contact/">contact page</a>.</p>'
+        '</div></div></section>'
+    )
     return dict(path="/services/",
-                title="AI, Web & Software Development Services | The Flow Labs",
-                og_title="Services: AI automation, web development & custom software | The Flow Labs",
-                description="What The Flow Labs builds: AI automation and chatbots, responsive websites, custom software. For businesses in Bhubaneswar and across India. Fixed price, built in-house.",
-                crumbs=crumb, hero=h, body=b)
+                title="Services — Interfaces, Systems & Intelligence | The Flow Labs",
+                og_title="Services: interfaces, systems & intelligence | The Flow Labs",
+                description="Websites, custom software and AI automation from one founder-led team. Each project is quoted individually with a fixed price before code, and source is always handed over.",
+                crumbs=crumb, hero=h, body=b,
+                cms={"label": "services-hero-label", "title": "services-hero-title", "sub": "services-hero-subtitle"})
 
 def work_hub():
     crumb = [("/", "Home"), (None, "Work")]
     h = (crumb, None,
-         "Built in the lab. Shipped for real.",
-         "Real products and systems developed by The Flow Labs. Each case study covers the problem, technical architecture, and deployment status.")
+         "Built in the lab. <span class=\"grad\">Running in production.</span>",
+         "Every project below is either live, running in-house, or open source. No invented metrics — the label on each card is one we can prove.")
     cards = ""
-    for path, name, status, desc, tag in [
-        ("/work/droovee/", "Droovee", "LIVE PRODUCT",
-         "Chauffeur booking platform for Bhubaneswar. Verified drivers, transparent pricing, instant trip requests.", "assets/work-droovee.png"),
-        ("/work/qr-platform/", "QR Business Platform", "LIVE PRODUCT",
+    for path, name, status, cat, desc, tag in [
+        ("/work/droovee/", "Droovee", "LIVE", "web software",
+         "An on-demand chauffeur booking platform: verified drivers, transparent fares, instant trip requests and a live operations view behind it.", "assets/work-droovee.png"),
+        ("/work/qr-platform/", "QR Business Platform", "LIVE", "web software",
          "One stable QR code per business resolves to a fast, always-current mobile page. Centrally managed, tracked per scan. Passcode demo on this site.", "assets/work-qrplatform.svg"),
-        ("/work/drishti/", "Drishti", "OPERATIONS AI",
-         "Fleet operations console for a state transport corporation: live telemetry, demand forecasting and risk scoring.", "assets/work-drishti.png"),
-        ("/work/flowops/", "FlowOps", "AUTOMATION",
+        ("/work/drishti/", "Drishti", "IN-HOUSE", "software ai",
+         "Fleet operations console: live telemetry, demand forecasting and risk scoring for a state transport network.", "assets/work-drishti.png"),
+        ("/work/flowops/", "FlowOps", "IN-HOUSE", "ai software",
          "An AI triage layer for support teams: classifies every ticket, drafts the reply, escalates what needs a human.", "assets/work-flowops.png"),
-        ("/work/interview-copilot/", "INTERVIEW-COPILOT", "AI COPILOT",
-         "An open-source AI interview companion: prepare, rehearse and improve with real-time coaching.", "assets/work-interviewcopilot.svg"),
-        ("/work/bhuverify/", "BHOOMI Series", "GEO + DATA",
+        ("/work/interview-copilot/", "Interview Copilot", "OPEN SOURCE", "ai oss",
+         "An AI interview companion: prepare, rehearse and improve with real-time coaching and structured feedback.", "assets/work-interviewcopilot.svg"),
+        ("/work/bhuverify/", "BHOOMI", "IN-HOUSE", "software oss",
          "BhumiStack, BHOOMI and Bhuverify: a land-intelligence stack for maps, verification and property workflows.", "assets/work-bhoomi.svg"),
-        ("/work/carbon-coach/", "Carbon Coach", "SUSTAINABILITY",
+        ("/work/carbon-coach/", "Carbon Coach", "OPEN SOURCE", "web oss",
          "An open-source TypeScript app that tracks and coaches personal carbon footprints.", "assets/work-carboncoach.svg"),
     ]:
         if tag.endswith(".png"):
             dims = ' width="1440" height="900"'
         else:
             dims = ''
-        cards += (f'<a class="work reveal" href="{path}">'
+        cards += (f'<a class="work reveal" href="{path}" data-cat="{cat}">'
                   f'<div class="thumb"><img src="/{tag}" alt="{name} project by The Flow Labs"{dims} loading="lazy" decoding="async"></div>'
                   f'<div class="wbody"><div class="wtop"><h3>{name}</h3><span class="meta">{status}</span></div>'
                   f'<p>{desc}</p><div class="wlink">Case study <span>→</span></div></div></a>')
-    b = ('<section><div class="wrap"><div class="work-grid">' + cards + '</div>'
+    b = ('<section><div class="wrap">'
+         '<div class="work-filter" data-work-filter role="group" aria-label="Filter work">'
+         '<button type="button" data-filter="all" aria-pressed="true">All</button>'
+         '<button type="button" data-filter="web" aria-pressed="false">Interfaces</button>'
+         '<button type="button" data-filter="software" aria-pressed="false">Systems</button>'
+         '<button type="button" data-filter="ai" aria-pressed="false">Intelligence</button>'
+         '<button type="button" data-filter="oss" aria-pressed="false">Open source</button>'
+         '</div>'
+         '<div class="work-grid" style="margin-top:24px">' + cards + '</div>'
          '<div class="ai-lab reveal" style="margin-top:34px"><p>Also in the lab</p>'
          '<div class="ai-lab-chips"><span class="ai-chip"><span class="live"></span>CivicPulseAI</span>'
          '<span class="ai-chip"><span class="live"></span>ML-MLOps</span>'
          '<span class="ai-chip"><span class="live"></span>btc-sentiment-analysis</span></div></div>'
          '</div></section>')
     return dict(path="/work/",
-                title="Our Work: AI Platforms, Web Apps & Case Studies | The Flow Labs",
-                og_title="Work by The Flow Labs: AI, web apps & case studies",
-                description="Real projects by The Flow Labs: a live chauffeur booking platform, fleet operations AI, support automation, land intelligence and open-source apps.",
+                title="Work — Live, In-House and Open Source | The Flow Labs",
+                og_title="Work by The Flow Labs: interfaces, systems, intelligence",
+                description="Live products and in-house systems built by The Flow Labs: a chauffeur booking platform, fleet operations AI, support triage, land intelligence and open-source apps.",
                 crumbs=crumb, hero=h, body=b)
 
 PAGES = []
@@ -379,11 +513,11 @@ PAGES.append(services_hub())
 PAGES.append(work_hub())
 
 def page_ai_automation():
-    path = "/services/ai-automation-bhubaneswar/"
+    path = "/services/ai-automation/"
     crumb = [("/", "Home"), ("/services/", "Services"), (None, "AI automation")]
-    h = (crumb, "AI automation · Bhubaneswar + remote teams",
-         'AI automation for businesses in <span class="grad">Bhubaneswar</span>',
-         "We connect AI to repetitive operational processes so your team can focus on core business growth. Scoped, built, and shipped in-house with fixed pricing.")
+    h = (crumb, "Intelligence · AI automation",
+         'AI automation that <span class="grad">actually ships.</span>',
+         "We connect AI to the repetitive parts of your operation so your team stops being the integration layer. Scoped, built and shipped in-house with a fixed quote.")
     b = (
         '<section><div class="wrap"><div class="prose">'
         '<p>AI automation is not a robot in a suit. It is chat assistants, document processing, ticket triage, '
@@ -421,31 +555,31 @@ def page_ai_automation():
         '<p>WhatsApp Business, Google Workspace, Sheets, email, Meta channels, payment links, CRMs, '
         'internal databases and custom APIs. If your stack is unusual, we build the glue layer.</p>'
         '<h2>Where we work</h2>'
-        '<p>Home base is Bhubaneswar, Odisha. Teams across Odisha and the rest of India get the same '
-        'founder-led build, mostly remote, with in-person visits when the project genuinely needs them.</p>'
+        '<p>We work remotely with teams across India and abroad, on weekly video demos and short written '
+        'updates. If a project genuinely needs someone on site, we say so before signing anything, not after.</p>'
         '</div></div></section>'
         + faq([
             ("How much does AI automation cost?", "It depends on how many workflows you automate and which tools need connecting. A focused single-workflow build costs less than most websites; multi-system builds are scoped in phases. Either way the price is fixed before code starts."),
             ("Will AI automation replace my staff?", "No. It replaces the boring 60% of people’s day. Your front desk still handles the sensitive conversations; the automation handles the repeated ones."),
             ("What if my data is sensitive?", "We build on your accounts wherever possible, restrict what the AI can access, and keep no customer data in our own systems after handover."),
-            ("Do you work with businesses outside Bhubaneswar?", "Yes. Bhubaneswar is home, but we build for teams across Odisha and all of India, remote with weekly video demos."),
+            ("Do you work remotely?", "Yes. We build for teams across India and abroad, remote-first with weekly video demos and short written updates. Time zone has not been a blocker yet."),
             ("How fast can something go live?", "A single-workflow automation typically ships in days, not months. Bigger builds are phased so you get value early."),
         ])
         + cta("Ready to automate repetitive operations?",
               "Tell us which workflows consume your team's time. We will scope an automated solution with clear milestones and fixed pricing."))
     return dict(path=path,
-                title="AI Automation Agency in Bhubaneswar | The Flow Labs",
-                og_title="AI automation for businesses in Bhubaneswar | The Flow Labs",
-                description="AI workflow automation, AI agents, document processing and support automation for businesses in Bhubaneswar and Odisha. Founder-led studio, fixed price, built in-house.",
+                title="AI Automation Agency for Growing Businesses | The Flow Labs",
+                og_title="AI automation for growing businesses | The Flow Labs",
+                description="AI workflow automation, agents, document processing and support triage for growing businesses. Founder-led studio, fixed quote before code, built in-house.",
                 service={"name": "AI Automation & Workflow Integration", "serviceType": "AI automation consulting and implementation"},
                 crumbs=crumb, hero=h, body=b)
 
 def page_web_dev():
-    path = "/services/web-development-bhubaneswar/"
+    path = "/services/web-development/"
     crumb = [("/", "Home"), ("/services/", "Services"), (None, "Web development")]
-    h = (crumb, "Web development · Bhubaneswar + remote teams",
-         'Web development for businesses in <span class="grad">Bhubaneswar</span>',
-         "Websites and web applications that load quickly, look polished, and convert visitors into customers. Built and maintained in-house.")
+    h = (crumb, "Interfaces · Web development",
+         'Websites and web apps that <span class="grad">earn their keep.</span>',
+         "Fast, polished, phone-first interfaces that turn visitors into enquiries. Built and maintained in-house with a fixed quote.")
     b = (
         '<section><div class="wrap"><div class="prose">'
         '<p>Your website is the one employee that talks to every customer before you do. It should load fast, '
@@ -479,13 +613,13 @@ def page_web_dev():
         '<li>Connected enquiry or booking flow (we route leads to your inbox or CRM).</li>'
         '<li>Handover with documentation, plus a support window for post-launch fixes.</li>'
         '</ul>'
-        '<h2>Serving Bhubaneswar and beyond</h2>'
-        '<p>Founder-led studio, Bhubaneswar based. We build remotely for teams anywhere in India, and meet '
-        'locally when it makes sense. Related work: <a href="/work/droovee/">Droovee</a> (live booking '
+        '<h2>Where we work</h2>'
+        '<p>We build remotely for teams across India and abroad, and meet in person when a project genuinely '
+        'calls for it. Related work: <a href="/work/droovee/">Droovee</a> (live booking '
         'platform) and <a href="/work/carbon-coach/">Carbon Coach</a> (open source web app).</p>'
         '</div></div></section>'
         + faq([
-            ("How much does a website cost in Bhubaneswar?", "Simple business sites and landing pages sit at the lower end of a rough ₹25k to ₹1L range. Custom web apps cost more because they involve real product engineering. You get an exact fixed quote after the first scoping call."),
+            ("What does a website cost?", "Every project is priced individually and quoted as a fixed, all-in number after discovery — before any code is written. There is no rate card, because no two builds are the same: pages, integrations and custom engineering all change the scope. You get an exact fixed quote after the first scoping call."),
             ("How long does it take to build a website?", "A focused business site or landing page typically ships in days. Larger web apps run in phases: first something you can point at, then the full build."),
             ("Will my website show up on Google?", "Being indexable and fast is the entry ticket, and every site we ship passes it (metadata, performance, mobile-first). Ranking takes longer and depends on your market. We set honest expectations instead of fake guarantees."),
             ("Do you maintain the site after launch?", "Yes. Handover includes documentation and a support window; ongoing maintenance is available and priced transparently."),
@@ -494,18 +628,18 @@ def page_web_dev():
         + cta("Ready for a high-performance website?",
               "Tell us what your website needs to achieve. We provide an upfront fixed quote and deliver with weekly progress previews."))
     return dict(path=path,
-                title="Web Development Company in Bhubaneswar | The Flow Labs",
-                og_title="Web development company in Bhubaneswar | The Flow Labs",
-                description="Fast, responsive websites, landing pages and custom web apps for businesses in Bhubaneswar and across India. Phone-first, performance-focused, built in-house.",
+                title="Web Development for Growing Businesses | The Flow Labs",
+                og_title="Web development, built in-house | The Flow Labs",
+                description="Fast, responsive websites, landing pages and custom web apps. Phone-first, performance-focused, built and maintained in-house with a fixed quote.",
                 service={"name": "Website & Web Application Development", "serviceType": "Web development"},
                 crumbs=crumb, hero=h, body=b)
 
 def page_custom_software():
-    path = "/services/custom-software-development-bhubaneswar/"
+    path = "/services/custom-software-development/"
     crumb = [("/", "Home"), ("/services/", "Services"), (None, "Custom software")]
-    h = (crumb, "Custom software · Bhubaneswar + remote teams",
-         'Custom software development in <span class="grad">Bhubaneswar</span>',
-         "Internal tools, operational dashboards, and management systems tailored to how your business actually runs.")
+    h = (crumb, "Systems · Custom software",
+         'Software shaped around <span class="grad">how you actually work.</span>',
+         "Internal tools, operations consoles and dashboards built around your process instead of a vendor's feature list. Fixed quote per phase, agreed before code.")
     b = (
         '<section><div class="wrap"><div class="prose">'
         '<p>Every business runs its real operations somewhere: a spreadsheet, three WhatsApp groups and one '
@@ -517,7 +651,7 @@ def page_custom_software():
         '<li><strong>Internal business tools.</strong> The app your team opens every morning: intake, tracking, job cards, attendance, whatever your process actually is.</li>'
         '<li><strong>Management dashboards.</strong> One screen that shows today’s revenue, pipeline or plant status without assembling it manually. See <a href="/work/drishti/">Drishti</a>, our operations intelligence console.</li>'
         '<li><strong>Property and verification workflows.</strong> See <a href="/work/bhuverify/">the BHOOMI stack</a>: maps, verification and property data systems.</li>'
-        '<li><strong>APIs and-backend services.</strong> The connecting tissue between tools you already pay for.</li>'
+        '<li><strong>APIs and backend services.</strong> The connecting tissue between tools you already pay for.</li>'
         '</ul>'
         '<h2>Custom vs ready-made, in one honest line</h2>'
         '<p>Buy ready-made when your process is standard. Go custom when your process is your advantage, or '
@@ -537,9 +671,10 @@ def page_custom_software():
         '<li>Data migration from wherever it lives today (usually Excel).</li>'
         '<li>Handover documentation and a support window after go-live.</li>'
         '</ul>'
-        '<h2>Serving Bhubaneswar and beyond</h2>'
-        '<p>Bhubaneswar is home base; we take projects across Odisha and India. Related work: '
-        '<a href="/work/flowops/">FlowOps</a> (AI workflow console) built in-house by the same founders who '
+        '<h2>Where we work</h2>'
+        '<p>We work remotely with teams across India and abroad. Related work: '
+        '<a href="/work/flowops/">FlowOps</a> (AI workflow console) and '
+        '<a href="/work/drishti/">Drishti</a> (fleet operations console), both built by the same founders who '
         'would build yours.</p>'
         '</div></div></section>'
         + faq([
@@ -552,9 +687,9 @@ def page_custom_software():
         + cta("Describe the workflow challenge you want to solve.",
               "Schedule an introductory scoping call. If an off-the-shelf product is better suited to your needs, we will tell you directly."))
     return dict(path=path,
-                title="Custom Software Development Company in Bhubaneswar | The Flow Labs",
-                og_title="Custom software development company in Bhubaneswar | The Flow Labs",
-                description="Custom business software: internal tools, management dashboards, APIs and dashboards for teams in Bhubaneswar and across India. Built in-house, owner-managed, fixed price.",
+                title="Custom Software Development, Fixed Price | The Flow Labs",
+                og_title="Custom software development | The Flow Labs",
+                description="Custom business software: internal tools, operations dashboards, APIs and data pipelines. Built in-house, owner-managed, fixed quote per phase.",
                 service={"name": "Custom Software Development", "serviceType": "Custom software development"},
                 crumbs=crumb, hero=h, body=b)
 
@@ -615,7 +750,7 @@ def page_chatbots():
     return dict(path=path,
                 title="AI Chatbot Development for Business | The Flow Labs",
                 og_title="AI chatbot development for business | The Flow Labs",
-                description="AI assistants trained on your business that answer customers at 3AM, book enquiries and escalate sensitive cases. For businesses in Bhubaneswar and across India.",
+                description="AI assistants trained on your business that answer customers at 3AM, capture enquiries and escalate sensitive cases. Built in-house, fixed price.",
                 service={"name": "AI Chatbot & Assistant Development", "serviceType": "AI chatbot development and integration"},
                 crumbs=crumb, hero=h, body=b)
 
@@ -633,7 +768,7 @@ def page_qr_platform():
         '<section><div class="wrap">'
         '<div class="prose">'
         '<p><strong>Status:</strong> live product. A passcode-protected demo runs right on this site at '
-        '<a href="/qr/">theflowlabs.online/qr</a> - ask us for the demo passcode and explore the real console. '
+        '<a href="/qr/">www.theflowlabs.online/qr</a> - ask us for the demo passcode and explore the real console. '
         'Demo data is synthetic and resets on boot.</p>'
         '<h2>What it is</h2>'
         '<p>Many small businesses have no usable web presence, or a slow one buried three clicks deep. '
@@ -661,7 +796,7 @@ def page_qr_platform():
         '<h2>What it proves about us</h2>'
         '<p>We ship complete products, not prototypes: multi-role auth, versioned content, analytics, '
         'an audit log and a verified end-to-end suite. The same engineering goes into a '
-        '<a href="/services/custom-software-development-bhubaneswar/">custom platform</a> we build for you.</p>'
+        '<a href="/services/custom-software-development/">custom platform</a> we build for you.</p>'
         '</div></div></section>'
         + faq([
             ("Can I see the platform live?", "Yes. The demo runs on this website at /qr and is passcode-protected. Ask us for the demo passcode; you get the real console with synthetic demo data."),
@@ -680,9 +815,9 @@ def page_qr_platform():
 
 def page_droovee():
     crumb = [("/", "Home"), ("/work/", "Work"), (None, "Droovee")]
-    h = (crumb, "LIVE PRODUCT · Bhubaneswar",
+    h = (crumb, "LIVE · Chauffeur booking",
          'Droovee: book a chauffeur, drive your own car',
-         "A live chauffeur-booking platform in Bhubaneswar built by our founders. On-demand professional drivers: verified profiles, transparent pricing, and instant trip requests.")
+         "A live chauffeur-booking platform built by our founders. On-demand professional drivers: verified profiles, transparent pricing and instant trip requests.")
     b = (
         '<section><div class="wrap">'
         '<div class="prose">'
@@ -710,8 +845,8 @@ def page_droovee():
         '<h2>What it proves about us</h2>'
         '<p>We do not just mock up nice screens. We ship real products with real booking flows, real users '
         'and real edge cases. That is the same muscle you get when you hire us for a '
-        '<a href="/services/web-development-bhubaneswar/">web application</a> or a '
-        '<a href="/services/ai-automation-bhubaneswar/">workflow platform</a>.</p>'
+        '<a href="/services/web-development/">web application</a> or a '
+        '<a href="/services/ai-automation/">workflow platform</a>.</p>'
         '</div></div></section>'
         + faq([
             ("Is Droovee a client project of The Flow Labs?", "No. Droovee is a product built and run by the founders themselves. It is our lab, and a public demonstration of how we build."),
@@ -724,7 +859,7 @@ def page_droovee():
     return dict(path="/work/droovee/",
                 title="Droovee Case Study: Chauffeur Booking Platform | The Flow Labs",
                 og_title="Droovee: chauffeur booking platform built by The Flow Labs",
-                description="Droovee is a live chauffeur-booking platform for Bhubaneswar built by The Flow Labs founders. Verified drivers, transparent pricing, instant trip requests.",
+                description="Droovee is a live chauffeur-booking platform built by The Flow Labs founders. Verified drivers, transparent pricing, instant trip requests.",
                 crumbs=crumb, hero=h, body=b)
 
 def page_drishti():
@@ -757,8 +892,8 @@ def page_drishti():
         '<h2>What it proves about us</h2>'
         '<p>Operations AI is not just chatbots. We build the serious side too: data pipelines, forecasting '
         'and dashboards for real operations. If your business has logistics, assets or field teams, start '
-        'at our <a href="/services/ai-automation-bhubaneswar/">AI automation service</a> or the '
-        '<a href="/services/custom-software-development-bhubaneswar/">custom software page</a>.</p>'
+        'at our <a href="/services/ai-automation/">AI automation service</a> or the '
+        '<a href="/services/custom-software-development/">custom software page</a>.</p>'
         '</div></div></section>'
         + cta("Managing complex operations across disconnected systems?",
               "Tell us about your current operational workflow. We will scope a centralized console tailored to your real-world requirements."))
@@ -799,7 +934,7 @@ def page_flowops():
         '<li>Ops console UI</li></ul>'
         '<h2>What it proves about us</h2>'
         '<p>This is the exact architecture behind our '
-        '<a href="/services/ai-automation-bhubaneswar/">AI automation</a> and '
+        '<a href="/services/ai-automation/">AI automation</a> and '
         '<a href="/services/ai-chatbot-development/">AI chatbot</a> services: classify, draft, escalate. '
         'Built entirely in-house by our engineering team, with full accountability and zero third-party subcontracting.</p>'
         '</div></div></section>'
@@ -888,7 +1023,7 @@ def page_bhuverify():
         '<h2>What it proves about us</h2>'
         '<p>We handle serious data engineering: records, geo, verification, workflows. If your business has '
         'data that is scattered and slow, start at the '
-        '<a href="/services/custom-software-development-bhubaneswar/">custom software</a> service page.</p>'
+        '<a href="/services/custom-software-development/">custom software</a> service page.</p>'
         '</div></div></section>'
         + cta("Navigating complex records or geospatial data?",
               "Tell us what your data looks like today. We will scope a structured pipeline to accelerate analysis and decision-making."))
@@ -927,7 +1062,7 @@ def page_carbon_coach():
         '<li>Analytics and progress visualisations</li></ul>'
         '<h2>What it proves about us</h2>'
         '<p>Front-end craft and live data handling. The same coding standards go into every '
-        '<a href="/services/web-development-bhubaneswar/">website and web app</a> we build for a business.</p>'
+        '<a href="/services/web-development/">website and web app</a> we build for a business.</p>'
         '</div></div></section>'
         + cta("Need a modern, data-driven web application?",
               "Tell us about your product concept. We deliver responsive, high-performance web applications with fixed pricing and clear timelines."))
@@ -939,26 +1074,33 @@ def page_carbon_coach():
 
 def page_about():
     crumb = [("/", "Home"), (None, "About")]
-    h = (crumb, "Founder-led · Bhubaneswar",
-         'Founder-led engineering. Built in-house.',
-         "The Flow Labs is an engineering studio in Bhubaneswar. We design, build, and ship AI automation, web applications, and custom software.")
+    h = (crumb, "Founder-led · In-house",
+         'Founder-led engineering. <span class="grad">Built in-house.</span>',
+         "The Flow Labs is a three-person engineering studio. We design, build and ship interfaces, systems and applied intelligence — and you work with the people writing the code.")
     b = (
         '<section><div class="wrap"><div class="prose">'
-        '<p>[TODO-OWNER: add founder names, short bios and a proper logo/face photo here. Honest identities beat anonymity for trust.]</p>'
-        '<p>The Flow Labs was founded on a straightforward principle: businesses deserve direct access to the engineers '
+        '<p data-cms="about-body-1">The Flow Labs was founded on a straightforward principle: businesses deserve direct access to the engineers '
         'building their software. Instead of working through sales representatives and outsourced development teams, '
         'our clients collaborate directly with the founders who design and write the code. Droovee, our live chauffeur '
         'booking platform, is a product of this hands-on engineering approach.</p>'
+        '<h2>Who you actually work with</h2>'
+        '<ul>'
+        '<li><strong>Smruti Ranjan — Founder.</strong> Architects the systems and AI infrastructure behind every project, and leads scoping on every build.</li>'
+        '<li><strong>Biswash — Co-Founder.</strong> Builds the platforms, APIs and backend infrastructure that have to hold up under real load.</li>'
+        '<li><strong>Arpita — Co-Founder.</strong> Shapes the interfaces, user experience and visual identity across every product we ship.</li>'
+        '</ul>'
+        '<p>Three people, no account layer. Every project is handled by the same three, which is exactly why we cap '
+        'the month at four builds.</p>'
         '<h2>How we work</h2>'
         '<ul>'
         '<li><strong>You talk to the people building it.</strong> No account managers, no handoffs, no “our developer will get back to you”.</li>'
         '<li><strong>Fixed price before code.</strong> Scope, timeline and price agreed first. No surprise invoices mid-project.</li>'
         '<li><strong>Weekly demos.</strong> You watch the product grow in real, clickable versions, not slide decks.</li>'
-        '<li><strong>We ship in-house.</strong> AI, web, automation and software are built by us. If a task does not fit our skills, we say so instead of subcontracting quietly.</li>'
+        '<li><strong>We ship in-house.</strong> Interfaces, systems and AI are built by us. If a task does not fit our skills, we say so instead of subcontracting quietly.</li>'
         '</ul>'
         '<h2>Where we are</h2>'
-        '<p>Based in Bhubaneswar, Odisha, India. Local in presence, serious in ambition: we take projects '
-        'across India, remotely, and meet in person around Bhubaneswar when the project calls for it.</p>'
+        '<p data-cms="about-body-2">We work remotely with teams across India and abroad, and meet in person when a project genuinely '
+        'calls for it. Our studio address is on the <a href="/contact/">contact page</a>.</p>'
         '<h2>What we will NOT do</h2>'
         '<ul>'
         '<li>Promise rankings and overnight SEO miracles. We set honest expectations instead.</li>'
@@ -966,22 +1108,72 @@ def page_about():
         '<li>Inflate our history. What you see in <a href="/work/">our lab</a> is our actual work, labelled honestly by status (live, in-house, open source).</li>'
         '</ul>'
         '<h2>Our approach</h2>'
-        '<p>We believe in transparency, rapid execution, and technical craft. We agree on fixed pricing before '
+        '<p data-cms="about-body-3">We believe in transparency, rapid execution and technical craft. We agree on fixed pricing before '
         'code starts, demonstrate progress through weekly interactive builds, and deliver maintainable software that '
         'solves real operational problems.</p>'
         '</div></div></section>'
         + faq([
-            ("Who are the founders?", "A two-founder engineering team based in Bhubaneswar. [TODO: names and short bios pending owner input.]"),
+            ("Who are the founders?", "Smruti Ranjan (Founder), Biswash (Co-Founder) and Arpita (Co-Founder). Three people, no account layer — you work with the same three from first call to handover."),
             ("Is The Flow Labs an agency?", "We are a studio, not an agency: the founders do the work personally, with fixed-price projects and no outsourced middle layer."),
-            ("Can we visit or work locally in Bhubaneswar?", "Yes, we take local meetings. Most projects run remote-first with weekly video demos."),
+            ("How many projects do you take on?", "Four a month, and no more. That is the honest ceiling for a team that does not subcontract. Current availability is on the contact page."),
         ])
         + cta("Speak directly with the engineering team",
               "The most effective way to start is a scoping conversation. Bring your requirements, and we will provide an honest assessment of scope, timeline, and pricing.")
     )
     return dict(path="/about/",
-                title="About The Flow Labs: Founder-Led Engineering Studio | Bhubaneswar",
-                og_title="About The Flow Labs: founder-led engineering, Bhubaneswar",
-                description="Meet The Flow Labs: a two-founder engineering studio in Bhubaneswar building AI, web and custom software in-house. Fixed price, weekly demos, honest scoping.",
+                title="About — A Three-Person Engineering Studio | The Flow Labs",
+                og_title="About The Flow Labs: founder-led engineering",
+                description="Meet The Flow Labs: Smruti Ranjan (Founder), Biswash and Arpita (Co-Founders). A three-person studio building interfaces, systems and AI in-house.",
+                crumbs=crumb, hero=h, body=b,
+                cms={"label": "about-hero-label", "title": "about-hero-title", "sub": "about-hero-subtitle"})
+
+def page_lab_report():
+    crumb = [("/", "Home"), (None, "Lab Report")]
+    h = (crumb, "Free · No signup · ~10 seconds",
+         'The Lab Report: <span class="grad">your site, scored.</span>',
+         "Paste any URL and get a plain-English read on speed, accessibility and search readiness. One score, three bars, the three things worth fixing first.")
+    b = (
+        '<section><div class="wrap">'
+        '<div class="lab-form-wrap">'
+        '<form class="lab-form" id="labForm" novalidate>'
+        '<label for="labUrl" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Website URL</label>'
+        '<input id="labUrl" name="url" type="url" inputmode="url" placeholder="yourbusiness.com" autocomplete="url" required>'
+        '<button class="btn btn-primary" type="submit">Run the report</button>'
+        '</form>'
+        '<p class="lab-note">Public data only. We store nothing except the score, cached for 24 hours.</p>'
+        '<p class="report-err" id="labError" hidden></p>'
+        '<div class="report" id="labReport" aria-live="polite"></div>'
+        '</div>'
+        '<div class="prose" style="margin-top:48px">'
+        '<h2>Why we give this away</h2>'
+        '<p>Because most businesses have never actually seen their own site measured. They know it feels slow, '
+        'or that enquiries are thin, but nobody has shown them a number. The Lab Report shows the number in ten '
+        'seconds, with no form, no email gate and no call booked on the back of it.</p>'
+        '<p>If the score is bad and you want it fixed, we do that for a living. If the score is good, you just '
+        'learned something free. Either outcome is fine by us.</p>'
+        '<h2>What it measures</h2>'
+        '<ul>'
+        '<li><strong>Performance.</strong> How fast the page actually renders on a mid-range phone, not on a developer laptop.</li>'
+        '<li><strong>Accessibility.</strong> Whether the page can be read and used by people with screen readers, low vision or slow connections.</li>'
+        '<li><strong>Best practices and SEO.</strong> The fundamentals that decide whether search engines can read and trust the page.</li>'
+        '</ul>'
+        '<h2>What it does not do</h2>'
+        '<ul>'
+        '<li>It does not sign you up to anything. There is no email field, because there is nothing to send you.</li>'
+        '<li>It does not publish your result. Scans are visible only to the person who ran them.</li>'
+        '<li>It does not replace a real audit. It is a fast, honest first look, not a 40-page PDF.</li>'
+        '</ul>'
+        '<h2>Powered by</h2>'
+        '<p>Google PageSpeed Insights, running on free-tier infrastructure. That is why results are cached for '
+        '24 hours and rate-limited — if the scanner is busy, try again in a minute.</p>'
+        '</div></div></section>'
+        + cta("Want the fixes, not just the score?",
+              "Send us the URL you just scanned. We will tell you which three changes would move the number most, and what they cost.")
+    )
+    return dict(path="/lab-report/",
+                title="Free Website Lab Report — Speed, Accessibility & SEO | The Flow Labs",
+                og_title="Free website Lab Report | The Flow Labs",
+                description="Scan any URL and get a plain-English score for speed, accessibility and search readiness. Free, no signup, no email gate, results cached for 24 hours.",
                 crumbs=crumb, hero=h, body=b)
 
 def page_contact():
@@ -991,18 +1183,19 @@ def page_contact():
          "Submit your requirements, send an email, or message us directly. We will review your project and reply within 48 hours with scope, timeline, and pricing.")
     b = (
         '<section id="enquiry" style="padding-top:20px"><div class="wrap">'
-        + ENQUIRY_FORM +
+        + SLOT_METER + EMAIL_CARD + ENQUIRY_FORM +
         '</div></section>'
         + CONTACT_OTHER
         + cta("Want to explore our work first?",
               "Review our selected <a href='/work/'>case studies</a> and our <a href='/services/'>services overview</a>. We look forward to hearing about your project.")
     )
     return dict(path="/contact/",
-                title="Start a Project: Contact The Flow Labs (Bhubaneswar)",
+                title="Contact — Start a Project | The Flow Labs",
                 og_title="Start a project | The Flow Labs",
-                description="Tell The Flow Labs what you are building: websites, AI, automation or custom software. Enquiry form with an honest 48h reply from the founders.",
+                description="Tell The Flow Labs what you are building: a website, a system or an AI workflow. Two December build slots open, honest 48-hour reply from the founders.",
                 crumbs=crumb, hero=h, body=b,
-                footer_note=CONTACT_JS)
+                footer_note=CONTACT_JS,
+                cms={"label": "contact-hero-label", "title": "contact-hero-title", "sub": "contact-hero-subtitle"})
 
 def page_privacy():
     crumb = [("/", "Home"), (None, "Privacy Policy")]
@@ -1011,14 +1204,24 @@ def page_privacy():
          "What we collect when you enquire, why, how long we keep it and how to make us forget you.")
     b = (
         '<section><div class="wrap"><div class="prose">'
-        '<p>Last updated: ' + YEAR + '. This applies to theflowlabs.online and every enquiry you '
-        'send us from it.</p>'
+        '<p>Last updated: ' + YEAR + '. This applies to www.theflowlabs.online and every enquiry or Lab Report '
+        'you send us from it.</p>'
         '<h2>What we collect</h2>'
         '<ul>'
         '<li><strong>What you type into our forms:</strong> your name, email or phone, project type, project description and budget range.</li>'
         '<li><strong>Technical metadata, automatically:</strong> your browser’s user-agent string and the page source tag (for understanding where enquirers came from).</li>'
+        '<li><strong>Anonymous page views:</strong> we count visits to understand which pages are useful. This is cookie-less: no cookies, no localStorage, no fingerprinting, no IP address stored, and no personal data attached.</li>'
         '</ul>'
-        '<p>We do not run advertising trackers or analytics cookies today.</p>'
+        '<p>We do not run advertising trackers, third-party analytics, or analytics cookies.</p>'
+        '<h2>The Lab Report</h2>'
+        '<p>The Lab Report is a free public-URL scanner. It fetches the page you paste and scores it with Google '
+        'PageSpeed Insights, then shows you the result. We store the URL you scanned and the returned scores for '
+        '24 hours so repeat scans are fast and so we do not hammer the free API. We do not store your IP address '
+        'beyond the five-minute rate limit check, and we never attach a scan to an enquiry unless you send one. '
+        'Nothing about your site is published.</p>'
+        '<h2>Analytics in plain language</h2>'
+        '<p>Each page view creates one anonymous row: the path, the referring site’s domain, a coarse device category (mobile, tablet, desktop) and a timestamp. '
+        'We cannot identify you from it, and it is never linked to an enquiry you submit. If your browser sends Do Not Track, we skip the count entirely.</p>'
         '<h2>Why we collect it</h2>'
         '<ul>'
         '<li>To reply to your enquiry with scope, timeline and pricing.</li>'
@@ -1050,9 +1253,9 @@ def page_privacy():
 
 # --------------------------------------------------------------------- blog --
 BLOG_META = [
-    ("/blog/ai-automation-for-bhubaneswar-businesses/",
-     "How Businesses in Bhubaneswar Can Use AI Automation | The Flow Labs",
-     "AI automation for Bhubaneswar businesses explained practically: what to automate first, what it costs, and what to expect. No hype, founder-written."),
+    ("/blog/ai-automation-for-small-businesses/",
+     "How Small Businesses Can Use AI Automation | The Flow Labs",
+     "AI automation for small businesses explained practically: what to automate first, what it costs, and what to expect. No hype, founder-written."),
     ("/blog/custom-software-vs-ready-made-software/",
      "Custom Software vs Ready-Made: A Business Decision Guide | The Flow Labs",
      "Custom software vs ready-made software compared honestly: cost, control, timelines and the five questions that actually decide which one you need."),
@@ -1077,28 +1280,28 @@ def blog_index():
          + cta("Reading is nice. Building is better.",
                "When you are done with the theory, tell us what you want to build and we will scope it honestly."))
     return dict(path="/blog/",
-                title="The Flow Labs Blog: Practical AI, Websites & Software",
+                title="Blog — The Flow Labs",
                 og_title="The Flow Labs blog: practical AI and software",
-                description="Practical articles on AI automation, chatbots, websites and custom software for businesses in Bhubaneswar and India. Written by the founders.",
+                description="Practical articles on AI automation, chatbots, websites and custom software. Written by the founders from production experience.",
                 crumbs=crumb, hero=h, body=b)
 
 def article1():
     path = BLOG_META[0][0]
-    crumb = [("/", "Home"), ("/blog/", "Blog"), (None, "AI automation for Bhubaneswar businesses")]
+    crumb = [("/", "Home"), ("/blog/", "Blog"), (None, "AI automation for small businesses")]
     h = (crumb, "Founder-written · " + YEAR,
-         'How businesses in Bhubaneswar can use AI automation',
-         "A practical walkthrough of what to automate first, what to leave alone, and what it actually costs to get moving. Written for local business owners, not tech conferences.")
+         'How small businesses can use AI automation',
+         "A practical walkthrough of what to automate first, what to leave alone, and what it actually costs to get moving. Written for business owners, not tech conferences.")
     b = (
         '<section><div class="wrap"><div class="prose">'
         '<p><em>Author: The Flow Labs (founder-written). Last updated: ' + YEAR + '.</em></p>'
-        '<p>In many growing businesses in Bhubaneswar, day-to-day operations rely on WhatsApp messages, phone calls, '
+        '<p>In many growing businesses, day-to-day operations rely on WhatsApp messages, phone calls, '
         'and disconnected spreadsheets managed by one person. AI automation often sounds complex '
         'and inaccessible as a solution. In practice, starting with the right operational bottleneck makes it practical and cost-effective. This guide walks '
         'through it from the perspective of what we have actually shipped: a live booking platform '
         '(Droovee), an AI support triage console (FlowOps) and a fleet intelligence console (Drishti).</p>'
         '<h2>Start here: the processes worth automating first</h2>'
         '<ul>'
-        '<li><strong>The same question, asked a hundred times.</strong> Prices, timings, “are you available on Ganesh Puja”, capture on your site or Instagram and answer automatically. This is the classic first automation because it is concentrated pain.</li>'
+        '<li><strong>The same question, asked a hundred times.</strong> Prices, timings, availability, “do you deliver to my area” — capture the question on your site or Instagram and answer automatically. This is the classic first automation because it is concentrated pain.</li>'
         '<li><strong>Data re-typing between two systems.</strong> Enquiry form → spreadsheet → follow-up task requires a human relaying it every single time. Crack it and speed changes immediately.</li>'
         '<li><strong>Follow-up reminders.</strong> Most local businesses lose revenue not on leads but on the follow-up that never came.</li>'
         '<li><strong>Daily reporting.</strong> Assembling yesterday’s numbers should be a file or dashboard you open, not a phone call tour.</li>'
@@ -1122,20 +1325,20 @@ def article1():
         '<li>Week 3: get it scoped with a fixed quote. Ask what happens when the automation meets an edge case.</li>'
         '<li>Week 4: ship it for one team, one week, then decide on the next. The goal is not a revolution; it is a chain.</li>'
         '</ul>'
-        '<h2>Local advantage you should not ignore</h2>'
-        '<p>Bhubaneswar’s market rewards speed: customers switch to the business that responds first. '
+        '<h2>The advantage you should not ignore</h2>'
+        '<p>Small markets reward speed: customers switch to the business that responds first. '
         'AI automation is fundamentally about responsiveness and consistency. Adopting intelligent workflows today creates '
         'a lasting operational advantage for your business.</p>'
         '<p>Want to scope your first automation without jargon? '
-        '<a href="/services/ai-automation-bhubaneswar/">Here is how we handle it</a>, or call us directly: '
+        '<a href="/services/ai-automation/">Here is how we handle it</a>, or email us: '
         '<a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>.</p>'
         '</div></div></section>'
         + cta("Ready to automate your first operational workflow?",
               "Identify the repetitive process that consumes your team's time. We will scope an effective solution with an upfront fixed quote."))
-    return dict(path=path, title=BLOG_META[0][1], og_title="AI automation for Bhubaneswar businesses",
+    return dict(path=path, title=BLOG_META[0][1], og_title="AI automation for small businesses",
                 description=BLOG_META[0][2],
                 crumbs=crumb, hero=h, body=b,
-                article={"headline": "How Businesses in Bhubaneswar Can Use AI Automation", "date": YEAR})
+                article={"headline": "How Small Businesses Can Use AI Automation", "date": YEAR})
 
 def article2():
     path = BLOG_META[1][0]
@@ -1164,7 +1367,7 @@ def article2():
         'general-purpose ERP: now THAT is a money-eater.</p>'
         '<p>Sharp tip: build the boring 90% with proven tools, and spend the custom budget on the special '
         '10% that makes your business YOURS. This is exactly how we approach scoping on '
-        '<a href="/services/custom-software-development-bhubaneswar/">our custom software service</a>.</p>'
+        '<a href="/services/custom-software-development/">our custom software service</a>.</p>'
         '<h2>A hybrid: practice what you preach</h2>'
         '<ul>'
         '<li>Internal tools built custom, glued to your existing systems with APIs, NOT a full platform rebuild.</li>'
@@ -1233,7 +1436,7 @@ def article3():
         '</ul>'
         '<p>When you ship it, submit to Google Search Console and move on to actual marketing. A website '
         'is a stage, not the show.</p>'
-        '<p>Want this planned with you directly? <a href="/services/web-development-bhubaneswar/">Here is our '
+        '<p>Want this planned with you directly? <a href="/services/web-development/">Here is our '
         'web development service</a>, or start a conversation at '
         '<a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>.</p>'
         '</div></div></section>'
@@ -1249,19 +1452,19 @@ PAGES += [
     page_ai_automation(), page_web_dev(), page_custom_software(), page_chatbots(),
     page_droovee(), page_drishti(), page_flowops(), page_interview_copilot(),
     page_bhuverify(), page_carbon_coach(), page_qr_platform(),
-    page_about(), page_contact(), page_privacy(),
+    page_about(), page_contact(), page_privacy(), page_lab_report(),
     blog_index(), article1(), article2(), article3(),
 ]
 
 SERVICE_META = {
-    "/services/ai-automation-bhubaneswar/": {"name": "AI Automation & Workflow Integration", "serviceType": "AI automation consulting and implementation"},
-    "/services/web-development-bhubaneswar/": {"name": "Website & Web Application Development", "serviceType": "Web development"},
-    "/services/custom-software-development-bhubaneswar/": {"name": "Custom Software Development", "serviceType": "Custom software development"},
+    "/services/ai-automation/": {"name": "AI Automation & Workflow Integration", "serviceType": "AI automation consulting and implementation"},
+    "/services/web-development/": {"name": "Website & Web Application Development", "serviceType": "Web development"},
+    "/services/custom-software-development/": {"name": "Custom Software Development", "serviceType": "Custom software development"},
     "/services/ai-chatbot-development/": {"name": "AI Chatbot & Assistant Development", "serviceType": "AI chatbot development and integration"},
 }
 
 # -------------------------------------------------------------------- emit ---
-SITEMAP_ROOT_EXTRA = ["/", "/services/", "/work/", "/blog/", "/about/", "/contact/", "/privacy-policy/"]
+SITEMAP_ROOT_EXTRA = ["/", "/services/", "/work/", "/blog/", "/about/", "/contact/", "/lab-report/", "/privacy-policy/"]
 
 TEMPLATE = '''<!DOCTYPE html>
 <html lang="en">
@@ -1281,35 +1484,30 @@ TEMPLATE = '''<!DOCTYPE html>
 <meta name="twitter:title" content="{og_title}" />
 <meta name="twitter:description" content="{description}" />
 <meta name="twitter:image" content="{og_img}" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23C8552B'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-size='15' font-weight='bold' fill='%23fff' text-anchor='middle'%3EFL%3C/text%3E%3C/svg%3E" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233B82F6'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-size='15' font-weight='bold' fill='%23FFFFFF' text-anchor='middle'%3EFL%3C/text%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="/assets/site.config.js"></script>
-<link rel="stylesheet" href="/assets/site.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
+<script src="/assets/site.config.js?v=7"></script>
+<link rel="stylesheet" href="/assets/site.css?v=7">
 {jsonld}
 </head>
-<body>
+<body data-page="{page_slug}">
 
-<div class="glow"></div>
-<div class="grid-fade"></div>
-
-<header id="header">
-  <div class="wrap">
-    <nav>
-      <a href="/" class="logo"><span class="mark">FL</span> The Flow Labs</a>
-      <div class="nav-links" id="navLinks">
-        <a href="/work/">Work</a>
-        <a href="/services/">Services</a>
-        <a href="/about/">About</a>
-        <a href="/blog/">Blog</a>
-        <a href="/contact/">Contact</a>
-      </div>
-      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
-      <a href="/contact/" class="btn btn-primary btn-sm">Start a project</a>
-    </nav>
+<header class="nav" id="nav">
+  <div class="container nav-inner">
+    <a href="/" class="nav-logo">The Flow Labs<span class="accent-dot">.</span></a>
+    <div class="nav-links" id="nav-links">
+      <a href="/work/">Work</a>
+      <a href="/services/">Services</a>
+      <a href="/lab-report/">Lab Report</a>
+      <a href="/about/">About</a>
+      <a href="/blog/">Blog</a>
+      <a href="/contact/" class="nav-cta">Start a project</a>
+    </div>
+    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
@@ -1318,49 +1516,60 @@ TEMPLATE = '''<!DOCTYPE html>
 {body_html}
 </main>
 
-<footer>
-  <div class="wrap">
-    <div class="star-accent" aria-hidden="true">
-      <div class="star-accent-symbol"></div>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <a href="/" class="nav-logo">The Flow Labs<span class="accent-dot">.</span></a>
+        <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four builds a month, every layer in-house.</p>
+        <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Navigate</h5>
+          <a href="/work/">Work</a>
+          <a href="/services/">Services</a>
+          <a href="/lab-report/">Lab Report</a>
+          <a href="/about/">About</a>
+          <a href="/blog/">Blog</a>
+        </div>
+        <div class="footer-col">
+          <h5>Connect</h5>
+          <a href="/contact/">Start a project</a>
+          <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
+          <a href="/contact/">hello@theflowlabs.online</a>
+        </div>
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/services/">What we build</a>
+          <a href="/privacy-policy/">Privacy Policy</a>
+          <a href="/lab-report/">Free site report</a>
+        </div>
+      </div>
     </div>
-
-    <div class="footer-cols">
-      <div class="footer-col">
-        <h4>Navigation</h4>
-        <a href="/work/">Work</a>
-        <a href="/services/">Services</a>
-        <a href="/about/">About</a>
-        <a href="/blog/">Blog</a>
-        <a href="/contact/">Contact</a>
-      </div>
-      <div class="footer-col">
-        <h4>Connect</h4>
-        <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-        <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
-        <span class="footer-note">Bhubaneswar, Odisha, India</span>
-      </div>
-      <div class="footer-col">
-        <h4>Legal</h4>
-        <a href="/privacy-policy/">Privacy Policy</a>
-        <span class="footer-note">© <span id="year"></span> The Flow Labs.</span>
-        <span class="footer-note">All rights reserved.</span>
-      </div>
+    <div class="footer-bottom" style="border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem">
+      <span>© <span id="year">2026</span> The Flow Labs. All rights reserved.</span>
+      <span class="footer-powered">Built and maintained in-house</span>
     </div>
   </div>
 </footer>
 {footer_note}
-<script src="/assets/site.js"></script>
+<script src="/assets/site.js?v=7"></script>
+<script src="/assets/site-cms.js" defer></script>
+<script src="/assets/site-track.js" defer></script>
 </body>
 </html>
 '''
 
+SLUGS = {"/": "home", "/about/": "about", "/services/": "services", "/contact/": "contact", "/lab-report/": "lab-report"}
+
 def emit():
-    url_entries = ["/", "/services/", "/work/", "/blog/", "/about/", "/contact/", "/privacy-policy/"]
+    url_entries = list(SITEMAP_ROOT_EXTRA)
     written = []
     todo_rx = __import__("re").compile(r"\[TODO-OWNER:([^\]]+)\]")
     for p in PAGES:
         orbzz, pill, h1, sub = p["hero"]
-        hero_html = hero(orbzz, pill, h1, sub)
+        hero_html = hero(orbzz, pill, h1, sub, p.get("cms"))
         canonical = BASE + p["path"]
         jlds = [org_min(), crumb_jsonld(p["crumbs"])]
         if p["path"] in SERVICE_META:
@@ -1368,9 +1577,7 @@ def emit():
             jlds.append({"@context": "https://schema.org", "@type": "Service",
                          "name": s["name"], "description": p["description"],
                          "provider": {"@type": "Organization", "name": "The Flow Labs", "url": BASE + "/", "email": "hello@theflowlabs.online"},
-                         "areaServed": [{"@type": "City", "name": "Bhubaneswar"},
-                                        {"@type": "State", "name": "Odisha"},
-                                        {"@type": "Country", "name": "India"}],
+                         "areaServed": [{"@type": "Country", "name": "India"}],
                          "serviceType": s["serviceType"]})
         if p.get("article"):
             a = p["article"]
@@ -1386,6 +1593,7 @@ def emit():
             og_title=p["og_title"], og_img=OG_IMG,
             jsonld=jsonld, hero_html=hero_html, body_html=p["body"],
             footer_note=p.get("footer_note", ""),
+            page_slug=SLUGS.get(p["path"], ""),
         )
         # TODO-OWNER markers stay out of public copy (kept as code comments)
         html = todo_rx.sub(lambda m: "<!-- TODO-OWNER: " + m.group(1).strip() + " -->", html)
@@ -1396,10 +1604,14 @@ def emit():
         written.append(p["path"])
         url_entries.append(p["path"])
 
-    # sitemap
+    # sitemap (dedupe: root extras and generated pages overlap)
+    seen = []
+    for u in url_entries:
+        if u not in seen:
+            seen.append(u)
     urls_xml = "".join(
         f"<url><loc>{BASE}{u if u.endswith('/') else u + '/'}</loc><lastmod>{YEAR}</lastmod></url>"
-        for u in url_entries)
+        for u in seen)
     sitemap = ('<?xml version="1.0" encoding="UTF-8"?>\r\n'
                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\r\n' + urls_xml + "\r\n</urlset>\r\n")
     with io.open(os.path.join(os.getcwd(), "sitemap.xml"), "w", encoding="utf-8", newline="") as f:

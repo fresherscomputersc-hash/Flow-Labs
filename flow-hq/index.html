@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Flow HQ — The Flow Labs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233B82F6'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-size='14' font-weight='bold' fill='%23F0F0F2' text-anchor='middle'%3EFL%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div class="auth-wrap" id="authView">
+  <form class="auth-card" id="loginForm" autocomplete="on">
+    <p class="auth-brand">Flow HQ<span>.</span></p>
+    <p class="auth-sub">The Flow Labs — internal console</p>
+    <div class="auth-error" id="authError" role="alert"></div>
+    <div class="admin-form">
+      <div class="admin-field">
+        <label for="loginEmail">Email</label>
+        <input class="admin-input" id="loginEmail" name="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="admin-field">
+        <label for="loginPassword">Password</label>
+        <input class="admin-input" id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="admin-btn primary" type="submit" id="loginBtn">Sign in</button>
+    </div>
+    <p class="auth-note">Authorized founders only. Accounts are managed in Supabase Auth.</p>
+  </form>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="admin-layout" id="appView" hidden>
+  <aside class="admin-sidebar">
+    <div class="admin-brand">Flow HQ<span>.</span><small>The Flow Labs</small></div>
+    <nav class="admin-nav" id="adminNav" aria-label="Admin sections">
+      <button type="button" data-tab="dashboard" class="active">Dashboard</button>
+      <button type="button" data-tab="leads">Leads</button>
+      <button type="button" data-tab="visitors">Visitors</button>
+      <button type="button" data-tab="content">Content</button>
+      <button type="button" data-tab="settings">Settings</button>
+    </nav>
+    <div class="admin-sidebar-foot">
+      <div class="admin-user" id="adminUser"></div>
+      <button type="button" class="admin-btn ghost" id="logoutBtn">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <h1 id="viewTitle">Dashboard</h1>
+        <p id="viewSubtitle">Site health at a glance.</p>
+      </div>
+      <a class="admin-btn ghost" href="/" target="_blank" rel="noopener">View public site ↗</a>
+    </header>
+
+    <!-- Dashboard -->
+    <section class="admin-view active" id="view-dashboard">
+      <div class="admin-stats" id="dashboardStats">
+        <div class="admin-stat"><strong>—</strong><span>Loading</span></div>
+      </div>
+      <div class="admin-grid-2">
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div><h2>Recent leads</h2><p>Latest five enquiries.</p></div>
+            <button type="button" class="admin-btn ghost" data-goto="leads">All leads</button>
+          </div>
+          <div id="recentLeads"><p class="admin-empty">Loading…</p></div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div><h2>Traffic</h2><p>Page views by period.</p></div>
+            <button type="button" class="admin-btn ghost" data-goto="visitors">Details</button>
+          </div>
+          <div class="admin-bars" id="dashboardTraffic"><p class="admin-empty">Loading…</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Leads -->
+    <section class="admin-view" id="view-leads">
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <div><h2>All leads</h2><p id="leadsMeta">Newest first.</p></div>
+          <div class="admin-actions">
+            <button type="button" class="admin-btn" id="refreshLeads">Refresh</button>
+          </div>
+        </div>
+        <div class="admin-table-wrap" id="leadsTable"><p class="admin-empty">Loading…</p></div>
+        <div class="admin-actions" style="margin-top:1rem">
+          <button type="button" class="admin-btn" id="leadsPrev">Previous</button>
+          <button type="button" class="admin-btn" id="leadsNext">Next</button>
+          <span class="spacer"></span>
+          <span class="admin-bar-value" id="leadsPageLabel"></span>
+        </div>
+        <div id="leadDetail"></div>
+      </div>
+    </section>
+
+    <!-- Visitors -->
+    <section class="admin-view" id="view-visitors">
+      <div class="admin-stats" id="visitorStats">
+        <div class="admin-stat"><strong>—</strong><span>Loading</span></div>
+      </div>
+      <div class="admin-grid-2">
+        <div class="admin-card">
+          <div class="admin-card-head"><div><h2>Top pages</h2><p>Most viewed paths.</p></div></div>
+          <div class="admin-bars" id="topPages"><p class="admin-empty">Loading…</p></div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-head"><div><h2>Referrers</h2><p>Where visitors came from.</p></div></div>
+          <div class="admin-bars" id="topReferrers"><p class="admin-empty">Loading…</p></div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-head"><div><h2>Devices</h2><p>Derived from screen width.</p></div></div>
+          <div class="admin-bars" id="deviceSplit"><p class="admin-empty">Loading…</p></div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-head"><div><h2>Notes</h2><p>What this data means.</p></div></div>
+          <p class="admin-hint"><strong>No cookies.</strong> A row is one page view. No IP address, device ID or personal data is stored. Bots and admin pages are skipped.</p>
+          <button type="button" class="admin-btn" id="refreshVisitors">Refresh</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content -->
+    <section class="admin-view" id="view-content">
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <div><h2>Content overrides</h2><p>Blank fields fall back to the hardcoded HTML.</p></div>
+          <div class="admin-actions">
+            <select class="admin-select" id="contentPage" aria-label="Page"></select>
+          </div>
+        </div>
+        <p class="admin-hint">Changes go live within about 60 seconds because the public endpoint is cached. Use <strong>Open page</strong> after saving to verify.</p>
+        <div class="content-grid">
+          <form class="admin-form" id="contentForm"></form>
+          <div>
+            <div class="admin-actions" style="margin-bottom:0.75rem">
+              <a class="admin-btn ghost" id="contentOpen" href="/" target="_blank" rel="noopener">Open page ↗</a>
+              <button type="button" class="admin-btn danger" id="contentReset">Reset page</button>
+            </div>
+            <div class="content-preview" id="contentPreview"><p class="admin-empty">Select a page.</p></div>
+          </div>
+        </div>
+        <div class="admin-actions" style="margin-top:1rem">
+          <button type="submit" form="contentForm" class="admin-btn primary" id="contentSave">Save changes</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="admin-view" id="view-settings">
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <div><h2>Site settings</h2><p>Accent, section visibility and SEO defaults.</p></div>
+        </div>
+        <form class="admin-form" id="settingsForm">
+          <div class="settings-section">
+            <h3>Appearance</h3>
+            <div class="admin-field">
+              <label for="accentColor">Accent colour</label>
+              <div class="color-row">
+                <input type="color" id="accentColor" value="#3B82F6">
+                <input class="admin-input" id="accentHex" type="text" maxlength="7" spellcheck="false">
+              </div>
+              <small>Applied as the CSS custom property on the public site.</small>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Homepage sections</h3>
+            <div id="sectionToggles"></div>
+          </div>
+
+          <div class="settings-section">
+            <h3>SEO</h3>
+            <div id="seoFields" class="admin-form"></div>
+            <p class="admin-hint">SEO overrides are applied by JavaScript, so search crawlers may keep seeing the static build defaults. Edit <code>tools/site/build.py</code> for permanent SEO changes.</p>
+          </div>
+
+          <button type="submit" class="admin-btn primary" id="settingsSave">Save settings</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="admin-toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/assets/site.config.js"></script>
+<script src="content-schema.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

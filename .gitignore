@@ -4,3 +4,33 @@ __pycache__/
 data/out/_tmp/
 .DS_Store
 Thumbs.db
+
+# local secrets and tooling
+.env
+.env.local
+.env*.local
+.vercel
+*.pem
+*.key
+client_secret*.json
+gtoken.json
+
+# scratch/redesign staging copy (not part of the deploy)
+_redesign_temp/
+build.log
+
+# internal business ops — kept out of the public site repo
+research/
+content/
+leads/
+_palettes/
+tools/lead-factory/
+tools/content-factory/
+LEAD-GEN-WORKFLOW.md
+outreach-templates.md
+loot-drop-ideas.csv
+_diag.py
+_sched_check.py
+_score_leads.py
+AUTOPSY.bat
+GENERATE-CONTENT.bat
