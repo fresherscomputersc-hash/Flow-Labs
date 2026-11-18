@@ -301,7 +301,7 @@ grant execute on function public.visitor_stats() to authenticated;
 -- 8. Default settings (optional; admin upserts the same keys)
 -- ------------------------------------------------------------
 insert into public.site_settings (key, value) values
-  ('accent_color', '#6EA8FF'),
+  ('accent_color', '#3B82F6'),
   ('section_home_work', 'on'),
   ('section_home_process', 'on'),
   ('section_home_faq', 'on'),
@@ -316,7 +316,7 @@ insert into public.site_settings (key, value) values
   ('seo_title_about', 'About — A Three-Person Engineering Studio | The Flow Labs'),
   ('seo_description_about', 'Meet The Flow Labs: Smruti Ranjan (Founder), Biswash and Arpita (Co-Founders). A three-person studio building interfaces, systems and AI in-house.'),
   ('seo_title_services', 'Services — Interfaces, Systems & Intelligence | The Flow Labs'),
-  ('seo_description_services', 'Websites and web apps from ₹25,000, custom software from ₹75,000, AI automation from ₹40,000. One founder-led team, fixed price before code.'),
+  ('seo_description_services', 'Websites, custom software and AI automation from one founder-led team — each project priced individually with a fixed quote before code.'),
   ('seo_title_contact', 'Contact — Start a Project | The Flow Labs'),
   ('seo_description_contact', 'Tell The Flow Labs what you are building: a website, a system or an AI workflow. Two December build slots open, honest 48-hour reply from the founders.'),
   ('seo_title_lab_report', 'Free Website Lab Report — Speed, Accessibility & SEO | The Flow Labs'),

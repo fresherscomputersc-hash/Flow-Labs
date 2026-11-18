@@ -687,7 +687,7 @@ window.setTimeout(function () {
 
   function mailtoLink(name, cont, type, idea, budget) {
     const body = `Name: ${name}\nContact: ${cont}\nProject Category: ${type}\nEstimated Budget: ${budget || '-'}\nSource: ${leadSrc}\n\nProject Requirements:\n${idea}`;
-    return 'mailto:theflowlabs01@gmail.com?subject=' +
+    return 'mailto:hello@theflowlabs.online?subject=' +
       encodeURIComponent('New project inquiry | The Flow Labs') +
       '&body=' + encodeURIComponent(body);
   }

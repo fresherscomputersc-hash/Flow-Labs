@@ -108,9 +108,17 @@ const supabaseConfig = () => {
   return { url: url.replace(/\/+$/, ''), key };
 };
 
+// Cards written before the findings fix carry a "did not return detail"
+// placeholder. Treat them as stale so the old copy cannot sit in the cache
+// for 24 hours after a deploy.
+const isStaleCard = (payload) => {
+  const findings = (payload && payload.findings) || [];
+  return findings.some((line) => String(line).indexOf('did not return detail') > -1);
+};
+
 const cacheGet = async (key) => {
   const local = memCache.get(key);
-  if (local && Date.now() - local.at < CACHE_MS) return local.data;
+  if (local && Date.now() - local.at < CACHE_MS && !isStaleCard(local.data)) return local.data;
 
   const sb = supabaseConfig();
   if (!sb) return null;
@@ -126,6 +134,7 @@ const cacheGet = async (key) => {
     const row = Array.isArray(rows) ? rows[0] : null;
     if (!row || !row.payload) return null;
     if (Date.now() - new Date(row.created_at).getTime() > CACHE_MS) return null;
+    if (isStaleCard(row.payload)) return null;
     memCache.set(key, { at: Date.now(), data: row.payload });
     return row.payload;
   } catch (e) {
@@ -299,23 +308,32 @@ const heuristicScan = async (target) => {
   };
 };
 
-const collectFindings = (categories) => {
+// Lighthouse keeps the per-audit results in lighthouseResult.audits and the
+// category -> audit mapping in lighthouseResult.categories[*].auditRefs.
+// Reading categories[*].audits (the old shape here) always came back empty,
+// which is why every scan fell through to the "no detail" copy.
+const collectFindings = (lh) => {
   const findings = [];
   const seen = new Set();
+  const audits = (lh && lh.audits) || {};
+  const categories = (lh && lh.categories) || {};
 
-  const order = ['performance', 'accessibility', 'best-practices', 'seo'];
-  for (const name of order) {
-    const audits = (categories[name] || {}).audits || {};
-    Object.keys(audits).forEach((id) => {
-      const audit = audits[id];
-      if (!audit || audit.score === null || audit.score === undefined) return;
-      if (audit.score >= 0.9) return;
-      if (audit.scoreDisplayMode === 'informative' || audit.scoreDisplayMode === 'notApplicable') return;
-      if (!AUDIT_LABELS[id] || seen.has(id)) return;
-      seen.add(id);
-      findings.push({ weight: audit.score, text: AUDIT_LABELS[id] });
-    });
-  }
+  const relevant = new Set();
+  Object.keys(categories).forEach((name) => {
+    const refs = (categories[name] || {}).auditRefs || [];
+    refs.forEach((ref) => { if (ref && ref.id) relevant.add(ref.id); });
+  });
+
+  Object.keys(audits).forEach((id) => {
+    if (relevant.size && !relevant.has(id)) return;
+    const audit = audits[id];
+    if (!audit || audit.score === null || audit.score === undefined) return;
+    if (audit.score >= 0.9) return;
+    if (audit.scoreDisplayMode === 'informative' || audit.scoreDisplayMode === 'notApplicable') return;
+    if (!AUDIT_LABELS[id] || seen.has(id)) return;
+    seen.add(id);
+    findings.push({ weight: audit.score, text: AUDIT_LABELS[id] });
+  });
 
   findings.sort((a, b) => a.weight - b.weight);
   return findings.slice(0, 3).map((f) => f.text);
@@ -325,6 +343,12 @@ const FALLBACK_FINDINGS = [
   'The upstream scanner did not return detail this time.',
   'Run it again in a minute for a full read.',
   'Or email us the URL and we will run it by hand.'
+];
+
+const CLEAN_FINDINGS = [
+  'Nothing blocking found — the page passes every check this scan measures.',
+  'Scores come from Google Lighthouse on a mobile profile, run just now.',
+  'Results are cached for 24 hours. Fix something and re-run to compare.'
 ];
 
 module.exports = async (req, res) => {
@@ -418,7 +442,7 @@ module.exports = async (req, res) => {
   }
 
   const overall = Math.round(scores.reduce((sum, s) => sum + s.value, 0) / scores.length);
-  const findings = collectFindings(cats);
+  const findings = collectFindings(lh);
 
   const payload = {
     ok: true,
@@ -427,7 +451,7 @@ module.exports = async (req, res) => {
     grade: gradeFor(overall),
     overall,
     scores,
-    findings: findings.length ? findings : FALLBACK_FINDINGS,
+    findings: findings.length ? findings : (overall >= 85 ? CLEAN_FINDINGS : FALLBACK_FINDINGS),
     scannedAt: new Date().toISOString()
   };
 

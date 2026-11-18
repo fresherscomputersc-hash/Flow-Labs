@@ -57,7 +57,7 @@ window.CONTENT_SCHEMA = {
 };
 
 window.SETTINGS_DEFAULTS = {
-  accent_color: '#6EA8FF',
+  accent_color: '#3B82F6',
   section_home_work: 'on',
   section_home_process: 'on',
   section_home_faq: 'on',
