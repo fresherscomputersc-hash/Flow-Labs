@@ -40,7 +40,10 @@ This project is a multi-page static site built with modern vanilla HTML, CSS, an
 │   └── content-schema.js                    # CMS field registry shared with the admin UI
 ├── tools/site/
 │   ├── build.py                             # Sub-page generator, sitemap, and robots compiler
+│   ├── blog.py                              # Markdown blog pipeline (frontmatter + renderer)
 │   └── check_cms_keys.py                    # Verifies every data-cms key has a schema field
+├── blog-src/                                # One Markdown file per blog post (source of truth)
+│   └── README.md                            # Frontmatter keys, Markdown subset, publishing steps
 ├── api/
 │   ├── notify.js                            # Serverless endpoint for SMTP email notifications
 │   ├── content.js                           # Public CMS overrides
@@ -105,6 +108,28 @@ This compiles:
 `check_cms_keys.py` fails if any `data-cms` attribute has no matching field in `flow-hq/content-schema.js`, if a schema field has no home on the page, or if a `data-section` toggle has no setting.
 
 The homepage (`index.html`) is hand-written and is not regenerated.
+
+---
+
+## Publishing a Blog Post
+
+Blog posts are Markdown files in `blog-src/`, not pages in `build.py`. To publish:
+
+1. **Create the file.** Copy an existing post in `blog-src/` and rename it to the URL slug you want, e.g. `why-we-quote-before-we-code.md`.
+2. **Fill in the frontmatter.** `title` and `description` are required; `date`, `slug`, `h1`, `subtitle`, `pill`, `crumb`, `cta_h2`, and `cta_p` are optional and documented in [`blog-src/README.md`](blog-src/README.md). Set `draft: true` while it is unfinished.
+3. **Write the body in Markdown.** Supported: paragraphs, `##`/`###` headings, `-` and `1.` lists, `**bold**`, `*italic*`, `` `code` ``, `[links](/path/)`, `![images](/assets/blog/x.png)`, `>` quotes, and fenced code blocks. Raw HTML is escaped.
+4. **Build and check.**
+   ```bash
+   python tools/site/build.py
+   python tools/site/check_cms_keys.py
+   ```
+   The first should print `generated N pages`; the second should print `all CMS and section keys resolve`.
+5. **Preview.** Open `blog/<slug>/index.html` in a browser. Confirm the card appears on `blog/index.html` and the URL is in `sitemap.xml`.
+6. **Publish.** `git add -A`, commit, and push to `main`. Vercel rebuilds and the post goes live.
+
+Each post automatically gets the shared page shell, breadcrumbs, canonical URL, OpenGraph tags, `Article` JSON-LD, a sitemap entry, and the blog index card. Images live in `assets/blog/` and are referenced root-relative.
+
+There is no blog editor in Flow HQ yet. Flow HQ manages copy for the four core pages only.
 
 ---
 

@@ -8,7 +8,10 @@ Emits every folder in PAGES plus sitemap.xml and robots.txt.
 Style/JS live in assets/site.css and assets/site.js (shared with index.html).
 """
 from __future__ import annotations
-import io, os, json
+import io, os, json, sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import blog  # noqa: E402  markdown blog pipeline (tools/site/blog.py)
 
 BASE  = "https://www.theflowlabs.online"
 OG_IMG = BASE + "/assets/work-droovee.png"
@@ -1252,26 +1255,21 @@ def page_privacy():
                 crumbs=crumb, hero=h, body=b)
 
 # --------------------------------------------------------------------- blog --
-BLOG_META = [
-    ("/blog/ai-automation-for-small-businesses/",
-     "How Small Businesses Can Use AI Automation | The Flow Labs",
-     "AI automation for small businesses explained practically: what to automate first, what it costs, and what to expect. No hype, founder-written."),
-    ("/blog/custom-software-vs-ready-made-software/",
-     "Custom Software vs Ready-Made: A Business Decision Guide | The Flow Labs",
-     "Custom software vs ready-made software compared honestly: cost, control, timelines and the five questions that actually decide which one you need."),
-    ("/blog/how-to-plan-a-website-for-a-new-startup/",
-     "How to Plan a Website for a New Startup | The Flow Labs",
-     "How to plan a startup website that actually gets you customers: goals, must-have pages, copy, budget and common traps. Practical, founder-written."),
-]
+# -------------------------------------------------------------------- blog --
+# Posts live in blog-src/*.md — see blog-src/README.md for the format.
+# Add or edit a file there, run this script, and the page, the blog index
+# card, the sitemap entry and the Article JSON-LD are all generated.
+BLOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "blog-src")
+POSTS = blog.load_posts(BLOG_DIR, YEAR)
 
 def blog_index():
     crumb = [("/", "Home"), (None, "Blog")]
     h = (crumb, "Practical engineering",
          'The Flow Labs blog', "Practical perspectives on AI automation, web performance, and custom software development. Written by our founders based on production experience.")
     cards = "".join(
-        f'<div class="mini reveal"><h4><a href="{u}" style="color:inherit;text-decoration:none">{t.split(" | ")[0]}</a></h4>'
-        f'<p>{d}</p><p style="margin-top:10px"><a href="{u}" >Read →</a></p></div>'
-        for (u, t, d) in BLOG_META)
+        f'<div class="mini reveal"><h4><a href="{p["path"]}" style="color:inherit;text-decoration:none">{p["card"]}</a></h4>'
+        f'<p>{p["description"]}</p><p style="margin-top:10px"><a href="{p["path"]}" >Read →</a></p></div>'
+        for p in POSTS)
     b = ('<section><div class="wrap"><div class="mini-grid">' + cards + '</div>'
          '<div class="prose reveal" style="margin-top:26px"><p>Every article here has to pass one test: '
          'would this actually help someone running a business? If you want a topic covered, DM us on '
@@ -1285,175 +1283,13 @@ def blog_index():
                 description="Practical articles on AI automation, chatbots, websites and custom software. Written by the founders from production experience.",
                 crumbs=crumb, hero=h, body=b)
 
-def article1():
-    path = BLOG_META[0][0]
-    crumb = [("/", "Home"), ("/blog/", "Blog"), (None, "AI automation for small businesses")]
-    h = (crumb, "Founder-written · " + YEAR,
-         'How small businesses can use AI automation',
-         "A practical walkthrough of what to automate first, what to leave alone, and what it actually costs to get moving. Written for business owners, not tech conferences.")
-    b = (
-        '<section><div class="wrap"><div class="prose">'
-        '<p><em>Author: The Flow Labs (founder-written). Last updated: ' + YEAR + '.</em></p>'
-        '<p>In many growing businesses, day-to-day operations rely on WhatsApp messages, phone calls, '
-        'and disconnected spreadsheets managed by one person. AI automation often sounds complex '
-        'and inaccessible as a solution. In practice, starting with the right operational bottleneck makes it practical and cost-effective. This guide walks '
-        'through it from the perspective of what we have actually shipped: a live booking platform '
-        '(Droovee), an AI support triage console (FlowOps) and a fleet intelligence console (Drishti).</p>'
-        '<h2>Start here: the processes worth automating first</h2>'
-        '<ul>'
-        '<li><strong>The same question, asked a hundred times.</strong> Prices, timings, availability, “do you deliver to my area” — capture the question on your site or Instagram and answer automatically. This is the classic first automation because it is concentrated pain.</li>'
-        '<li><strong>Data re-typing between two systems.</strong> Enquiry form → spreadsheet → follow-up task requires a human relaying it every single time. Crack it and speed changes immediately.</li>'
-        '<li><strong>Follow-up reminders.</strong> Most local businesses lose revenue not on leads but on the follow-up that never came.</li>'
-        '<li><strong>Daily reporting.</strong> Assembling yesterday’s numbers should be a file or dashboard you open, not a phone call tour.</li>'
-        '</ul>'
-        '<h2>What not to automate (yet)</h2>'
-        '<ul>'
-        '<li><strong>The sensitive conversations.</strong> Price negotiation with a big client, an unhappy customer, a health or safety question. Hand those to a person. Every time.</li>'
-        '<li><strong>The process nobody can explain.</strong> If your own team cannot describe a workflow clearly, automating it will simply automate the confusion. Fix the process first.</li>'
-        '</ul>'
-        '<h2>What it costs, honestly</h2>'
-        '<p>Prices vary by scope, but honest rules of thumb: a focused single-flow automation (capturing enquiries and answering FAQs) costs less than what most businesses spend renovating their shop; '
-        'multi-system builds are phased. Our advice is always: <strong>fix the price before code starts</strong>, '
-        'and start with the leak that hurts the most.</p>'
-        '<h2>What it costs you in effort, honestly</h2>'
-        '<p>The founder does the scoping; your team does the testing with a real day’s data. If somebody '
-        'promises you AI with zero involvement from your side, they are selling you a demo, not a system.</p>'
-        '<h2>A 30-day starting plan</h2>'
-        '<ul>'
-        '<li>Week 1: list every repetitive thing your team did this week. Even 10 minutes matters.</li>'
-        '<li>Week 2: pick ONE. The one that repeats the most and hurts most often.</li>'
-        '<li>Week 3: get it scoped with a fixed quote. Ask what happens when the automation meets an edge case.</li>'
-        '<li>Week 4: ship it for one team, one week, then decide on the next. The goal is not a revolution; it is a chain.</li>'
-        '</ul>'
-        '<h2>The advantage you should not ignore</h2>'
-        '<p>Small markets reward speed: customers switch to the business that responds first. '
-        'AI automation is fundamentally about responsiveness and consistency. Adopting intelligent workflows today creates '
-        'a lasting operational advantage for your business.</p>'
-        '<p>Want to scope your first automation without jargon? '
-        '<a href="/services/ai-automation/">Here is how we handle it</a>, or email us: '
-        '<a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>.</p>'
-        '</div></div></section>'
-        + cta("Ready to automate your first operational workflow?",
-              "Identify the repetitive process that consumes your team's time. We will scope an effective solution with an upfront fixed quote."))
-    return dict(path=path, title=BLOG_META[0][1], og_title="AI automation for small businesses",
-                description=BLOG_META[0][2],
-                crumbs=crumb, hero=h, body=b,
-                article={"headline": "How Small Businesses Can Use AI Automation", "date": YEAR})
-
-def article2():
-    path = BLOG_META[1][0]
-    crumb = [("/", "Home"), ("/blog/", "Blog"), (None, "Custom software vs ready-made")]
-    h = (crumb, "Founder-written · " + YEAR,
-         'Custom software vs ready-made software',
-         "The five questions that genuinely decide between a SaaS subscription and custom-built software. A decision guide for businesses, written from both sides of the table.")
-    b = (
-        '<section><div class="wrap"><div class="prose">'
-        '<p><em>Author: The Flow Labs (founder-written). Last updated: ' + YEAR + '.</em></p>'
-        '<p>Somewhere between a spreadsheet and a fully custom system lives every real business decision. '
-        'You can subscribe to ready-made software and be up tomorrow, or get something built to match your '
-        'exact process. Here is the version of that conversation without the sales agenda.</p>'
-        '<h2>The five questions that actually decide it</h2>'
-        '<ol>'
-        '<li><strong>Is your process standard?</strong> Invoicing, payroll, basic CRM: standard everywhere. Buy. The more local, cultural or unique flavor is in your process, the more custom makes sense.</li>'
-        '<li><strong>Will the process be your competitive advantage?</strong> If your edge is HOW you do things, mandatory “adjusting” to vendor rules can destroy that edge.</li>'
-        '<li><strong>What is actually your volume?</strong> Five bills a month: ready-made. Five thousand records a day across fields: build.</li>'
-        '<li><strong>Do you need the data?</strong> Custom software gives you schema-level control. Many vendors give you reports, not data.</li>'
-        '<li><strong>Who maintains it?</strong> With SaaS, the vendor does. With custom, maintenance is a real line item. Decide consciously, not by glance.</li>'
-        '</ol>'
-        '<h2>Costs compared, with a straight face</h2>'
-        '<p>Ready-made is cheaper for the first year and then quietly charges you per seat, forever. '
-        'Custom looks expensive up front and usually saves money around year two or three, IF scope is '
-        'actually controlled. The number one mistake on both sides is custom that tries to become a '
-        'general-purpose ERP: now THAT is a money-eater.</p>'
-        '<p>Sharp tip: build the boring 90% with proven tools, and spend the custom budget on the special '
-        '10% that makes your business YOURS. This is exactly how we approach scoping on '
-        '<a href="/services/custom-software-development/">our custom software service</a>.</p>'
-        '<h2>A hybrid: practice what you preach</h2>'
-        '<ul>'
-        '<li>Internal tools built custom, glued to your existing systems with APIs, NOT a full platform rebuild.</li>'
-        '<li>Landing pages plus dashboards as phase one, depth later. You see ROI before the big spend.</li>'
-        '<li>Sub-process automation on top of tools you already pay for.</li>'
-        '</ul>'
-        '<h2>Our honest bias</h2>'
-        '<p>Yes, we build software, so read this with that in mind. But note, we advise multiple clients AWAY '
-        'from custom every quarter. The deciding factor above should always be a straight answer in a '
-        'scoping call, before you commit to any bill from anyone.</p>'
-        '<p>If you want the straight answer on your specific case, bring your process (yes, even screenshots '
-        'of the Excel), and we will tell you plainly.</p>'
-        '</div></div></section>'
-        + cta("Evaluating custom software for your business?",
-              "Schedule an introductory scoping call. If an off-the-shelf platform is better suited to your current stage, we will say so upfront."))
-    return dict(path=path, title=BLOG_META[1][1], og_title="Custom software vs ready-made software",
-                description=BLOG_META[1][2],
-                crumbs=crumb, hero=h, body=b,
-                article={"headline": "Custom Software vs Ready-Made Software: A Business Decision Guide", "date": YEAR})
-
-def article3():
-    path = BLOG_META[2][0]
-    crumb = [("/", "Home"), ("/blog/", "Blog"), (None, "Planning a startup website")]
-    h = (crumb, "Founder-written · " + YEAR,
-         'How to plan a website for a new startup',
-         "Goals, pages, copy, budget and the classic traps startups fall into with their first website. A practical plan you can actually follow this week.")
-    b = (
-        '<section><div class="wrap"><div class="prose">'
-        '<p><em>Author: The Flow Labs (founder-written). Last updated: ' + YEAR + '.</em></p>'
-        '<p>Most startup websites fail before a single line of code is written, because nobody decided '
-        'what the website is actually FOR. Not the, all-hands-will-love-it decisions. The practical ones. '
-        'Here is the plan we wish every founder would walk in with.</p>'
-        '<h2>Step 1: choose ONE primary job</h2>'
-        '<p>A website can pull off multiple jobs. It is way stronger when one job is primary:</p>'
-        '<ul>'
-        '<li><strong>Collect qualified leads</strong> (most service businesses),</li>'
-        '<li><strong>Convince investors/biz-dev visitors</strong> (fundraising context),</li>'
-        '<li><strong>Convert signups</strong> (product stage startups),</li>'
-        '<li><strong>Just exist credibly</strong> when someone Googles your name after meeting you.</li>'
-        '</ul>'
-        '<p>Choosing primary changes everything downstream: copy, structure, even speed budget.</p>'
-        '<h2>Step 2: the pages you actually need</h2>'
-        '<ul>'
-        '<li><strong>Home:</strong> what you do, for whom, and one obvious next step. If a visitor cannot answer “what does this thing do” in 5 seconds, nothing else matters.</li>'
-        '<li><strong>Proof:</strong> portfolio, case studies, or honest early-stage framing. Proof beats promises. (See how our <a href="/work/">work page</a> labels status honestly.)</li>'
-        '<li><strong>Services/product:</strong> concrete offer, not a vibe.</li>'
-        '<li><strong>Contact/enquiry:</strong> a form you will actually see. Test it yourself before launch, twice.</li>'
-        '</ul>'
-        '<p>Nine-page menus and 3-layer dropdowns are decoration. One page, one job.</p>'
-        '<h2>Step 3: write for the customer, not for the founder</h2>'
-        '<p>Common trap: pages that describe what the founder finds interesting and what the customer needs '
-        'to know, in the reverse of that order. Every sentence either helps a visitor decide, or gets cut. '
-        'One test: have a friend read the homepage for 8 seconds and say what you do. Whatever they say, '
-        'is the truth.</p>'
-        '<h2>Step 4: budget in honesty ranges</h2>'
-        '<p>DIY builders: cheap and slow-loading, or clunky. Agencies: fine, sometimes generic. '
-        'Founder-built (ours): fixed price, shipped fast, real engineering underneath. Do not blow the '
-        'budget on art direction before copy exists. Copy is the product on a website.</p>'
-        '<h2>Step 5: check before launch</h2>'
-        '<ul>'
-        '<li>Loads fast on a real budget phone with weak signal.</li>'
-        '<li>Form works, reply arrives, and auto-confirmation reads like a human wrote it.</li>'
-        '<li>Google can index it (title, description, sitemap are not blocked).</li>'
-        '<li>Every button and link works on mobile.</li>'
-        '<li>You are proud to read the copy aloud.</li>'
-        '</ul>'
-        '<p>When you ship it, submit to Google Search Console and move on to actual marketing. A website '
-        'is a stage, not the show.</p>'
-        '<p>Want this planned with you directly? <a href="/services/web-development/">Here is our '
-        'web development service</a>, or start a conversation at '
-        '<a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>.</p>'
-        '</div></div></section>'
-        + cta("Planning your next web application or site?",
-              "Tell us what the site needs to achieve. We will help prioritize features, define the scope, and build it for performance."))
-    return dict(path=path, title=BLOG_META[2][1], og_title="How to plan a website for a new startup",
-                description=BLOG_META[2][2],
-                crumbs=crumb, hero=h, body=b,
-                article={"headline": "How to Plan a Website for a New Startup", "date": YEAR})
-
 # ----------------------------------------------------------------- assemble --
 PAGES += [
     page_ai_automation(), page_web_dev(), page_custom_software(), page_chatbots(),
     page_droovee(), page_drishti(), page_flowops(), page_interview_copilot(),
     page_bhuverify(), page_carbon_coach(), page_qr_platform(),
     page_about(), page_contact(), page_privacy(), page_lab_report(),
-    blog_index(), article1(), article2(), article3(),
+    blog_index(), *blog.to_pages(POSTS, cta),
 ]
 
 SERVICE_META = {
