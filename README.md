@@ -142,7 +142,11 @@ There is no blog editor in Flow HQ yet. Flow HQ manages copy for the four core p
 ### Hosting
 Deployed automatically to **Vercel** on pushes to the repository.
 
-`vercel.json` adds `X-Robots-Tag: noindex, nofollow, noarchive`, `X-Frame-Options: DENY`, and `Referrer-Policy: no-referrer` to `/flow-hq/*`.
+`vercel.json` sets the shared security headers on every route (`Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and a tailored `Content-Security-Policy`), keeps `/flow-hq/*` out of search results, and marks any `*.vercel.app` host `noindex, nofollow`. The two production aliases redirect permanently to `https://www.theflowlabs.online`.
+
+Two deliberate CSP allowances: `'unsafe-inline'` for scripts and styles (the pages ship inline theme and form scripts) and `https://cdn.jsdelivr.net` for the Supabase client that Flow HQ loads. If you move those to bundled files, tighten the policy at the same time.
+
+No source maps are generated or published: the site is hand-written HTML, CSS and plain ES5 in `assets/`, and the API routes are unbundled Vercel functions.
 
 ### Environment Variables
 Set these in your Vercel project settings (see `.env.example`):

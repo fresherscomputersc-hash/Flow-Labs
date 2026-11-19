@@ -97,9 +97,10 @@ CONTACT_JS = r"""
 <script>
 (function () {
   const formView = document.getElementById('formView');
-  const successView = document.getElementById('successView');
   const ideaForm = document.getElementById('ideaForm');
   const submitBtn = document.getElementById('submitBtn');
+  const contactCard = document.querySelector('.contact-card');
+  let successView = null;
   let projectType = '';
 
   const chipElements = document.querySelectorAll('#typeChips .chip-opt');
@@ -121,7 +122,14 @@ CONTACT_JS = r"""
     if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return true;
     return s.replace(/[^\d]/g, '').length >= 8;
   };
-  const showError = (id, show) => document.getElementById(id).classList.toggle('show', show);
+  /* Errors: visible class + aria-invalid on the control that owns them. */
+  const showError = (id, show) => {
+    const err = document.getElementById(id);
+    if (!err) return;
+    err.classList.toggle('show', show);
+    const field = err.parentElement && err.parentElement.querySelector('input, textarea, select');
+    if (field) field.setAttribute('aria-invalid', show ? 'true' : 'false');
+  };
   ['fName', 'fIdea'].forEach(id => {
     document.getElementById(id).addEventListener('blur', (e) =>
       showError('err' + id.slice(1), !e.target.value.trim()));
@@ -155,12 +163,32 @@ CONTACT_JS = r"""
     });
     if (res.status !== 201 && res.status !== 200) throw new Error('supabase ' + res.status);
   }
+  /* The confirmation panel is not in the initial DOM: it is cloned from a
+     <template> on the first successful submit so crawlers and screen readers
+     never encounter "Project details received" before a message is sent. */
+  function closeSuccess() {
+    if (!successView) return;
+    successView.remove();
+    successView = null;
+    formView.hidden = false;
+    const nameField = document.getElementById('fName');
+    if (nameField) nameField.focus();
+  }
+
   function showSuccess() {
     submitBtn.disabled = false;
     submitBtn.classList.remove('loading');
-    formView.style.display = 'none';
-    successView.classList.add('show');
-    successView.style.display = 'block';
+    if (!successView) {
+      const tpl = document.getElementById('successTpl');
+      if (tpl && contactCard) {
+        contactCard.appendChild(tpl.content.cloneNode(true));
+        successView = document.getElementById('successView');
+        const closeBtn = document.getElementById('successClose');
+        if (closeBtn) closeBtn.addEventListener('click', closeSuccess);
+      }
+    }
+    formView.hidden = true;
+    if (successView) successView.classList.add('show');
     ideaForm.reset();
     chipElements.forEach(c => {
       c.classList.remove('sel');
@@ -168,15 +196,8 @@ CONTACT_JS = r"""
     });
     projectType = '';
     note.textContent = 'Direct reply within 48 hours. No spam, guaranteed.';
-  }
-
-  const closeBtn = document.getElementById('successClose');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      successView.classList.remove('show');
-      successView.style.display = 'none';
-      formView.style.display = '';
-    });
+    const heading = document.getElementById('successHeading');
+    if (heading) heading.focus();
   }
 
   ideaForm.addEventListener('submit', async (e) => {
@@ -245,30 +266,30 @@ ENQUIRY_FORM = '''
     </div>
     <form id="ideaForm" novalidate>
       <div class="field">
-        <label for="fName">Your name <span>*</span></label>
-        <input id="fName" name="name" type="text" placeholder="Full name or company name" autocomplete="name" required>
-        <div class="err" id="errName">Please enter your name.</div>
+        <label for="fName">Your name <span aria-hidden="true">*</span></label>
+        <input id="fName" name="name" type="text" placeholder="Full name or company name" autocomplete="name" required aria-describedby="errName" aria-invalid="false">
+        <div class="err" id="errName" role="alert">Please enter your name.</div>
       </div>
       <div class="field">
-        <label for="fContact">Email or phone number <span>*</span></label>
-        <input id="fContact" name="contact" type="text" placeholder="name@company.com or +91..." autocomplete="email" required>
-        <div class="err" id="errContact">Please enter a valid email address or phone number.</div>
+        <label for="fContact">Email or phone number <span aria-hidden="true">*</span></label>
+        <input id="fContact" name="contact" type="text" placeholder="name@company.com or +91..." autocomplete="email" required aria-describedby="errContact" aria-invalid="false">
+        <div class="err" id="errContact" role="alert">Please enter a valid email address or phone number.</div>
       </div>
       <div class="field">
-        <label>Project category <span>*</span></label>
-        <div class="chips-row" id="typeChips" role="radiogroup" aria-label="Project type">
+        <span class="field-label" id="typeLabel">Project category <span aria-hidden="true">*</span></span>
+        <div class="chips-row" id="typeChips" role="radiogroup" aria-labelledby="typeLabel" aria-describedby="errType">
           <span class="chip-opt" data-val="Website" role="radio" aria-checked="false" tabindex="0">Website</span>
           <span class="chip-opt" data-val="AI tool" role="radio" aria-checked="false" tabindex="0">AI tool</span>
           <span class="chip-opt" data-val="Automation" role="radio" aria-checked="false" tabindex="0">Automation</span>
           <span class="chip-opt" data-val="Software" role="radio" aria-checked="false" tabindex="0">Software</span>
           <span class="chip-opt" data-val="Not sure yet" role="radio" aria-checked="false" tabindex="0">Other / Discuss</span>
         </div>
-        <div class="err" id="errType">Please select a project category.</div>
+        <div class="err" id="errType" role="alert">Please select a project category.</div>
       </div>
       <div class="field">
-        <label for="fIdea">Project requirements <span>*</span></label>
-        <textarea id="fIdea" name="idea" placeholder="Describe what you want to build, the problems you are solving, or key features needed..." required></textarea>
-        <div class="err" id="errIdea">Please describe your project or requirements.</div>
+        <label for="fIdea">Project requirements <span aria-hidden="true">*</span></label>
+        <textarea id="fIdea" name="idea" placeholder="Describe what you want to build, the problems you are solving, or key features needed..." required aria-describedby="errIdea" aria-invalid="false"></textarea>
+        <div class="err" id="errIdea" role="alert">Please describe your project or requirements.</div>
       </div>
       <div class="field">
         <label for="fBudget">Estimated budget (₹)</label>
@@ -294,14 +315,16 @@ ENQUIRY_FORM = '''
       </div>
     </form>
   </div>
-  <div class="success" id="successView" style="display:none">
-    <div class="check" aria-hidden="true">
-      <svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>
+  <template id="successTpl">
+    <div class="success" id="successView" role="status" aria-live="polite">
+      <div class="check" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>
+      </div>
+      <h3 id="successHeading" tabindex="-1">Project details received.</h3>
+      <p>Thank you for reaching out. We will review your requirements and respond within 48 hours with next steps on scope, timeline, and pricing.</p>
+      <button class="btn btn-primary" id="successClose" type="button" style="margin-top:22px;">Send another message</button>
     </div>
-    <h3>Project details received.</h3>
-    <p>Thank you for reaching out. We will review your requirements and respond within 48 hours with next steps on scope, timeline, and pricing.</p>
-    <button class="btn btn-primary" id="successClose" style="margin-top:22px;">Send another message</button>
-  </div>
+  </template>
 </div>
 '''
 
@@ -461,6 +484,14 @@ def services_hub():
                 crumbs=crumb, hero=h, body=b,
                 cms={"label": "services-hero-label", "title": "services-hero-title", "sub": "services-hero-subtitle"})
 
+# Verified outcomes only. A card renders its outcome line only when a client-confirmed
+# number exists here. Never add a metric that has not been verified: an honest gap
+# beats a number nobody can defend in the sales call.
+WORK_OUTCOMES = {
+    # "/work/droovee/": "Example format: bookings confirmed without a dispatcher in the loop.",
+}
+
+
 def work_hub():
     crumb = [("/", "Home"), (None, "Work")]
     h = (crumb, None,
@@ -487,10 +518,13 @@ def work_hub():
             dims = ' width="1440" height="900"'
         else:
             dims = ''
+        outcome = WORK_OUTCOMES.get(path)
+        outcome_html = (f'<p class="woutcome"><span class="wlabel">Outcome</span>{outcome}</p>'
+                        if outcome else '')
         cards += (f'<a class="work reveal" href="{path}" data-cat="{cat}">'
                   f'<div class="thumb"><img src="/{tag}" alt="{name} project by The Flow Labs"{dims} loading="lazy" decoding="async"></div>'
                   f'<div class="wbody"><div class="wtop"><h3>{name}</h3><span class="meta">{status}</span></div>'
-                  f'<p>{desc}</p><div class="wlink">Case study <span>→</span></div></div></a>')
+                  f'<p>{desc}</p>{outcome_html}<div class="wlink">Case study <span aria-hidden="true">→</span></div></div></a>')
     b = ('<section><div class="wrap">'
          '<div class="work-filter" data-work-filter role="group" aria-label="Filter work">'
          '<button type="button" data-filter="all" aria-pressed="true">All</button>'
@@ -500,10 +534,8 @@ def work_hub():
          '<button type="button" data-filter="oss" aria-pressed="false">Open source</button>'
          '</div>'
          '<div class="work-grid" style="margin-top:24px">' + cards + '</div>'
-         '<div class="ai-lab reveal" style="margin-top:34px"><p>Also in the lab</p>'
-         '<div class="ai-lab-chips"><span class="ai-chip"><span class="live"></span>CivicPulseAI</span>'
-         '<span class="ai-chip"><span class="live"></span>ML-MLOps</span>'
-         '<span class="ai-chip"><span class="live"></span>btc-sentiment-analysis</span></div></div>'
+         '<p class="work-note reveal">Every project on this page links to a case study we can point at. '
+         'If it is not live, running in-house, or open source, it does not belong here.</p>'
          '</div></section>')
     return dict(path="/work/",
                 title="Work — Live, In-House and Open Source | The Flow Labs",
@@ -1254,6 +1286,102 @@ def page_privacy():
                 description="What The Flow Labs collects when you submit an enquiry, why, where it is stored, how long it is kept and how to have it deleted.",
                 crumbs=crumb, hero=h, body=b)
 
+
+def page_terms():
+    crumb = [("/", "Home"), (None, "Terms of Service")]
+    h = (crumb, "Plain terms, same as the quote",
+         'Terms of service',
+         "How we scope, price and hand over work, who owns what, and what happens if something goes wrong. Short, because it should be readable.")
+    b = (
+        '<section><div class="wrap"><div class="prose">'
+        '<p>Last updated: ' + YEAR + '. These terms cover work we do for you through '
+        'www.theflowlabs.online. They are written to be read, not skimmed past. If anything here '
+        'conflicts with a signed proposal or statement of work, the signed document wins.</p>'
+
+        '<h2>1. Scoping comes before code</h2>'
+        '<p>Every project starts with a written scope: what is being built, what is explicitly out of '
+        'scope, what you provide, and what "done" means. We do not start build work on a verbal '
+        'understanding. If the scope changes after you approve it, we re-quote the delta before doing '
+        'the work, in writing, so there is never a surprise invoice at the end.</p>'
+
+        '<h2>2. Fixed price, paid in milestones</h2>'
+        '<ul>'
+        '<li><strong>The quote is the price</strong> for the agreed scope. It does not move because we '
+        'underestimated our own effort.</li>'
+        '<li><strong>Payment is split into milestones</strong>, typically a deposit to begin, one or two '
+        'payments tied to reviewable stages, and the balance on handover. The split is written into the '
+        'proposal before you pay anything.</li>'
+        '<li><strong>Invoices are due on the terms stated on the invoice.</strong> Work pauses on overdue '
+        'invoices, and resumes when they clear. We would rather tell you that plainly than keep building '
+        'and stay quiet about it.</li>'
+        '<li><strong>Third-party costs are yours and are passed through at cost</strong> — domains, hosting, '
+        'paid APIs, fonts, licences. We tell you which ones a project needs before we start.</li>'
+        '</ul>'
+
+        '<h2>3. You own the work on handover</h2>'
+        '<p>When the final invoice is paid, you own the deliverables we built for you: the source code, the '
+        'design files, the content we wrote for you and the documentation. We hand over the repository and '
+        'the credentials, not a locked box.</p>'
+        '<p>Two honest exceptions: <strong>third-party components</strong> keep their own licences (open-source '
+        'libraries, fonts, stock assets), and <strong>our pre-existing tooling</strong> — internal helpers, '
+        'starter templates and patterns we reuse across projects — stays ours, licensed to you for use inside '
+        'what we built. We will always say which is which.</p>'
+        '<p>Unless you ask us not to, we may show the finished work in our portfolio and describe it in a '
+        'case study. We will not publish your metrics, your customers or anything confidential without your '
+        'written approval.</p>'
+
+        '<h2>4. What we need from you</h2>'
+        '<ul>'
+        '<li>One decision-maker who can approve scope, design and final sign-off.</li>'
+        '<li>Content, access and feedback in reasonable time. Timelines slip when input stalls; we will flag '
+        'it early rather than absorb it silently.</li>'
+        '<li>Accurate information about your business, and the right to share any data you give us.</li>'
+        '</ul>'
+
+        '<h2>5. Timeline and revisions</h2>'
+        '<p>Delivery dates are estimates unless the proposal states a fixed date. Each project includes the '
+        'revision rounds listed in the scope; further rounds are quoted separately. Once a stage is approved, '
+        'reopening it counts as a scope change.</p>'
+
+        '<h2>6. Support after handover</h2>'
+        '<p>Every project includes a warranty window (stated in the proposal) for defects in what we built: '
+        'things that do not work as specified. It does not cover new features, third-party outages, or changes '
+        'made by someone else. After the window, support is available on a quoted basis, and you are never '
+        'locked in — the code is yours.</p>'
+
+        '<h2>7. Limits of liability</h2>'
+        '<p>We deliver the work described in the scope, with reasonable skill and care. We are not liable for '
+        'indirect or consequential losses, lost profits, or lost data beyond our control. Our total liability '
+        'for any project is capped at the fees paid for that project. Keep your own backups; we will help you '
+        'set them up.</p>'
+
+        '<h2>8. Cancellation</h2>'
+        '<p>Either side can end a project in writing. You pay for the milestones completed and work in '
+        'progress up to that point, and you receive what has been paid for. The deposit is not refundable once '
+        'build work has started, because it reserves studio time that cannot be resold.</p>'
+
+        '<h2>9. Governing law</h2>'
+        '<p>These terms are governed by the laws of India. Disputes are subject to the exclusive jurisdiction '
+        'of the courts at Bhubaneswar, Odisha. Before anything formal, talk to us: every dispute we have had so '
+        'far was a conversation.</p>'
+
+        '<h2>10. Changes to these terms</h2>'
+        '<p>We may update this page as the studio changes. The date at the top changes with it. The terms that '
+        'apply to your project are the ones in effect when you approve the proposal.</p>'
+
+        '<h2>Questions</h2>'
+        '<p>Anything unclear, ask before you sign: '
+        '<a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>. We would rather spend ten '
+        'minutes explaining a clause than have you agree to something you do not understand.</p>'
+        '</div></div></section>'
+    )
+    return dict(path="/terms/",
+                title="Terms of Service | The Flow Labs",
+                og_title="Terms of service | The Flow Labs",
+                description="The Flow Labs terms: how projects are scoped, fixed-price payment milestones, IP ownership on handover, support, cancellation and governing law in India.",
+                crumbs=crumb, hero=h, body=b)
+
+
 # --------------------------------------------------------------------- blog --
 # -------------------------------------------------------------------- blog --
 # Posts live in blog-src/*.md — see blog-src/README.md for the format.
@@ -1288,7 +1416,7 @@ PAGES += [
     page_ai_automation(), page_web_dev(), page_custom_software(), page_chatbots(),
     page_droovee(), page_drishti(), page_flowops(), page_interview_copilot(),
     page_bhuverify(), page_carbon_coach(), page_qr_platform(),
-    page_about(), page_contact(), page_privacy(), page_lab_report(),
+    page_about(), page_contact(), page_privacy(), page_terms(), page_lab_report(),
     blog_index(), *blog.to_pages(POSTS, cta),
 ]
 
@@ -1314,7 +1442,7 @@ LOGO_MARK = (
 LOGO_LINK = ('<a href="/" class="nav-logo">' + LOGO_MARK
              + '<span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>')
 
-SITEMAP_ROOT_EXTRA = ["/", "/services/", "/work/", "/blog/", "/about/", "/contact/", "/lab-report/", "/privacy-policy/"]
+SITEMAP_ROOT_EXTRA = ["/", "/services/", "/work/", "/blog/", "/about/", "/contact/", "/lab-report/", "/privacy-policy/", "/terms/"]
 
 TEMPLATE = '''<!DOCTYPE html>
 <html lang="en">
@@ -1341,7 +1469,7 @@ TEMPLATE = '''<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
 <script src="/assets/site.config.js?v=7"></script>
-<link rel="stylesheet" href="/assets/site.css?v=8">
+<link rel="stylesheet" href="/assets/site.css?v=9">
 {jsonld}
 </head>
 <body data-page="{page_slug}">
@@ -1395,6 +1523,7 @@ TEMPLATE = '''<!DOCTYPE html>
           <h5>Studio</h5>
           <a href="/services/">What we build</a>
           <a href="/privacy-policy/">Privacy Policy</a>
+          <a href="/terms/">Terms of Service</a>
           <a href="/lab-report/">Free site report</a>
         </div>
       </div>

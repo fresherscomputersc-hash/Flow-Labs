@@ -23,7 +23,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
 <script src="assets/site.config.js?v=7"></script>
-<link rel="stylesheet" href="assets/site.css?v=8">
+<link rel="stylesheet" href="assets/site.css?v=9">
 <script>
 /* First-load brand reveal. Runs before paint so the page never flashes.
    Homepage only, once per browser per 7 days, honouring reduced motion,
@@ -90,6 +90,7 @@
       <span class="pill"><span class="dot"></span> <span data-cms="hero-label">Interfaces · Systems · Intelligence</span></span>
       <h1 class="hero-title" data-cms="hero-title">If it lives on a screen,<br>we build <em>it.</em></h1>
       <p class="hero-subtitle" data-cms="hero-subtitle">A founder-led studio that designs the interface, engineers the system, and wires in the intelligence. One team, fixed price, no handoffs.</p>
+      <p class="hero-second">Fixed quote before we start. Three founders on the build. The repository is yours at handover.</p>
       <div class="hero-actions">
         <a href="#contact" class="btn btn-primary magnetic">Start a project</a>
         <a href="#work" class="btn magnetic">See the work</a>
@@ -509,33 +510,33 @@
         <div id="formView">
           <form id="ideaForm" novalidate>
             <div class="field">
-              <label for="fName">Your name <span>*</span></label>
-              <input id="fName" name="name" type="text" placeholder="Full name or company name" autocomplete="name" required>
-              <div class="err" id="errName">Please enter your name.</div>
+              <label for="fName">Your name <span aria-hidden="true">*</span></label>
+              <input id="fName" name="name" type="text" placeholder="Full name or company name" autocomplete="name" required aria-describedby="errName" aria-invalid="false">
+              <div class="err" id="errName" role="alert">Please enter your name.</div>
             </div>
 
             <div class="field">
-              <label for="fContact">Email or phone number <span>*</span></label>
-              <input id="fContact" name="contact" type="text" placeholder="name@company.com or +91..." autocomplete="email" required>
-              <div class="err" id="errContact">Please enter a valid email address or phone number.</div>
+              <label for="fContact">Email or phone number <span aria-hidden="true">*</span></label>
+              <input id="fContact" name="contact" type="text" placeholder="name@company.com or +91..." autocomplete="email" required aria-describedby="errContact" aria-invalid="false">
+              <div class="err" id="errContact" role="alert">Please enter a valid email address or phone number.</div>
             </div>
 
             <div class="field">
-              <label>Project category <span>*</span></label>
-              <div class="chips-row" id="typeChips" role="radiogroup" aria-label="Project type">
+              <span class="field-label" id="typeLabel">Project category <span aria-hidden="true">*</span></span>
+              <div class="chips-row" id="typeChips" role="radiogroup" aria-labelledby="typeLabel" aria-describedby="errType">
                 <span class="chip-opt" data-val="Website" role="radio" aria-checked="false" tabindex="0">Website</span>
                 <span class="chip-opt" data-val="AI tool" role="radio" aria-checked="false" tabindex="0">AI tool</span>
                 <span class="chip-opt" data-val="Automation" role="radio" aria-checked="false" tabindex="0">Automation</span>
                 <span class="chip-opt" data-val="Software" role="radio" aria-checked="false" tabindex="0">Software</span>
                 <span class="chip-opt" data-val="Not sure yet" role="radio" aria-checked="false" tabindex="0">Other / Discuss</span>
               </div>
-              <div class="err" id="errType">Please select a project category.</div>
+              <div class="err" id="errType" role="alert">Please select a project category.</div>
             </div>
 
             <div class="field">
-              <label for="fIdea">Project requirements <span>*</span></label>
-              <textarea id="fIdea" name="idea" placeholder="Describe what you want to build, the problems you are solving, or key features needed..." required></textarea>
-              <div class="err" id="errIdea">Please describe your project or requirements.</div>
+              <label for="fIdea">Project requirements <span aria-hidden="true">*</span></label>
+              <textarea id="fIdea" name="idea" placeholder="Describe what you want to build, the problems you are solving, or key features needed..." required aria-describedby="errIdea" aria-invalid="false"></textarea>
+              <div class="err" id="errIdea" role="alert">Please describe your project or requirements.</div>
             </div>
 
             <div class="field">
@@ -565,14 +566,16 @@
           </form>
         </div>
 
-        <div class="success" id="successView">
-          <div class="check" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>
+        <template id="successTpl">
+          <div class="success" id="successView" role="status" aria-live="polite">
+            <div class="check" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>
+            </div>
+            <h3 id="successHeading" tabindex="-1">Project details received.</h3>
+            <p>Thank you for reaching out. We will review your requirements and respond within 48 hours with next steps on scope, timeline, and pricing.</p>
+            <button class="btn btn-primary" id="successClose" type="button" style="margin-top:22px;">Send another message</button>
           </div>
-          <h3>Project details received.</h3>
-          <p>Thank you for reaching out. We will review your requirements and respond within 48 hours with next steps on scope, timeline, and pricing.</p>
-          <button class="btn btn-primary" id="successClose" style="margin-top:22px;">Send another message</button>
-        </div>
+        </template>
       </div>
     </div>
   </section>
@@ -607,6 +610,7 @@
           <h5>Studio</h5>
           <a href="/services/">What we build</a>
           <a href="/privacy-policy/">Privacy Policy</a>
+          <a href="/terms/">Terms of Service</a>
           <a href="/lab-report/">Free site report</a>
         </div>
       </div>
@@ -631,9 +635,10 @@ window.setTimeout(function () {
 <script>
   /* ---------- contact form handling (Supabase + fallback) ---------- */
   const formView = document.getElementById('formView');
-  const successView = document.getElementById('successView');
   const ideaForm = document.getElementById('ideaForm');
   const submitBtn = document.getElementById('submitBtn');
+  const contactCard = document.querySelector('.contact-card');
+  let successView = null;
   let projectType = '';
 
   // Single-select accessible project type chips
@@ -666,16 +671,22 @@ window.setTimeout(function () {
     return digits.length >= 8; // valid phone
   }
 
+  /* Errors: visible class + aria-invalid on the control that owns them. */
+  function showError(id, show) {
+    const errEl = document.getElementById(id);
+    if (!errEl) return;
+    errEl.classList.toggle('show', show);
+    const field = errEl.parentElement && errEl.parentElement.querySelector('input, textarea, select');
+    if (field) field.setAttribute('aria-invalid', show ? 'true' : 'false');
+  }
+
   ['fName', 'fIdea'].forEach(id => {
-    document.getElementById(id).addEventListener('blur', (e) => {
-      const errEl = document.getElementById('err' + id.slice(1));
-      errEl.classList.toggle('show', !e.target.value.trim());
-    });
+    document.getElementById(id).addEventListener('blur', (e) =>
+      showError('err' + id.slice(1), !e.target.value.trim()));
   });
 
-  document.getElementById('fContact').addEventListener('blur', (e) => {
-    document.getElementById('errContact').classList.toggle('show', !validContact(e.target.value));
-  });
+  document.getElementById('fContact').addEventListener('blur', (e) =>
+    showError('errContact', !validContact(e.target.value)));
 
   // Backend config
   const cfg = (typeof window !== 'undefined' && window.SITE_CONFIG) || {};
@@ -710,11 +721,32 @@ window.setTimeout(function () {
     }
   }
 
-  const showSuccess = () => {
+  /* The confirmation panel is not in the initial DOM: it is cloned from a
+     <template> on the first successful submit so crawlers and screen readers
+     never encounter "Project details received" before a message is sent. */
+  function closeSuccess() {
+    if (!successView) return;
+    successView.remove();
+    successView = null;
+    formView.hidden = false;
+    const nameField = document.getElementById('fName');
+    if (nameField) nameField.focus();
+  }
+
+  function showSuccess() {
     submitBtn.disabled = false;
     submitBtn.classList.remove('loading');
-    formView.style.display = 'none';
-    successView.classList.add('show');
+    if (!successView) {
+      const tpl = document.getElementById('successTpl');
+      if (tpl && contactCard) {
+        contactCard.appendChild(tpl.content.cloneNode(true));
+        successView = document.getElementById('successView');
+        const closeBtn = document.getElementById('successClose');
+        if (closeBtn) closeBtn.addEventListener('click', closeSuccess);
+      }
+    }
+    formView.hidden = true;
+    if (successView) successView.classList.add('show');
     ideaForm.reset();
     chipElements.forEach(c => {
       c.classList.remove('sel');
@@ -722,12 +754,9 @@ window.setTimeout(function () {
     });
     projectType = '';
     note.textContent = 'Direct reply within 48 hours. No spam, guaranteed.';
-  };
-
-  document.getElementById('successClose').addEventListener('click', () => {
-    successView.classList.remove('show');
-    formView.style.display = '';
-  });
+    const heading = document.getElementById('successHeading');
+    if (heading) heading.focus();
+  }
 
   ideaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -737,14 +766,14 @@ window.setTimeout(function () {
     let ok = true;
 
     const check = (input, errId, valid) => {
-      err(errId).classList.toggle('show', !valid);
+      showError(errId, !valid);
       if (!valid) ok = false;
     };
 
     check(nameC, 'errName', nameC.value.trim().length > 0);
     check(contactC, 'errContact', validContact(contactC.value));
     check(ideaC, 'errIdea', ideaC.value.trim().length > 0);
-    err('errType').classList.toggle('show', !projectType);
+    showError('errType', !projectType);
     if (!projectType) ok = false;
 
     if (!ok) {

@@ -4,7 +4,7 @@
 // Credentials come from Vercel Environment Variables (never in code):
 //   SMTP_HOST  e.g. smtp.gmail.com (Gmail) / smtp-relay.brevo.com (Brevo)
 //   SMTP_PORT  e.g. 465
-//   SMTP_USER  the sending account, e.g. theflowlabs01@gmail.com
+//   SMTP_USER  the sending account, e.g. hello@theflowlabs.online
 //   SMTP_PASS  app password (NOT the account password)
 //   NOTIFY_TO  where alerts go (defaults to SMTP_USER)
 // No SMTP configured -> returns 503 and the site still works fine
