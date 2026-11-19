@@ -11,6 +11,7 @@ Live site: [www.theflowlabs.online](https://www.theflowlabs.online)
 This project is a multi-page static site built with modern vanilla HTML, CSS, and JavaScript, paired with a lightweight Python site generator and a serverless lead capture backend.
 
 - **Frontend**: Static HTML5, vanilla CSS (`assets/site.css`), and vanilla JavaScript (`assets/site.js`). No frontend frameworks or heavy client dependencies.
+- **Brand mark**: A sheared, heavy "F" stroked on a 40×40 grid (`assets/logo.svg`), inlined in the header and footer with `stroke="currentColor"` so it follows `--accent` and any CMS accent override. `assets/favicon.svg` is the same mark on the dark tile; `assets/icon-180.png` and `assets/icon-512.png` are the app icons. The wordmark stays live text in Space Grotesk with the accent dot.
 - **Typography & Design System**: Space Grotesk display + DM Sans body + IBM Plex Mono labels via Google Fonts. "Launch blue" palette — near-black surfaces (`#0B0B10`), silver-grey text (`#94A3B8` / `#78879E`), a single blue accent (`#3B82F6`, press `#2563EB`), pill buttons with hard 4px offset shadows, a single soft radial glow behind the hero, and a grain overlay at 3%. All animation respects `prefers-reduced-motion`.
 - **Page Generator (`tools/site/build.py`)**: Python standard-library script that serves as the single source of truth for generating all sub-pages, semantic metadata, OpenGraph tags, JSON-LD schemas (`Organization`, `Service`, `Article`, `BreadcrumbList`), `sitemap.xml`, and `robots.txt`.
 - **Database & Lead Storage (Supabase)**: Form submissions write directly to the `site_leads` table via Supabase REST API using row-level security (RLS).
@@ -32,6 +33,9 @@ This project is a multi-page static site built with modern vanilla HTML, CSS, an
 │   ├── site-cms.js                          # Applies /api/content and /api/settings overrides
 │   ├── site-track.js                        # Cookie-less page-view beacon
 │   ├── site.config.js                       # Client-side configuration (Supabase URL and anon key)
+│   ├── logo.svg                             # Brand mark (sheared "F"), transparent background
+│   ├── favicon.svg                          # Mark on the dark tile — browser icon
+│   ├── icon-180.png / icon-512.png          # Apple touch icon and app icon
 │   └── work-*                               # Project screenshots and vector asset illustrations
 ├── flow-hq/                                 # Hidden admin console (noindex, unlinked)
 │   ├── index.html

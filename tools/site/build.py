@@ -1300,6 +1300,20 @@ SERVICE_META = {
 }
 
 # -------------------------------------------------------------------- emit ---
+# The mark: a sheared, heavy "F" for Flow. Stroked paths on a 40×40 grid so the
+# same geometry scales from a 16px favicon to a 200px signature. Colour comes
+# from `currentColor`, which resolves to --accent (and follows CMS overrides).
+LOGO_MARK = (
+    '<svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
+    '<g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">'
+    '<path d="M14.6 6.5 L11.4 33.5"/>'
+    '<path d="M14.6 6.5 H29.5"/>'
+    '<path d="M13.2 19.8 H24.6"/>'
+    '</g></svg>'
+)
+LOGO_LINK = ('<a href="/" class="nav-logo">' + LOGO_MARK
+             + '<span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>')
+
 SITEMAP_ROOT_EXTRA = ["/", "/services/", "/work/", "/blog/", "/about/", "/contact/", "/lab-report/", "/privacy-policy/"]
 
 TEMPLATE = '''<!DOCTYPE html>
@@ -1320,19 +1334,21 @@ TEMPLATE = '''<!DOCTYPE html>
 <meta name="twitter:title" content="{og_title}" />
 <meta name="twitter:description" content="{description}" />
 <meta name="twitter:image" content="{og_img}" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%233B82F6'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-size='15' font-weight='bold' fill='%23FFFFFF' text-anchor='middle'%3EFL%3C/text%3E%3C/svg%3E" />
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/assets/icon-180.png" />
+<meta name="theme-color" content="#0B0B10" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
 <script src="/assets/site.config.js?v=7"></script>
-<link rel="stylesheet" href="/assets/site.css?v=7">
+<link rel="stylesheet" href="/assets/site.css?v=8">
 {jsonld}
 </head>
 <body data-page="{page_slug}">
 
 <header class="nav" id="nav">
   <div class="container nav-inner">
-    <a href="/" class="nav-logo">The Flow Labs<span class="accent-dot">.</span></a>
+    {logo_link}
     <div class="nav-links" id="nav-links">
       <a href="/work/">Work</a>
       <a href="/services/">Services</a>
@@ -1356,7 +1372,7 @@ TEMPLATE = '''<!DOCTYPE html>
   <div class="container">
     <div class="footer-top">
       <div>
-        <a href="/" class="nav-logo">The Flow Labs<span class="accent-dot">.</span></a>
+        {logo_link}
         <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four builds a month, every layer in-house.</p>
         <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
       </div>
@@ -1429,6 +1445,7 @@ def emit():
             og_title=p["og_title"], og_img=OG_IMG,
             jsonld=jsonld, hero_html=hero_html, body_html=p["body"],
             footer_note=p.get("footer_note", ""),
+            logo_link=LOGO_LINK,
             page_slug=SLUGS.get(p["path"], ""),
         )
         # TODO-OWNER markers stay out of public copy (kept as code comments)
