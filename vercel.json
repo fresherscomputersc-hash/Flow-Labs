@@ -1,6 +1,4 @@
 {
-  "buildCommand": "python3 -c \"import sys,platform;open('pycheck.txt','w').write(sys.version + ' | ' + platform.platform())\"",
-  "outputDirectory": ".",
   "headers": [
     {
       "source": "/(.*)",
