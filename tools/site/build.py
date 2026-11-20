@@ -806,7 +806,7 @@ def page_qr_platform():
         '<section><div class="wrap">'
         '<div class="prose">'
         '<p><strong>Status:</strong> live product. A passcode-protected demo runs right on this site at '
-        '<a href="/qr/">www.theflowlabs.online/qr</a> - ask us for the demo passcode and explore the real console. '
+        '<a href="/qr">www.theflowlabs.online/qr</a> - ask us for the demo passcode and explore the real console. '
         'Demo data is synthetic and resets on boot.</p>'
         '<h2>What it is</h2>'
         '<p>Many small businesses have no usable web presence, or a slow one buried three clicks deep. '
@@ -1471,7 +1471,7 @@ TEMPLATE = '''<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
-<script src="/assets/site.config.js?v=7"></script>
+<script src="/assets/site.config.js?v=7" defer></script>
 <link rel="stylesheet" href="/assets/site.css?v=10">
 {jsonld}
 </head>

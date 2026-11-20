@@ -15,6 +15,12 @@
       ]
     },
     {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800, stale-while-revalidate=86400" }
+      ]
+    },
+    {
       "source": "/flow-hq/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
@@ -39,6 +45,16 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/qr/",
+      "destination": "/qr",
+      "permanent": false
+    },
+    {
+      "source": "/cdn-cgi/l/email-protection",
+      "destination": "/contact/",
+      "permanent": false
+    },
     {
       "source": "/(.*)",
       "has": [{ "type": "host", "value": "the-flow-labs.vercel.app" }],
