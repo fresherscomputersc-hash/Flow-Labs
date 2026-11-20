@@ -21,8 +21,11 @@ YEAR  = "2026-11-05"
 ORG = {
     "@context": "https://schema.org", "@type": "Organization",
     "name": "The Flow Labs", "url": BASE + "/",
+    "logo": BASE + "/assets/icon-180.png",
     "email": "hello@theflowlabs.online", "image": OG_IMG,
     "description": "Founder-led engineering studio building interfaces, systems and applied intelligence for growing businesses. Fixed-price delivery, four builds a month, source code handed over on every project.",
+    "address": {"@type": "PostalAddress", "addressLocality": "Bhubaneswar",
+                "addressRegion": "Odisha", "addressCountry": "IN"},
     "founder": [{"@type": "Person", "name": "Smruti Ranjan", "jobTitle": "Founder"},
                 {"@type": "Person", "name": "Biswash", "jobTitle": "Co-Founder"},
                 {"@type": "Person", "name": "Arpita", "jobTitle": "Co-Founder"}],
@@ -1469,7 +1472,7 @@ TEMPLATE = '''<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
 <script src="/assets/site.config.js?v=7"></script>
-<link rel="stylesheet" href="/assets/site.css?v=9">
+<link rel="stylesheet" href="/assets/site.css?v=10">
 {jsonld}
 </head>
 <body data-page="{page_slug}">

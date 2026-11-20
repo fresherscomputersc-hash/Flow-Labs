@@ -464,7 +464,6 @@ p, li, .body-text {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   color: var(--text-muted);
-  opacity: 0.5;
   margin-top: 0;
   text-align: center;
 }
