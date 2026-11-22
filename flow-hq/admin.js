@@ -9,6 +9,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var state = {
     session: null,
+    profile: null,
+    role: null,
     tab: 'dashboard',
     leadsPage: 0,
     leadsPageSize: 25,
@@ -17,7 +19,8 @@
     settings: {},
     blogPosts: [],
     blogEditing: null,
-    blogSlugTouched: false
+    blogSlugTouched: false,
+    projects: []
   };
 
   var TAB_META = {
@@ -26,8 +29,32 @@
     visitors: ['Visitors', 'Cookie-less page views and traffic sources.'],
     content: ['Content', 'Override public copy without a deploy.'],
     blog: ['Blog', 'Write, draft and publish posts.'],
+    projects: ['Projects', 'Your projects, progress and modules.'],
+    team: ['Team', 'Create logins, set roles, suspend access.'],
     settings: ['Settings', 'Accent, sections and SEO defaults.']
   };
+
+  // What each role is allowed to open. The server (RLS) is the real
+  // gate; this only keeps the interface honest.
+  var TAB_ACCESS = {
+    owner: ['dashboard', 'leads', 'visitors', 'content', 'blog', 'projects', 'team', 'settings'],
+    admin: ['dashboard', 'leads', 'visitors', 'content', 'blog', 'projects', 'team', 'settings'],
+    manager: ['projects'],
+    member: ['projects'],
+    client: []
+  };
+
+  function allowedTabs(role) {
+    return TAB_ACCESS[role] || [];
+  }
+
+  function canOpen(tab) {
+    return allowedTabs(state.role).indexOf(tab) !== -1;
+  }
+
+  function isAdmin() {
+    return state.role === 'owner' || state.role === 'admin';
+  }
 
   var SECTION_LABELS = {
     section_home_work: 'Selected work',
@@ -100,21 +127,109 @@
   }
 
   async function enter(session) {
-    var check = await db.rpc('is_admin');
-    if (check.error || check.data !== true) {
+    var result = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+
+    if (result.error) {
+      var code = result.error.code || '';
+      var text = String(result.error.message || '');
       await db.auth.signOut();
-      showAuth('This account is not authorized for Flow HQ.');
+      if (code === 'PGRST205' || /schema cache|does not exist/i.test(text)) {
+        showAuth('Database setup is incomplete. Run supabase/migrations/0001_identity.sql in the Supabase SQL editor, then sign in again.');
+      } else {
+        showAuth('Could not load your profile: ' + text);
+      }
+      return;
+    }
+
+    if (!result.data) {
+      await db.auth.signOut();
+      showAuth('No Flow HQ profile exists for this account.');
+      return;
+    }
+
+    var profile = result.data;
+
+    if (profile.status !== 'active') {
+      await db.auth.signOut();
+      showAuth('This account is ' + (profile.status === 'invited' ? 'still an invite.' : 'suspended. Ask an admin to restore access.'));
+      return;
+    }
+
+    if (profile.role === 'client') {
+      await db.auth.signOut();
+      showAuth('Client accounts use the client portal, which is not built yet. Ask an admin for a team account.');
+      return;
+    }
+
+    if (!allowedTabs(profile.role).length) {
+      await db.auth.signOut();
+      showAuth('This account has no Flow HQ access.');
       return;
     }
 
     state.session = session;
+    state.profile = profile;
+    state.role = profile.role;
+
     $('authView').hidden = true;
     $('appView').hidden = false;
-    $('adminUser').textContent = (session.user && session.user.email) || '';
+    $('adminUser').textContent = (profile.full_name || session.user.email || '') +
+      ' · ' + profile.role;
     $('authError').classList.remove('show');
 
+    applyRole();
+
     var initial = (window.location.hash || '').replace('#', '');
-    activateTab(TAB_META[initial] ? initial : 'dashboard');
+    if (!canOpen(initial)) initial = allowedTabs(profile.role)[0];
+    activateTab(initial);
+  }
+
+  function applyRole() {
+    var tabs = allowedTabs(state.role);
+    Array.prototype.forEach.call(document.querySelectorAll('#adminNav [data-tab]'), function (button) {
+      var tab = button.getAttribute('data-tab');
+      button.hidden = tabs.indexOf(tab) === -1;
+    });
+
+    // Creating projects and accounts is admin-only at the database level.
+    if ($('projectNew')) $('projectNew').hidden = !isAdmin();
+  }
+
+  // Privileged calls that need the service role go through the one
+  // catch-all function. Everything else talks to PostgREST directly
+  // and is protected by RLS.
+  async function api(path, options) {
+    options = options || {};
+
+    var session = state.session;
+    var current = await db.auth.getSession();
+    if (current.data && current.data.session) {
+      session = current.data.session;
+      state.session = session;
+    }
+    if (!session || !session.access_token) throw new Error('Sign in required.');
+
+    var response = await fetch('/api/platform' + path, {
+      method: options.method || 'GET',
+      headers: Object.assign({
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + session.access_token
+      }, options.headers || {}),
+      body: options.body ? JSON.stringify(options.body) : undefined
+    });
+
+    var data = null;
+    try { data = await response.json(); } catch (error) { data = null; }
+
+    if (response.status === 404) {
+      throw new Error('The platform API is only available on the deployed site.');
+    }
+    if (!response.ok) {
+      var error = new Error((data && data.error) || ('Request failed (' + response.status + ')'));
+      error.status = response.status;
+      throw error;
+    }
+    return data || {};
   }
 
   async function boot() {
@@ -158,6 +273,7 @@
   /* ---------------- tabs ---------------- */
   function activateTab(tab) {
     if (!TAB_META[tab]) tab = 'dashboard';
+    if (!canOpen(tab)) tab = allowedTabs(state.role)[0] || 'dashboard';
     state.tab = tab;
 
     Array.prototype.forEach.call(document.querySelectorAll('#adminNav [data-tab]'), function (button) {
@@ -178,6 +294,8 @@
     if (tab === 'visitors') loadVisitors();
     if (tab === 'content') loadContent();
     if (tab === 'blog') loadBlog();
+    if (tab === 'projects') loadProjects();
+    if (tab === 'team') loadTeam();
     if (tab === 'settings') loadSettings();
   }
 
@@ -193,7 +311,7 @@
 
   window.addEventListener('hashchange', function () {
     var tab = (window.location.hash || '').replace('#', '');
-    if (TAB_META[tab] && tab !== state.tab) activateTab(tab);
+    if (TAB_META[tab] && canOpen(tab) && tab !== state.tab) activateTab(tab);
   });
 
   /* ---------------- shared queries ---------------- */
@@ -976,6 +1094,396 @@
     }
 
     if (remove) removeBlogPost(remove.getAttribute('data-blog-del'));
+  });
+
+  /* ---------------- projects ---------------- */
+  var PROJECT_STATUS = {
+    planning: 'Planning',
+    active: 'Active',
+    on_hold: 'On hold',
+    completed: 'Completed',
+    archived: 'Archived'
+  };
+
+  var ROLE_LABELS = {
+    owner: 'Owner',
+    admin: 'Admin',
+    manager: 'Manager',
+    member: 'Member',
+    client: 'Client'
+  };
+
+  function slugify(value) {
+    return String(value == null ? '' : value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+  }
+
+  function missingSchema(error, migration) {
+    var code = (error && error.code) || '';
+    var text = String((error && error.message) || '');
+    if (code !== 'PGRST205' && code !== '42P01' && !/schema cache|does not exist/i.test(text)) {
+      return false;
+    }
+    return migration;
+  }
+
+  async function loadProjects() {
+    var grid = $('projectsGrid');
+    grid.innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    var result = await db
+      .from('projects')
+      .select('id,key,name,summary,status,priority,due_date,updated_at')
+      .order('updated_at', { ascending: false });
+
+    if (result.error) {
+      var migration = missingSchema(result.error, 'supabase/migrations/0002_work.sql');
+      if (migration) {
+        grid.innerHTML = '<div class="invite-result"><strong>Projects table is missing</strong>' +
+          '<p class="admin-empty" style="text-align:left;margin:0">Run <code>' + esc(migration) + '</code> in the Supabase SQL editor, then press Refresh.</p></div>';
+      } else {
+        grid.innerHTML = '<p class="admin-empty">Could not load projects: ' + esc(result.error.message) + '</p>';
+      }
+      return;
+    }
+
+    state.projects = result.data || [];
+
+    if (!state.projects.length) {
+      grid.innerHTML = '<p class="admin-empty">No projects yet.' +
+        (isAdmin() ? ' Use “New project” to create the first one.' : '') + '</p>';
+      return;
+    }
+
+    var progress = await Promise.all(state.projects.map(function (project) {
+      return db.rpc('project_progress', { p_project: project.id });
+    }));
+
+    grid.innerHTML = state.projects.map(function (project, index) {
+      var info = (progress[index] && progress[index].data) || {};
+      var percent = Math.max(0, Math.min(100, Number(info.percent) || 0));
+      var total = Number(info.total) || 0;
+      var done = Number(info.done) || 0;
+
+      return '<article class="project-card">' +
+        '<div class="project-foot">' +
+          '<span class="project-key">' + esc(project.key) + '</span>' +
+          '<span class="badge ' + esc(project.status) + '">' + esc(PROJECT_STATUS[project.status] || project.status) + '</span>' +
+        '</div>' +
+        '<h3>' + esc(project.name) + '</h3>' +
+        '<p class="project-summary">' + esc(project.summary || 'No summary yet.') + '</p>' +
+        '<div class="progress-track"><span style="width:' + percent + '%"></span></div>' +
+        '<div class="project-foot">' +
+          '<span>' + percent + '% · ' + done + '/' + total + ' tasks</span>' +
+          '<span>' + esc(project.due_date ? 'Due ' + project.due_date : 'No due date') + '</span>' +
+        '</div>' +
+        '</article>';
+    }).join('');
+
+    fillProjectOptions(state.projects);
+  }
+
+  function fillProjectOptions(projects, force) {
+    var box = $('tm-projects');
+    if (!box) return;
+    if (!force && box.querySelector('input[type="checkbox"]')) return;
+
+    var list = projects || state.projects || [];
+    if (!list.length) {
+      box.innerHTML = '<p class="admin-empty">No projects yet.</p>';
+      return;
+    }
+
+    box.innerHTML = list.map(function (project) {
+      return '<label><input type="checkbox" value="' + esc(project.id) + '">' +
+        '<span>' + esc(project.name) + ' <span class="project-key">' + esc(project.key) + '</span></span></label>';
+    }).join('');
+  }
+
+  $('projectsRefresh').addEventListener('click', function () {
+    loadProjects();
+  });
+
+  $('projectNew').addEventListener('click', function () {
+    $('projectFormCard').hidden = false;
+    $('projectFormCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('pp-name').focus();
+  });
+
+  $('projectCancel').addEventListener('click', function () {
+    $('projectForm').reset();
+    $('pp-status').value = 'active';
+    $('projectFormCard').hidden = true;
+  });
+
+  $('projectForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    var key = $('pp-key').value.trim().toUpperCase();
+    var name = $('pp-name').value.trim();
+
+    if (!/^[A-Z][A-Z0-9]{1,7}$/.test(key)) {
+      fail('Key needs 2 to 8 characters: a letter, then letters or digits.');
+      return;
+    }
+    if (!name) {
+      fail('Give the project a name.');
+      return;
+    }
+
+    var base = slugify(name) || key.toLowerCase();
+    var payload = {
+      key: key,
+      name: name,
+      slug: base,
+      summary: $('pp-summary').value.trim() || null,
+      status: $('pp-status').value,
+      due_date: $('pp-due').value || null,
+      owner_id: state.profile.id,
+      created_by: state.profile.id
+    };
+
+    var button = $('projectSave');
+    button.disabled = true;
+
+    var result = await db.from('projects').insert(payload).select('id').single();
+
+    if (result.error && result.error.code === '23505' && /slug/i.test(result.error.message || '')) {
+      payload.slug = base + '-' + Math.random().toString(36).slice(2, 6);
+      result = await db.from('projects').insert(payload).select('id').single();
+    }
+
+    button.disabled = false;
+
+    if (result.error) {
+      fail(result.error.message || 'Could not create the project.');
+      return;
+    }
+
+    toast('Project created.');
+    $('projectForm').reset();
+    $('pp-status').value = 'active';
+    $('projectFormCard').hidden = true;
+    loadProjects();
+  });
+
+  /* ---------------- team ---------------- */
+  function randomPassword() {
+    var alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%*';
+    var bytes = new Uint32Array(20);
+    (window.crypto || window.msCrypto).getRandomValues(bytes);
+    var out = '';
+    for (var i = 0; i < bytes.length; i += 1) {
+      out += alphabet.charAt(bytes[i] % alphabet.length);
+    }
+    return out;
+  }
+
+  function syncTeamMode() {
+    var invite = $('tm-mode').value === 'invite';
+    var client = $('tm-role').value === 'client';
+
+    if (client) {
+      $('tm-mode').value = 'password';
+      invite = false;
+    }
+
+    var inviteOption = $('tm-mode').querySelector('option[value="invite"]');
+    if (inviteOption) inviteOption.disabled = client;
+
+    $('tm-password-field').hidden = invite;
+  }
+
+  async function loadTeam() {
+    var wrap = $('teamTable');
+    wrap.innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    var data;
+    try {
+      data = await api('/team');
+    } catch (error) {
+      wrap.innerHTML = '<div class="invite-result"><strong>Could not load accounts</strong>' +
+        '<p class="admin-empty" style="text-align:left;margin:0">' + esc(error.message) + '</p>' +
+        (error.status === 503 ? '<p class="admin-empty" style="text-align:left;margin:0">Set <code>SUPABASE_SERVICE_KEY</code> in Vercel, then redeploy.</p>' : '') +
+        '</div>';
+      return;
+    }
+
+    var members = data.members || [];
+
+    if (!members.length) {
+      wrap.innerHTML = '<p class="admin-empty">No accounts yet.</p>';
+      return;
+    }
+
+    wrap.innerHTML = '<table class="admin-table"><thead><tr>' +
+      '<th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th></th>' +
+      '</tr></thead><tbody>' +
+      members.map(function (member) {
+        var self = member.id === state.profile.id;
+        var options = ['owner', 'admin', 'manager', 'member', 'client'].map(function (role) {
+          var disabled = (role === 'owner' && state.role !== 'owner') ? ' disabled' : '';
+          return '<option value="' + role + '"' + (member.role === role ? ' selected' : '') + disabled + '>' +
+            ROLE_LABELS[role] + '</option>';
+        }).join('');
+
+        var next = member.status === 'suspended' ? 'active' : 'suspended';
+        var action = member.status === 'suspended' ? 'Restore' : 'Suspend';
+
+        return '<tr>' +
+          '<td><strong>' + esc(member.full_name || '—') + '</strong></td>' +
+          '<td>' + esc(member.email) + '</td>' +
+          '<td><select class="admin-select" data-role-for="' + esc(member.id) + '"' +
+            (self ? ' disabled title="You cannot change your own role"' : '') + '>' + options + '</select></td>' +
+          '<td><span class="badge ' + esc(member.status) + '">' + esc(member.status) + '</span></td>' +
+          '<td class="mono">' + esc(fmtDate(member.created_at)) + '</td>' +
+          '<td class="mono">' +
+            (self ? '' :
+              '<button type="button" class="admin-btn ghost" data-status-for="' + esc(member.id) + '" data-next="' + next + '">' + action + '</button> ' +
+              '<button type="button" class="admin-btn ghost" data-delete-for="' + esc(member.id) + '">Delete</button>') +
+          '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  $('teamNew').addEventListener('click', async function () {
+    $('teamForm').reset();
+    $('tm-role').value = 'member';
+    $('tm-mode').value = 'password';
+    $('teamResult').innerHTML = '';
+    $('teamFormCard').hidden = false;
+    syncTeamMode();
+
+    if (!state.projects.length) {
+      var result = await db.from('projects').select('id,key,name').order('name');
+      if (!result.error) state.projects = result.data || [];
+    }
+    fillProjectOptions(state.projects, true);
+
+    $('tm-name').focus();
+  });
+
+  $('teamCancel').addEventListener('click', function () {
+    $('teamForm').reset();
+    $('teamResult').innerHTML = '';
+    $('teamFormCard').hidden = true;
+  });
+
+  $('tm-mode').addEventListener('change', syncTeamMode);
+  $('tm-role').addEventListener('change', syncTeamMode);
+
+  $('tm-generate').addEventListener('click', function () {
+    $('tm-password').value = randomPassword();
+    $('tm-password').focus();
+  });
+
+  $('teamForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    var role = $('tm-role').value;
+    var invite = $('tm-mode').value === 'invite' && role !== 'client';
+    var password = invite ? '' : $('tm-password').value;
+
+    if (!invite && password.length < 10) {
+      fail('Temporary passwords need at least 10 characters.');
+      return;
+    }
+
+    var projectIds = Array.prototype.map.call(
+      $('tm-projects').querySelectorAll('input[type="checkbox"]:checked'),
+      function (input) { return input.value; }
+    );
+
+    var button = $('teamSave');
+    button.disabled = true;
+
+    try {
+      var data = await api('/team/invite', {
+        method: 'POST',
+        body: {
+          full_name: $('tm-name').value.trim(),
+          email: $('tm-email').value.trim(),
+          role: role,
+          password: password,
+          project_ids: projectIds
+        }
+      });
+
+      $('teamResult').innerHTML = '<div class="invite-result">' +
+        '<strong>Account created — ' + esc(data.email) + ' (' + esc(ROLE_LABELS[data.role] || data.role) + ')</strong>' +
+        (data.password
+          ? '<p class="admin-empty" style="text-align:left;margin:0">Share this password once. It is never shown again.</p>' +
+            '<code>' + esc(data.password) + '</code>'
+          : '<p class="admin-empty" style="text-align:left;margin:0">Supabase sent an invite email. The account stays “invited” until they set a password.</p>') +
+        '</div>';
+
+      $('teamForm').reset();
+      $('tm-role').value = 'member';
+      $('tm-mode').value = 'password';
+      syncTeamMode();
+      toast('Account created.');
+      loadTeam();
+      loadProjects();
+    } catch (error) {
+      fail(error.message);
+    }
+
+    button.disabled = false;
+  });
+
+  $('teamTable').addEventListener('change', async function (event) {
+    var select = event.target.closest('[data-role-for]');
+    if (!select) return;
+
+    var id = select.getAttribute('data-role-for');
+    select.disabled = true;
+
+    try {
+      await api('/team/' + id, { method: 'PATCH', body: { role: select.value } });
+      toast('Role updated.');
+    } catch (error) {
+      fail(error.message);
+    }
+
+    loadTeam();
+  });
+
+  $('teamTable').addEventListener('click', async function (event) {
+    var statusButton = event.target.closest('[data-status-for]');
+    var deleteButton = event.target.closest('[data-delete-for]');
+
+    if (statusButton) {
+      statusButton.disabled = true;
+      try {
+        await api('/team/' + statusButton.getAttribute('data-status-for'), {
+          method: 'PATCH',
+          body: { status: statusButton.getAttribute('data-next') }
+        });
+        toast('Account updated.');
+      } catch (error) {
+        fail(error.message);
+      }
+      loadTeam();
+      return;
+    }
+
+    if (deleteButton) {
+      var id = deleteButton.getAttribute('data-delete-for');
+      if (!window.confirm('Delete this account permanently? Their auth user is removed too.')) return;
+
+      deleteButton.disabled = true;
+      try {
+        await api('/team/' + id, { method: 'DELETE' });
+        toast('Account deleted.');
+      } catch (error) {
+        fail(error.message);
+      }
+      loadTeam();
+    }
   });
 
   /* ---------------- settings ---------------- */
