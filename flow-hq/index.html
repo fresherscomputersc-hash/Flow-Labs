@@ -32,7 +32,7 @@
       </div>
       <button class="admin-btn primary" type="submit" id="loginBtn">Sign in</button>
     </div>
-    <p class="auth-note">Authorized founders only. Accounts are managed in Supabase Auth.</p>
+    <p class="auth-note">Accounts are issued by an admin. There is no self sign-up.</p>
   </form>
 </div>
 
@@ -46,6 +46,8 @@
       <button type="button" data-tab="visitors">Visitors</button>
       <button type="button" data-tab="content">Content</button>
       <button type="button" data-tab="blog">Blog</button>
+      <button type="button" data-tab="projects">Projects</button>
+      <button type="button" data-tab="team">Team</button>
       <button type="button" data-tab="settings">Settings</button>
     </nav>
     <div class="admin-sidebar-foot">
@@ -257,6 +259,128 @@
             <button type="button" class="admin-btn danger" id="blogDelete" hidden>Delete post</button>
           </div>
         </form>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    <section class="admin-view" id="view-projects">
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <div><h2>Projects</h2><p>Everything you have access to, newest first.</p></div>
+          <div class="admin-actions">
+            <button type="button" class="admin-btn" id="projectsRefresh">Refresh</button>
+            <button type="button" class="admin-btn primary" id="projectNew">New project</button>
+          </div>
+        </div>
+        <div class="project-grid" id="projectsGrid"><p class="admin-empty">Loading…</p></div>
+      </div>
+
+      <div class="admin-card" id="projectFormCard" hidden>
+        <div class="admin-card-head">
+          <div><h2>New project</h2><p>The key prefixes every task: FLW-1, FLW-2.</p></div>
+        </div>
+        <form class="admin-form" id="projectForm">
+          <div class="admin-grid-2">
+            <div class="admin-field">
+              <label for="pp-name">Name</label>
+              <input class="admin-input" id="pp-name" required maxlength="120" placeholder="Flow Labs website">
+            </div>
+            <div class="admin-field">
+              <label for="pp-key">Key</label>
+              <input class="admin-input" id="pp-key" required maxlength="8" spellcheck="false" placeholder="FLW">
+              <small>Uppercase letters and digits, 2 to 8 characters.</small>
+            </div>
+          </div>
+          <div class="admin-field">
+            <label for="pp-summary">Summary</label>
+            <textarea class="admin-textarea" id="pp-summary" rows="2" maxlength="240" placeholder="One line a client could read."></textarea>
+          </div>
+          <div class="admin-grid-2">
+            <div class="admin-field">
+              <label for="pp-status">Status</label>
+              <select class="admin-select" id="pp-status">
+                <option value="planning">Planning</option>
+                <option value="active" selected>Active</option>
+                <option value="on_hold">On hold</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="pp-due">Due date</label>
+              <input class="admin-input" id="pp-due" type="date">
+            </div>
+          </div>
+          <div class="admin-actions">
+            <button type="submit" class="admin-btn primary" id="projectSave">Create project</button>
+            <button type="button" class="admin-btn ghost" id="projectCancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Team -->
+    <section class="admin-view" id="view-team">
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <div><h2>Team accounts</h2><p>Create logins, set roles, suspend access.</p></div>
+          <div class="admin-actions">
+            <button type="button" class="admin-btn primary" id="teamNew">Create account</button>
+          </div>
+        </div>
+        <div class="admin-table-wrap" id="teamTable"><p class="admin-empty">Loading…</p></div>
+      </div>
+
+      <div class="admin-card" id="teamFormCard" hidden>
+        <div class="admin-card-head">
+          <div><h2>New account</h2><p>Set a temporary password and share it once. Passwords are never shown again.</p></div>
+        </div>
+        <form class="admin-form" id="teamForm">
+          <div class="admin-grid-2">
+            <div class="admin-field">
+              <label for="tm-name">Full name</label>
+              <input class="admin-input" id="tm-name" required maxlength="120" autocomplete="off">
+            </div>
+            <div class="admin-field">
+              <label for="tm-email">Email</label>
+              <input class="admin-input" id="tm-email" type="email" required autocomplete="off">
+            </div>
+          </div>
+          <div class="admin-grid-2">
+            <div class="admin-field">
+              <label for="tm-role">Role</label>
+              <select class="admin-select" id="tm-role">
+                <option value="member" selected>Member</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+                <option value="client">Client (read-only portal)</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="tm-mode">Credentials</label>
+              <select class="admin-select" id="tm-mode">
+                <option value="password" selected>Temporary password</option>
+                <option value="invite">Email invite</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-field" id="tm-password-field">
+            <label for="tm-password">Temporary password</label>
+            <div class="admin-actions">
+              <input class="admin-input" id="tm-password" minlength="10" autocomplete="new-password" style="flex:1">
+              <button type="button" class="admin-btn" id="tm-generate">Generate</button>
+            </div>
+            <small>At least 10 characters. Shown once, immediately after creation.</small>
+          </div>
+          <div class="admin-field" id="tm-projects-field">
+            <label>Projects (optional)</label>
+            <div id="tm-projects" class="check-list"><p class="admin-empty">Loading projects…</p></div>
+          </div>
+          <div class="admin-actions">
+            <button type="submit" class="admin-btn primary" id="teamSave">Create account</button>
+            <button type="button" class="admin-btn ghost" id="teamCancel">Cancel</button>
+          </div>
+        </form>
+        <div id="teamResult"></div>
       </div>
     </section>
 
