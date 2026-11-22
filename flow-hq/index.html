@@ -45,6 +45,7 @@
       <button type="button" data-tab="leads">Leads</button>
       <button type="button" data-tab="visitors">Visitors</button>
       <button type="button" data-tab="content">Content</button>
+      <button type="button" data-tab="blog">Blog</button>
       <button type="button" data-tab="settings">Settings</button>
     </nav>
     <div class="admin-sidebar-foot">
@@ -154,6 +155,108 @@
         <div class="admin-actions" style="margin-top:1rem">
           <button type="submit" form="contentForm" class="admin-btn primary" id="contentSave">Save changes</button>
         </div>
+      </div>
+    </section>
+
+    <!-- Blog -->
+    <section class="admin-view" id="view-blog">
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <div><h2>Blog posts</h2><p id="blogMeta">Newest first. Drafts stay private.</p></div>
+          <div class="admin-actions">
+            <button type="button" class="admin-btn" id="blogRefresh">Refresh</button>
+            <button type="button" class="admin-btn" id="blogRebuild">Rebuild site</button>
+            <button type="button" class="admin-btn primary" id="blogNew">New post</button>
+          </div>
+        </div>
+        <p class="admin-hint">Publishing writes the post to Supabase and triggers a rebuild, so the static pages update in about a minute. Drafts are never readable by the public.</p>
+        <div class="admin-table-wrap" id="blogTable"><p class="admin-empty">Loading…</p></div>
+      </div>
+
+      <div class="admin-card" id="blogEditorCard" hidden>
+        <div class="admin-card-head">
+          <div><h2 id="blogEditorTitle">New post</h2><p id="blogEditorMeta">Not saved yet.</p></div>
+          <div class="admin-actions">
+            <a class="admin-btn ghost" id="blogViewLive" href="/blog/" target="_blank" rel="noopener" hidden>View live ↗</a>
+            <button type="button" class="admin-btn ghost" id="blogClose">Close</button>
+          </div>
+        </div>
+        <form class="admin-form" id="blogForm">
+          <div class="blog-grid">
+            <div class="admin-field">
+              <label for="bp-title">Title</label>
+              <input class="admin-input" id="bp-title" type="text" required>
+              <small>Browser tab and search result. Keep the “| The Flow Labs” suffix.</small>
+            </div>
+            <div class="admin-field">
+              <label for="bp-slug">URL slug</label>
+              <input class="admin-input" id="bp-slug" type="text" spellcheck="false" placeholder="auto-from-title">
+              <small>Public URL: /blog/&lt;slug&gt;/ — changing it later breaks old links.</small>
+            </div>
+          </div>
+
+          <div class="admin-field">
+            <label for="bp-description">Description</label>
+            <textarea class="admin-textarea" id="bp-description" rows="2"></textarea>
+            <small>Meta description and the card copy on /blog/.</small>
+          </div>
+
+          <details class="blog-more">
+            <summary>Headline, hero and CTA fields</summary>
+            <div class="blog-grid">
+              <div class="admin-field">
+                <label for="bp-h1">H1</label>
+                <input class="admin-input" id="bp-h1" type="text">
+              </div>
+              <div class="admin-field">
+                <label for="bp-crumb">Breadcrumb label</label>
+                <input class="admin-input" id="bp-crumb" type="text">
+              </div>
+            </div>
+            <div class="admin-field">
+              <label for="bp-subtitle">Subtitle</label>
+              <textarea class="admin-textarea" id="bp-subtitle" rows="2"></textarea>
+            </div>
+            <div class="admin-field">
+              <label for="bp-pill">Hero pill</label>
+              <input class="admin-input" id="bp-pill" type="text" placeholder="Founder-written — 2026">
+            </div>
+            <div class="blog-grid">
+              <div class="admin-field">
+                <label for="bp-cta-h2">CTA heading</label>
+                <input class="admin-input" id="bp-cta-h2" type="text">
+                <small>Leave blank to end the post without a CTA.</small>
+              </div>
+              <div class="admin-field">
+                <label for="bp-cta-p">CTA copy</label>
+                <input class="admin-input" id="bp-cta-p" type="text">
+              </div>
+            </div>
+          </details>
+
+          <div class="admin-field">
+            <label for="bp-body">Body (Markdown)</label>
+            <textarea class="admin-textarea blog-body" id="bp-body" rows="18" spellcheck="true"></textarea>
+            <small>Supported: paragraphs, ##/###/#### headings, - and 1. lists, **bold**, *italic*, `code`, [links](/path/), ![images](/assets/blog/x.png), &gt; quotes and fenced code. Raw HTML is escaped.</small>
+          </div>
+
+          <div class="blog-preview-shell">
+            <div class="admin-actions blog-preview-head">
+              <strong>Preview</strong>
+              <span class="spacer"></span>
+              <span class="admin-bar-value" id="blogWordCount"></span>
+            </div>
+            <div class="blog-preview" id="blogPreview"><p class="admin-empty">Start typing to see the rendered post.</p></div>
+          </div>
+
+          <div class="admin-actions">
+            <button type="submit" class="admin-btn primary" id="blogSave">Save</button>
+            <button type="button" class="admin-btn" id="blogPublish">Publish</button>
+            <button type="button" class="admin-btn ghost" id="blogUnpublish" hidden>Unpublish</button>
+            <span class="spacer"></span>
+            <button type="button" class="admin-btn danger" id="blogDelete" hidden>Delete post</button>
+          </div>
+        </form>
       </div>
     </section>
 

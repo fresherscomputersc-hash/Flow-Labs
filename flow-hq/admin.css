@@ -411,3 +411,27 @@ h3 { font-size: 0.95rem; }
   .admin-main { margin-left: 0; padding: 1.25rem; }
   .admin-topbar { flex-direction: column; }
 }
+
+/* ---------------- blog ---------------- */
+#blogEditorCard { margin-top: 1.25rem; }
+.blog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.blog-grid .admin-field { min-width: 0; }
+.blog-more { display: grid; gap: 1rem; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.9rem 1rem; }
+.blog-more summary { cursor: pointer; font-size: 0.78rem; color: var(--text-secondary); }
+.blog-more[open] summary { margin-bottom: 0.2rem; }
+.blog-body { min-height: 340px; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7; }
+.blog-preview-shell { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; }
+.blog-preview-head { margin-bottom: 0.75rem; }
+.blog-preview-head strong { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.blog-preview { max-height: 440px; overflow-y: auto; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.7; }
+.blog-preview p { white-space: normal; margin-bottom: 0.85rem; }
+.blog-preview h2, .blog-preview h3, .blog-preview h4 { color: var(--text); margin: 1.25rem 0 0.5rem; font-size: 1rem; }
+.blog-preview h2 { font-size: 1.12rem; }
+.blog-preview ul, .blog-preview ol { margin: 0 0 0.9rem 1.2rem; }
+.blog-preview li { margin-bottom: 0.35rem; }
+.blog-preview blockquote { border-left: 2px solid var(--accent); color: var(--text-muted); margin-bottom: 0.9rem; padding-left: 0.85rem; }
+.blog-preview code { background: var(--bg-elevated); border-radius: 3px; font-family: var(--font-mono); font-size: 0.78em; padding: 0.1rem 0.3rem; }
+.blog-preview pre { background: var(--bg-elevated); border-radius: var(--radius); margin-bottom: 0.9rem; overflow-x: auto; padding: 0.85rem; }
+.blog-preview pre code { background: none; padding: 0; }
+.blog-preview img { border-radius: var(--radius); max-width: 100%; }
+@media (max-width: 760px) { .blog-grid { grid-template-columns: 1fr; } }

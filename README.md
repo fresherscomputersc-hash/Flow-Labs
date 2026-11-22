@@ -44,12 +44,14 @@ This project is a multi-page static site built with modern vanilla HTML, CSS, an
 │   └── content-schema.js                    # CMS field registry shared with the admin UI
 ├── tools/site/
 │   ├── build.py                             # Sub-page generator, sitemap, and robots compiler
-│   ├── blog.py                              # Markdown blog pipeline (frontmatter + renderer)
+│   ├── blog.py                              # Markdown renderer (frontmatter + Markdown subset)
+│   ├── blog_source.py                       # Supabase-first post loader, blog-src/ fallback
 │   └── check_cms_keys.py                    # Verifies every data-cms key has a schema field
-├── blog-src/                                # One Markdown file per blog post (source of truth)
+├── blog-src/                                # Markdown posts (offline fallback for the build)
 │   └── README.md                            # Frontmatter keys, Markdown subset, publishing steps
 ├── api/
 │   ├── notify.js                            # Serverless endpoint for SMTP email notifications
+│   ├── rebuild.js                           # Admin-verified deploy hook trigger for blog edits
 │   ├── content.js                           # Public CMS overrides
 │   ├── settings.js                          # Public site settings
 │   └── track.js                             # Cookie-less page-view ingestion
@@ -105,7 +107,7 @@ python tools/site/check_cms_keys.py
 ```
 
 This compiles:
-- All 21 sub-pages under `services/`, `work/`, `blog/`, `about/`, `contact/`, `lab-report/`, and `privacy-policy/`
+- Every sub-page under `services/`, `work/`, `blog/`, `about/`, `contact/`, `lab-report/`, `privacy-policy/`, and `terms/` (the blog count follows the published posts)
 - `sitemap.xml` (deduplicated, `/flow-hq/` excluded)
 - `robots.txt`
 
@@ -117,11 +119,42 @@ The homepage (`index.html`) is hand-written and is not regenerated.
 
 ## Publishing a Blog Post
 
-Blog posts are Markdown files in `blog-src/`, not pages in `build.py`. To publish:
+Posts are written and published from **Flow HQ → Blog**. That is the normal path; you do not need a deploy for each edit.
+
+### The flow
+
+1. **Open Flow HQ** at `/flow-hq/` and sign in with an allowlisted admin account.
+2. **Blog → New post.** Fill in the title, slug, description and body. The slug becomes the URL: `/blog/<slug>/`.
+3. **Preview** renders live under the editor using the same Markdown subset as the site build.
+4. **Save** keeps it as a draft. Drafts live in `site_blog_posts` with `status = 'draft'` and RLS hides them from the public role, so a draft URL returns nothing.
+5. **Publish** sets `status = 'published'`, stamps `published_at`, and calls `POST /api/rebuild`. That endpoint verifies the caller's admin JWT and fires the Vercel deploy hook, so the static pages regenerate in about a minute.
+6. **Unpublish** or **Delete** also trigger a rebuild, which removes the page.
+
+Flow HQ's **Rebuild site** button re-runs the build without changing a post (useful after editing the table by hand).
+
+### One-time setup
+
+Run these once, in order:
+
+1. **Create the table.** Paste [`supabase-blog.sql`](supabase-blog.sql) into the Supabase SQL editor and run it. It creates `site_blog_posts`, the updated-at trigger, and the RLS policies (public reads only `published`; admins read and write everything).
+2. **Seed the existing posts.** Paste [`supabase-blog-seed.sql`](supabase-blog-seed.sql) and run it. It copies the three posts from `blog-src/` with `on conflict do nothing`, so it never overwrites later edits.
+3. **Create the deploy hook.** Vercel → project → Settings → Git → Deploy Hooks: one hook on `main`, any name. Copy the URL and add it to Environment Variables as `VERCEL_DEPLOY_HOOK_URL` (Production). Redeploy once so the function picks it up.
+4. **Build environment.** The production build reads Supabase with `SUPABASE_URL` and `SUPABASE_ANON_KEY`. Both are optional: `/api/rebuild` falls back to the public values in `assets/site.config.js`, which are already safe to expose (RLS protects the data).
+
+### How the build decides where posts come from
+
+`tools/site/blog_source.py` tries Supabase first and falls back to `blog-src/*.md`:
+
+- **With credentials** (Vercel): published rows from `site_blog_posts`, newest first.
+- **Without, or if the table is unreachable** (local builds, fresh clones): the Markdown files. This is why `python tools/site/build.py` still works offline and why a misconfigured database cannot take the blog down.
+
+### The Markdown-only path (still supported)
+
+Posts can also be written as files in `blog-src/` and built locally:
 
 1. **Create the file.** Copy an existing post in `blog-src/` and rename it to the URL slug you want, e.g. `why-we-quote-before-we-code.md`.
 2. **Fill in the frontmatter.** `title` and `description` are required; `date`, `slug`, `h1`, `subtitle`, `pill`, `crumb`, `cta_h2`, and `cta_p` are optional and documented in [`blog-src/README.md`](blog-src/README.md). Set `draft: true` while it is unfinished.
-3. **Write the body in Markdown.** Supported: paragraphs, `##`/`###` headings, `-` and `1.` lists, `**bold**`, `*italic*`, `` `code` ``, `[links](/path/)`, `![images](/assets/blog/x.png)`, `>` quotes, and fenced code blocks. Raw HTML is escaped.
+3. **Write the body in Markdown.** Supported: paragraphs, `##`/`###`/`####` headings, `-` and `1.` lists, `**bold**`, `*italic*`, `` `code` ``, `[links](/path/)`, `![images](/assets/blog/x.png)`, `>` quotes, and fenced code blocks. Raw HTML is escaped.
 4. **Build and check.**
    ```bash
    python tools/site/build.py
@@ -131,9 +164,9 @@ Blog posts are Markdown files in `blog-src/`, not pages in `build.py`. To publis
 5. **Preview.** Open `blog/<slug>/index.html` in a browser. Confirm the card appears on `blog/index.html` and the URL is in `sitemap.xml`.
 6. **Publish.** `git add -A`, commit, and push to `main`. Vercel rebuilds and the post goes live.
 
-Each post automatically gets the shared page shell, breadcrumbs, canonical URL, OpenGraph tags, `Article` JSON-LD, a sitemap entry, and the blog index card. Images live in `assets/blog/` and are referenced root-relative.
+A file post is only used when the Supabase read is unavailable, so on production prefer the Flow HQ editor; editing a `.md` file no longer changes the live blog once the table is seeded.
 
-There is no blog editor in Flow HQ yet. Flow HQ manages copy for the four core pages only.
+Each post automatically gets the shared page shell, breadcrumbs, canonical URL, OpenGraph tags, `Article` JSON-LD, a sitemap entry, and the blog index card. Images live in `assets/blog/` and are referenced root-relative.
 
 ---
 
@@ -162,8 +195,9 @@ Set these in your Vercel project settings (see `.env.example`):
 | `SMTP_PASS` | SMTP application-specific password |
 | `NOTIFY_TO` | Destination email where lead notifications are delivered |
 | `PSI_KEY` | Optional Google PageSpeed Insights API key for the Lab Report (`/api/audit`). Without it, the keyless free endpoint is used. |
-| `SUPABASE_URL` | Also read by `/api/audit` to persist the 24-hour scan cache (`site_audits`). |
+| `SUPABASE_URL` | Also read by `/api/audit` to persist the 24-hour scan cache (`site_audits`), and by the blog build to read `site_blog_posts`. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-side key used by `/api/audit` to write the scan cache. Falls back to `SUPABASE_ANON_KEY` if unset. |
+| `VERCEL_DEPLOY_HOOK_URL` | Deploy hook fired by `/api/rebuild` after a post is published, unpublished or deleted. Without it, Flow HQ shows a clear error and posts still save. |
 
 > **Note on the Lab Report:** all three of the above are optional. With none set, `/api/audit` still scans via the keyless PageSpeed endpoint and caches in memory only. It never fails hard: if PSI is down it returns a 503 and the page shows a "try again in a minute" message.
 
@@ -177,6 +211,10 @@ Run `supabase-schema.sql` in the Supabase SQL Editor. It is idempotent and creat
 - `site_visitors` — anonymous page views, inserted only by the service role
 - `site_audits` — The Lab Report 24-hour cache (one row per scanned URL)
 - `visitor_stats()` — aggregate RPC used by the admin dashboard
+
+Then run `supabase-blog.sql` (blog table, trigger, RLS) and `supabase-blog-seed.sql` (the three existing posts) in the same editor. Both are idempotent:
+
+- `site_blog_posts` — blog posts edited in Flow HQ; public can read `published` rows only, admins can read and write everything
 
 Then create the admin auth user in **Authentication → Users**, insert their email into `admin_users`, and disable public signups.
 

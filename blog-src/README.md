@@ -1,11 +1,18 @@
 # Blog source
 
+> **Production posts live in Supabase (`site_blog_posts`) and are edited in
+> Flow HQ → Blog.** This folder is the offline fallback: the build reads it only
+> when `SUPABASE_URL` / `SUPABASE_ANON_KEY` are absent or the table is
+> unreachable. Files here still work for local builds, and
+> `supabase-blog-seed.sql` seeded the original three posts from them.
+
 Every post on the site is one Markdown file in this folder. The build turns
 each file into `/blog/<slug>/` using the same page shell as the rest of the
 site — header, footer, canonical, OpenGraph tags, `Article` JSON-LD, sitemap
 entry, and the card on `/blog/`.
 
-Renderer: `tools/site/blog.py`. It is stdlib-only, like the rest of the build.
+Loader: `tools/site/blog_source.py` (Supabase first, this folder second).
+Renderer: `tools/site/blog.py`. Both are stdlib-only, like the rest of the build.
 
 ## Write a post
 
