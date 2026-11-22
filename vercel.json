@@ -80,32 +80,32 @@
     },
     {
       "source": "/services/ai-automation-bhubaneswar",
-      "destination": "/services/ai-automation/",
+      "destination": "/bhubaneswar/",
       "permanent": true
     },
     {
       "source": "/services/ai-automation-bhubaneswar/:path*",
-      "destination": "/services/ai-automation/:path*",
+      "destination": "/bhubaneswar/",
       "permanent": true
     },
     {
       "source": "/services/web-development-bhubaneswar",
-      "destination": "/services/web-development/",
+      "destination": "/bhubaneswar/",
       "permanent": true
     },
     {
       "source": "/services/web-development-bhubaneswar/:path*",
-      "destination": "/services/web-development/:path*",
+      "destination": "/bhubaneswar/",
       "permanent": true
     },
     {
       "source": "/services/custom-software-development-bhubaneswar",
-      "destination": "/services/custom-software-development/",
+      "destination": "/bhubaneswar/",
       "permanent": true
     },
     {
       "source": "/services/custom-software-development-bhubaneswar/:path*",
-      "destination": "/services/custom-software-development/:path*",
+      "destination": "/bhubaneswar/",
       "permanent": true
     },
     {

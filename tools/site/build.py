@@ -29,7 +29,9 @@ ORG = {
     "founder": [{"@type": "Person", "name": "Smruti Ranjan", "jobTitle": "Founder"},
                 {"@type": "Person", "name": "Biswash", "jobTitle": "Co-Founder"},
                 {"@type": "Person", "name": "Arpita", "jobTitle": "Co-Founder"}],
-    "areaServed": [{"@type": "Country", "name": "India"}],
+    "areaServed": [{"@type": "City", "name": "Bhubaneswar"},
+                   {"@type": "AdministrativeArea", "name": "Odisha"},
+                   {"@type": "Country", "name": "India"}],
     "sameAs": ["https://www.instagram.com/the.flow.labs/"],
 }
 
@@ -92,6 +94,16 @@ def steps():
     return '<div class="steps reveal">' + ''.join(
         f'<div class="step"><span class="num">0{i}</span><h3>{h}</h3><p>{p}</p></div>'
         for i, (h, p) in enumerate(STEPS, 1)) + '</div>'
+
+def where_we_work():
+    """Shared national + local signal appended to every service page."""
+    return ('<section><div class="wrap"><div class="prose">'
+            '<h2>Where we work</h2>'
+            '<p>We build for businesses in <a href="/bhubaneswar/">Bhubaneswar and across Odisha</a>, '
+            'work with clients throughout India, and run projects remotely with teams internationally. '
+            'Distance does not change the process: a written scope, a fixed price before code, weekly demos '
+            'on a real build, and the source code handed over at the end.</p>'
+            '</div></div></section>')
 
 CONTACT_JS = r"""
 <script>
@@ -358,7 +370,7 @@ CONTACT_OTHER = '''
     <h2>Direct channels</h2>
     <p><strong>Email:</strong> <a href="mailto:hello@theflowlabs.online" data-cms="contact-email">hello@theflowlabs.online</a> — include a brief overview of your project and we will take it from there.</p>
     <p><strong>Instagram:</strong> <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">@the.flow.labs</a> for quick questions.</p>
-    <p><strong>Studio:</strong> The Flow Labs, Bhubaneswar, Odisha, India. We work remotely with teams across India and abroad, with in-person meetings when they genuinely help.</p>
+    <p><strong>Studio:</strong> The Flow Labs, Bhubaneswar, Odisha, India. We work remotely with teams across India and abroad, with in-person meetings when they genuinely help. <a href="/bhubaneswar/">More about the studio in Bhubaneswar</a>.</p>
     <p>Ordering a website, a system or an AI workflow? Tell us the problem, not the solution — we will tell you which of the three layers actually fixes it.</p>
   </div>
 </div></section>
@@ -1385,6 +1397,107 @@ def page_terms():
                 crumbs=crumb, hero=h, body=b)
 
 
+def page_bhubaneswar():
+    """Local landing page. One substantive page for city intent, not a set of
+    thin doorway pages per service: the services are sections that link out."""
+    path = "/bhubaneswar/"
+    crumb = [("/", "Home"), (None, "Bhubaneswar")]
+    h = (crumb, "Bhubaneswar, Odisha",
+         'A software studio<br>in <span class="grad">Bhubaneswar.</span>',
+         "Three founders, one in-house team. We build websites, custom software and AI automation from Bhubaneswar for businesses in Odisha, across India, and remotely around the world.")
+    b = (
+        '<section><div class="wrap"><div class="prose">'
+        '<p>The Flow Labs is a founder-led engineering studio based in Bhubaneswar, Odisha. We design the interface, '
+        'engineer the system behind it, and wire in the AI that removes the repetitive work. Every project is quoted '
+        'individually with a fixed price before code starts, and the source code is handed over at the end.</p>'
+
+        '<h2>What we build for businesses in Bhubaneswar</h2>'
+        '<ul>'
+        '<li><strong>Websites and web apps.</strong> Fast, phone-first sites and product interfaces that load quickly and convert. '
+        'See <a href="/services/web-development/">web development</a>.</li>'
+        '<li><strong>Custom software.</strong> Internal tools, operations dashboards, APIs and data pipelines built around how your team actually works. '
+        'See <a href="/services/custom-software-development/">custom software development</a>.</li>'
+        '<li><strong>AI automation.</strong> Ticket triage, document processing, lead routing and reporting that runs on its own schedule. '
+        'See <a href="/services/ai-automation/">AI automation</a>.</li>'
+        '<li><strong>AI assistants.</strong> A chat assistant trained on your business that answers customers and captures enquiries at any hour. '
+        'See <a href="/services/ai-chatbot-development/">AI chatbot development</a>.</li>'
+        '</ul>'
+
+        '<h2>Why work with a studio here</h2>'
+        '<ul>'
+        '<li><strong>You can meet the people doing the work.</strong> For projects in and around Bhubaneswar, we can start '
+        'with a face-to-face scoping session instead of a video call.</li>'
+        '<li><strong>Same timezone, direct access.</strong> No account managers and no handoffs. You talk to the founders '
+        'building your product, on IST, when decisions need to be made.</li>'
+        '<li><strong>The work stays yours.</strong> A fixed quote before we start, weekly demos on a real build, and the '
+        'repository in your hands at handover.</li>'
+        '</ul>'
+
+        '<h2>Working with us across India</h2>'
+        '<p>Most of our clients are outside Odisha. The process is the same whether you are in Bengaluru, Mumbai, Delhi or '
+        'Bhubaneswar: a written scope, a fixed price before code, a clickable build every week, and a handover that leaves '
+        'you independent of us. The <a href="/services/">services overview</a> explains what each engagement includes.</p>'
+
+        '<h2>Working with us internationally</h2>'
+        '<p>We also run projects with teams outside India, entirely remotely. Everything is written down, demos are recorded, '
+        'and we keep a shared build you can open at any hour. If your team is in another timezone, we agree a short overlap '
+        'window for decisions and keep the rest async.</p>'
+
+        '<h2>Who we usually work with</h2>'
+        '<p>Founders and small teams with one specific operational problem: a booking flow that leaks enquiries, a back office '
+        'held together by spreadsheets, a support inbox nobody can keep up with, or a product idea that needs a real first '
+        'version. We are a three-person studio and we take on four builds a month, so the work stays close to the people who '
+        'scoped it.</p>'
+        '</div></div></section>'
+        + faq([
+            ("Do you only work with clients in Bhubaneswar?",
+             "No. Bhubaneswar is where the studio is based. Most projects run remotely with clients across India and abroad, "
+             "and local projects can include in-person sessions when they help."),
+            ("Can we meet in person before starting?",
+             "If you are in or around Bhubaneswar, yes. We can meet to understand the problem and scope the work before "
+             "anything is quoted."),
+            ("Do you work with international clients?",
+             "Yes. We work remotely with teams outside India, keep decisions in writing and share a clickable build every "
+             "week, so time zones rarely slow a project."),
+            ("How is pricing decided?",
+             "Every project is quoted individually. You get a written scope and a fixed price before code starts, so there "
+             "are no hourly surprises."),
+            ("How long does a project take?",
+             "It depends on scope. The quote includes milestones and a delivery date, and you see progress on a real build "
+             "every week."),
+        ])
+        + cta("Have a project in Bhubaneswar or elsewhere?",
+              "Tell us what you are building. We reply within 48 hours with an honest view of scope, timeline and price.")
+    )
+    schema = {
+        "@context": "https://schema.org", "@type": "ProfessionalService",
+        "@id": BASE + "/bhubaneswar/#studio",
+        "name": "The Flow Labs",
+        "url": BASE + "/bhubaneswar/",
+        "image": OG_IMG, "logo": BASE + "/assets/icon-180.png",
+        "email": "hello@theflowlabs.online",
+        "description": "Founder-led web, software and AI studio based in Bhubaneswar, Odisha, working with clients across India and remotely worldwide.",
+        "address": {"@type": "PostalAddress", "addressLocality": "Bhubaneswar",
+                    "addressRegion": "Odisha", "addressCountry": "IN"},
+        "areaServed": [{"@type": "City", "name": "Bhubaneswar"},
+                       {"@type": "AdministrativeArea", "name": "Odisha"},
+                       {"@type": "Country", "name": "India"}],
+        "founder": [{"@type": "Person", "name": "Smruti Ranjan", "jobTitle": "Founder"},
+                    {"@type": "Person", "name": "Biswash", "jobTitle": "Co-Founder"},
+                    {"@type": "Person", "name": "Arpita", "jobTitle": "Co-Founder"}],
+        "sameAs": ["https://www.instagram.com/the.flow.labs/"],
+        "availableLanguage": "English",
+        "knowsAbout": ["Web development", "Custom software development",
+                       "AI automation", "AI chatbot development"],
+    }
+    return dict(path=path,
+                title="Web & Software Studio in Bhubaneswar | The Flow Labs",
+                og_title="Software studio in Bhubaneswar | The Flow Labs",
+                description="A founder-led web, software and AI studio in Bhubaneswar, Odisha. Fixed price before code and source handed over. Working across India and remotely worldwide.",
+                crumbs=crumb, hero=h, body=b,
+                jsonld_extra=[schema])
+
+
 # --------------------------------------------------------------------- blog --
 # -------------------------------------------------------------------- blog --
 # Posts live in blog-src/*.md — see blog-src/README.md for the format.
@@ -1420,6 +1533,7 @@ PAGES += [
     page_droovee(), page_drishti(), page_flowops(), page_interview_copilot(),
     page_bhuverify(), page_carbon_coach(), page_qr_platform(),
     page_about(), page_contact(), page_privacy(), page_terms(), page_lab_report(),
+    page_bhubaneswar(),
     blog_index(), *blog.to_pages(POSTS, cta),
 ]
 
@@ -1472,7 +1586,7 @@ TEMPLATE = '''<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
 <script src="/assets/site.config.js?v=7" defer></script>
-<link rel="stylesheet" href="/assets/site.css?v=10">
+<link rel="stylesheet" href="/assets/site.css?v=11">
 {jsonld}
 </head>
 <body data-page="{page_slug}">
@@ -1524,6 +1638,7 @@ TEMPLATE = '''<!DOCTYPE html>
         </div>
         <div class="footer-col">
           <h5>Studio</h5>
+          <a href="/bhubaneswar/">Bhubaneswar studio</a>
           <a href="/services/">What we build</a>
           <a href="/privacy-policy/">Privacy Policy</a>
           <a href="/terms/">Terms of Service</a>
@@ -1545,7 +1660,7 @@ TEMPLATE = '''<!DOCTYPE html>
 </html>
 '''
 
-SLUGS = {"/": "home", "/about/": "about", "/services/": "services", "/contact/": "contact", "/lab-report/": "lab-report"}
+SLUGS = {"/": "home", "/about/": "about", "/services/": "services", "/contact/": "contact", "/lab-report/": "lab-report", "/bhubaneswar/": "bhubaneswar"}
 
 def emit():
     url_entries = list(SITEMAP_ROOT_EXTRA)
@@ -1556,12 +1671,16 @@ def emit():
         hero_html = hero(orbzz, pill, h1, sub, p.get("cms"))
         canonical = BASE + p["path"]
         jlds = [org_min(), crumb_jsonld(p["crumbs"])]
+        for extra in p.get("jsonld_extra", []):
+            jlds.append(extra)
         if p["path"] in SERVICE_META:
             s = SERVICE_META[p["path"]]
             jlds.append({"@context": "https://schema.org", "@type": "Service",
                          "name": s["name"], "description": p["description"],
                          "provider": {"@type": "Organization", "name": "The Flow Labs", "url": BASE + "/", "email": "hello@theflowlabs.online"},
-                         "areaServed": [{"@type": "Country", "name": "India"}],
+                         "areaServed": [{"@type": "City", "name": "Bhubaneswar"},
+                                        {"@type": "AdministrativeArea", "name": "Odisha"},
+                                        {"@type": "Country", "name": "India"}],
                          "serviceType": s["serviceType"]})
         if p.get("article"):
             a = p["article"]
@@ -1572,10 +1691,13 @@ def emit():
                          "publisher": {"@type": "Organization", "name": "The Flow Labs", "url": BASE + "/"},
                          "mainEntityOfPage": canonical, "image": OG_IMG})
         jsonld = "\n".join('<script type="application/ld+json">' + json.dumps(j, ensure_ascii=False) + '</script>' for j in jlds)
+        body_html = p["body"]
+        if p["path"] in SERVICE_META:
+            body_html += where_we_work()
         html = TEMPLATE.format(
             title=p["title"], description=p["description"], canonical=canonical,
             og_title=p["og_title"], og_img=OG_IMG,
-            jsonld=jsonld, hero_html=hero_html, body_html=p["body"],
+            jsonld=jsonld, hero_html=hero_html, body_html=body_html,
             footer_note=p.get("footer_note", ""),
             logo_link=LOGO_LINK,
             page_slug=SLUGS.get(p["path"], ""),
