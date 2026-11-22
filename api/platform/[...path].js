@@ -419,6 +419,30 @@ const handle = async (req, res, segments) => {
   throw http(404, 'Unknown endpoint.');
 };
 
+const parseSegments = (req) => {
+  // Vercel does not always populate req.query.path for a nested
+  // catch-all, so read the path straight off the request URL and fall
+  // back to the query object.
+  const pathname = String(req.url || '').split('?')[0];
+  const marker = '/api/platform';
+  const at = pathname.indexOf(marker);
+  let rest = at === -1 ? pathname : pathname.slice(at + marker.length);
+  rest = rest.replace(/^\/+|\/+$/g, '');
+
+  let parts = rest ? rest.split('/') : [];
+
+  if (!parts.length && req.query) {
+    const raw = req.query.path || req.query['...path'];
+    if (raw) parts = Array.isArray(raw) ? raw : String(raw).split('/');
+  }
+
+  return parts
+    .filter(Boolean)
+    .map((part) => {
+      try { return decodeURIComponent(part); } catch (error) { return part; }
+    });
+};
+
 module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
@@ -426,10 +450,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const raw = req.query && req.query.path;
-    const segments = (Array.isArray(raw) ? raw : String(raw || '').split('/'))
-      .filter(Boolean)
-      .map((part) => decodeURIComponent(part));
+    const segments = parseSegments(req);
 
     if (!segments.length) throw http(404, 'Unknown endpoint.');
 
