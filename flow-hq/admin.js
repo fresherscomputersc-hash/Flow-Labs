@@ -14,7 +14,10 @@
     leadsPageSize: 25,
     leadsTotal: 0,
     contentPage: 'home',
-    settings: {}
+    settings: {},
+    blogPosts: [],
+    blogEditing: null,
+    blogSlugTouched: false
   };
 
   var TAB_META = {
@@ -22,6 +25,7 @@
     leads: ['Leads', 'Every enquiry, newest first.'],
     visitors: ['Visitors', 'Cookie-less page views and traffic sources.'],
     content: ['Content', 'Override public copy without a deploy.'],
+    blog: ['Blog', 'Write, draft and publish posts.'],
     settings: ['Settings', 'Accent, sections and SEO defaults.']
   };
 
@@ -173,6 +177,7 @@
     if (tab === 'leads') loadLeads();
     if (tab === 'visitors') loadVisitors();
     if (tab === 'content') loadContent();
+    if (tab === 'blog') loadBlog();
     if (tab === 'settings') loadSettings();
   }
 
@@ -604,6 +609,373 @@
       toast('Page reset to hardcoded defaults.');
       loadContent();
     }
+  });
+
+  /* ---------------- blog ---------------- */
+  var BLOG_FALLBACK = /relation .* does not exist|schema cache/i;
+
+  function blogSlug(value) {
+    var text = String(value || '').split('|')[0];
+    if (text.normalize) text = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+  }
+
+  function mdInline(text) {
+    var out = esc(text);
+    out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img alt="$1" src="$2" loading="lazy">');
+    out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+    out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    out = out.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    return out;
+  }
+
+  function mdToHtml(markdown) {
+    var lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n');
+    var html = [];
+    var para = [];
+    var list = null;
+    var quote = [];
+    var code = null;
+
+    function flushPara() {
+      if (para.length) { html.push('<p>' + mdInline(para.join(' ')) + '</p>'); para = []; }
+    }
+    function flushList() {
+      if (!list) return;
+      html.push('<' + list.type + '>' + list.items.map(function (item) {
+        return '<li>' + mdInline(item) + '</li>';
+      }).join('') + '</' + list.type + '>');
+      list = null;
+    }
+    function flushQuote() {
+      if (quote.length) {
+        html.push('<blockquote>' + quote.map(mdInline).join('<br>') + '</blockquote>');
+        quote = [];
+      }
+    }
+    function flushAll() { flushPara(); flushList(); flushQuote(); }
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+
+      if (code !== null) {
+        if (/^```/.test(line.trim())) {
+          html.push('<pre><code>' + esc(code.join('\n')) + '</code></pre>');
+          code = null;
+        } else {
+          code.push(line);
+        }
+        continue;
+      }
+
+      if (/^```/.test(line.trim())) { flushAll(); code = []; continue; }
+      if (!line.trim()) { flushAll(); continue; }
+
+      var heading = line.match(/^(#{2,4})\s+(.*)$/);
+      if (heading) {
+        flushAll();
+        var level = heading[1].length;
+        html.push('<h' + level + '>' + mdInline(heading[2]) + '</h' + level + '>');
+        continue;
+      }
+
+      if (/^>\s?/.test(line)) {
+        flushPara(); flushList();
+        quote.push(line.replace(/^>\s?/, ''));
+        continue;
+      }
+
+      var bullet = line.match(/^\s*[-*]\s+(.*)$/);
+      var numbered = line.match(/^\s*\d+\.\s+(.*)$/);
+      if (bullet || numbered) {
+        flushPara(); flushQuote();
+        var type = bullet ? 'ul' : 'ol';
+        if (!list || list.type !== type) { flushList(); list = { type: type, items: [] }; }
+        list.items.push((bullet || numbered)[1]);
+        continue;
+      }
+
+      flushList(); flushQuote();
+      para.push(line.trim());
+    }
+
+    if (code !== null) html.push('<pre><code>' + esc(code.join('\n')) + '</code></pre>');
+    flushAll();
+    return html.join('\n');
+  }
+
+  function updateBlogPreview() {
+    var body = $('bp-body').value;
+    var words = body.trim() ? body.trim().split(/\s+/).length : 0;
+    $('blogWordCount').textContent = words ? words + ' words · ' + Math.max(1, Math.round(words / 220)) + ' min read' : '';
+    $('blogPreview').innerHTML = body.trim()
+      ? mdToHtml(body)
+      : '<p class="admin-empty">Start typing to see the rendered post.</p>';
+  }
+
+  function renderBlogTable() {
+    var container = $('blogTable');
+    var posts = state.blogPosts || [];
+
+    if (!posts.length) {
+      container.innerHTML = '<p class="admin-empty">No posts yet. Create the first one.</p>';
+      $('blogMeta').textContent = 'No posts yet.';
+      return;
+    }
+
+    var published = posts.filter(function (post) { return post.status === 'published'; }).length;
+    $('blogMeta').textContent = posts.length + ' post' + (posts.length === 1 ? '' : 's') + ' · ' +
+      published + ' published · ' + (posts.length - published) + ' draft' + (posts.length - published === 1 ? '' : 's');
+
+    container.innerHTML = '<table class="admin-table"><thead><tr>' +
+      '<th>Title</th><th>Slug</th><th>Status</th><th>Published</th><th>Updated</th><th></th>' +
+      '</tr></thead><tbody>' + posts.map(function (post) {
+        return '<tr>' +
+          '<td><strong>' + esc(post.title) + '</strong></td>' +
+          '<td class="mono">/blog/' + esc(post.slug) + '/</td>' +
+          '<td><span class="badge ' + (post.status === 'published' ? 'converted' : 'contacted') + '">' + esc(post.status) + '</span></td>' +
+          '<td class="mono">' + esc(post.published_at ? fmtDate(post.published_at) : '—') + '</td>' +
+          '<td class="mono">' + esc(fmtDate(post.updated_at)) + '</td>' +
+          '<td class="mono">' +
+            '<button type="button" class="admin-btn ghost" data-blog-edit="' + esc(post.id) + '">Edit</button> ' +
+            (post.status === 'published'
+              ? '<a class="admin-btn ghost" href="/blog/' + esc(post.slug) + '/" target="_blank" rel="noopener">View ↗</a> '
+              : '') +
+            '<button type="button" class="admin-btn danger" data-blog-del="' + esc(post.id) + '">Delete</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  async function loadBlog() {
+    var container = $('blogTable');
+    container.innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    var result = await db.from('site_blog_posts')
+      .select('id,slug,title,description,status,published_at,updated_at')
+      .order('updated_at', { ascending: false });
+
+    if (result.error) {
+      var message = result.error.message || '';
+      container.innerHTML = '<p class="admin-empty">Could not load posts. ' +
+        (BLOG_FALLBACK.test(message) ? 'Run <code>supabase-blog.sql</code> in the Supabase SQL editor first.' : 'Check your connection and RLS policies.') +
+        '</p>';
+      $('blogMeta').textContent = 'Blog unavailable.';
+      return;
+    }
+
+    state.blogPosts = result.data || [];
+    renderBlogTable();
+  }
+
+  function setBlogField(id, value) {
+    $(id).value = value == null ? '' : value;
+  }
+
+  function openBlogEditor(row, silent) {
+    state.blogEditing = row || null;
+    state.blogSlugTouched = !!(row && row.slug);
+
+    $('blogEditorCard').hidden = false;
+    $('blogEditorTitle').textContent = row ? 'Edit post' : 'New post';
+    $('blogEditorMeta').textContent = row
+      ? (row.status === 'published'
+        ? 'Published — save to push a new build.'
+        : 'Draft — only admins can see this.')
+      : 'Not saved yet.';
+
+    setBlogField('bp-title', row && row.title);
+    setBlogField('bp-slug', row && row.slug);
+    setBlogField('bp-description', row && row.description);
+    setBlogField('bp-h1', row && row.h1);
+    setBlogField('bp-crumb', row && row.crumb);
+    setBlogField('bp-subtitle', row && row.subtitle);
+    setBlogField('bp-pill', row && row.pill);
+    setBlogField('bp-cta-h2', row && row.cta_h2);
+    setBlogField('bp-cta-p', row && row.cta_p);
+    setBlogField('bp-body', row && row.body);
+
+    var isPublished = !!(row && row.status === 'published');
+    $('blogDelete').hidden = !row;
+    $('blogUnpublish').hidden = !isPublished;
+    $('blogViewLive').hidden = !isPublished;
+    if (isPublished) $('blogViewLive').href = '/blog/' + row.slug + '/';
+
+    updateBlogPreview();
+    if (!silent) $('blogEditorCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function closeBlogEditor() {
+    state.blogEditing = null;
+    $('blogEditorCard').hidden = true;
+  }
+
+  function collectBlogFields() {
+    return {
+      title: $('bp-title').value.trim(),
+      slug: blogSlug($('bp-slug').value || $('bp-title').value),
+      description: $('bp-description').value.trim(),
+      body: $('bp-body').value.trim(),
+      h1: $('bp-h1').value.trim(),
+      subtitle: $('bp-subtitle').value.trim(),
+      pill: $('bp-pill').value.trim(),
+      crumb: $('bp-crumb').value.trim(),
+      cta_h2: $('bp-cta-h2').value.trim(),
+      cta_p: $('bp-cta-p').value.trim()
+    };
+  }
+
+  async function saveBlog(status) {
+    var values = collectBlogFields();
+    if (!values.title) { fail('Add a title first.'); return null; }
+    if (!values.slug) { fail('Add a URL slug first.'); return null; }
+    if (!values.body) { fail('The post needs a body.'); return null; }
+    if (values.slug.length < 3) { fail('The slug is too short.'); return null; }
+
+    var payload = Object.assign({}, values);
+    if (status) {
+      payload.status = status;
+      if (status === 'published') {
+        payload.published_at = (state.blogEditing && state.blogEditing.published_at) || new Date().toISOString();
+      }
+    } else if (!state.blogEditing) {
+      payload.status = 'draft';
+    }
+
+    var button = $('blogSave');
+    button.disabled = true;
+    var result;
+    try {
+      result = state.blogEditing
+        ? await db.from('site_blog_posts').update(payload).eq('id', state.blogEditing.id).select().single()
+        : await db.from('site_blog_posts').insert(payload).select().single();
+    } finally {
+      button.disabled = false;
+    }
+
+    if (result.error) {
+      var message = result.error.message || '';
+      if (/duplicate key|unique/i.test(message)) {
+        fail('That slug is already used by another post. Pick a different one.');
+      } else if (BLOG_FALLBACK.test(message)) {
+        fail('The blog table is missing. Run supabase-blog.sql in Supabase first.');
+      } else {
+        fail('Could not save the post.');
+      }
+      return null;
+    }
+
+    openBlogEditor(result.data, true);
+    loadBlog();
+    return result.data;
+  }
+
+  async function triggerRebuild() {
+    var sessionResult = await db.auth.getSession();
+    var token = sessionResult.data && sessionResult.data.session
+      ? sessionResult.data.session.access_token
+      : '';
+    if (!token) { fail('Session expired. Sign in again.'); return false; }
+
+    try {
+      var response = await fetch('/api/rebuild', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      var data = await response.json().catch(function () { return {}; });
+      if (response.ok) {
+        toast('Rebuild started. Live in about a minute.');
+        return true;
+      }
+      fail(data.error || 'Could not start the rebuild.');
+    } catch (error) {
+      fail('Could not reach the rebuild endpoint.');
+    }
+    return false;
+  }
+
+  async function removeBlogPost(id) {
+    if (!window.confirm('Delete this post permanently?')) return;
+    var result = await db.from('site_blog_posts').delete().eq('id', id);
+    if (result.error) {
+      fail('Delete failed.');
+      return;
+    }
+    if (state.blogEditing && state.blogEditing.id === id) closeBlogEditor();
+    toast('Post deleted.');
+    loadBlog();
+    triggerRebuild();
+  }
+
+  $('blogRefresh').addEventListener('click', loadBlog);
+  $('blogRebuild').addEventListener('click', triggerRebuild);
+  $('blogNew').addEventListener('click', function () { openBlogEditor(null); });
+  $('blogClose').addEventListener('click', closeBlogEditor);
+
+  $('bp-body').addEventListener('input', updateBlogPreview);
+  $('bp-subtitle').addEventListener('input', updateBlogPreview);
+
+  $('bp-title').addEventListener('input', function () {
+    if (!state.blogSlugTouched) {
+      $('bp-slug').value = blogSlug($('bp-title').value);
+    }
+  });
+
+  $('bp-slug').addEventListener('input', function () {
+    state.blogSlugTouched = $('bp-slug').value.trim() !== '';
+  });
+
+  $('blogForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    var row = await saveBlog(null);
+    if (!row) return;
+    if (row.status === 'published') {
+      triggerRebuild();
+    } else {
+      toast('Draft saved.');
+    }
+  });
+
+  $('blogPublish').addEventListener('click', async function () {
+    var row = await saveBlog('published');
+    if (row) triggerRebuild();
+  });
+
+  $('blogUnpublish').addEventListener('click', async function () {
+    if (!state.blogEditing) return;
+    if (!window.confirm('Move this post back to draft? It leaves the public blog after the next rebuild.')) return;
+
+    var result = await db.from('site_blog_posts')
+      .update({ status: 'draft' })
+      .eq('id', state.blogEditing.id)
+      .select()
+      .single();
+
+    if (result.error) {
+      fail('Could not unpublish.');
+      return;
+    }
+    openBlogEditor(result.data, true);
+    loadBlog();
+    triggerRebuild();
+  });
+
+  $('blogDelete').addEventListener('click', function () {
+    if (state.blogEditing) removeBlogPost(state.blogEditing.id);
+  });
+
+  $('blogTable').addEventListener('click', async function (event) {
+    var edit = event.target.closest('[data-blog-edit]');
+    var remove = event.target.closest('[data-blog-del]');
+
+    if (edit) {
+      var result = await db.from('site_blog_posts').select('*').eq('id', edit.getAttribute('data-blog-edit')).single();
+      if (result.error) fail('Could not load the post.');
+      else openBlogEditor(result.data);
+    }
+
+    if (remove) removeBlogPost(remove.getAttribute('data-blog-del'));
   });
 
   /* ---------------- settings ---------------- */

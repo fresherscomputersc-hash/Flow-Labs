@@ -12,6 +12,7 @@ import io, os, json, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import blog  # noqa: E402  markdown blog pipeline (tools/site/blog.py)
+import blog_source  # noqa: E402  Supabase-first post loader with blog-src/ fallback
 
 BASE  = "https://www.theflowlabs.online"
 OG_IMG = BASE + "/assets/work-droovee.png"
@@ -1504,7 +1505,9 @@ def page_bhubaneswar():
 # Add or edit a file there, run this script, and the page, the blog index
 # card, the sitemap entry and the Article JSON-LD are all generated.
 BLOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "blog-src")
-POSTS = blog.load_posts(BLOG_DIR, YEAR)
+# Posts come from Supabase when credentials are in the environment (production),
+# otherwise from blog-src/*.md so the build still works offline.
+POSTS = blog_source.load_posts(BLOG_DIR, YEAR)
 
 def blog_index():
     crumb = [("/", "Home"), (None, "Blog")]
