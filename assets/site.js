@@ -178,9 +178,10 @@
     var step = function () {
       if (!running) return;
       ctx.clearRect(0, 0, w, h);
-      ctx.strokeStyle = 'rgba(59,130,246,0.15)';
-      ctx.fillStyle = 'rgba(96,165,250,0.55)';
-      ctx.lineWidth = 0.6;
+      var isBright = document.body && (document.body.getAttribute('data-theme') === 'bright' || document.documentElement.getAttribute('data-theme') === 'bright');
+      ctx.strokeStyle = isBright ? 'rgba(37,99,235,0.14)' : 'rgba(59,130,246,0.15)';
+      ctx.fillStyle = isBright ? 'rgba(37,99,235,0.48)' : 'rgba(96,165,250,0.55)';
+      ctx.lineWidth = isBright ? 0.75 : 0.6;
 
       for (var i = 0; i < parts.length; i++) {
         var p = parts[i];
