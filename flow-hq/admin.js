@@ -206,6 +206,11 @@
       button.hidden = tabs.indexOf(tab) === -1;
     });
 
+    Array.prototype.forEach.call(document.querySelectorAll('.admin-nav-group'), function (group) {
+      var visibleButtons = group.querySelectorAll('[data-tab]:not([hidden])');
+      group.hidden = visibleButtons.length === 0;
+    });
+
     // Creating projects and accounts is admin-only at the database level.
     if ($('projectNew')) $('projectNew').hidden = !isAdmin();
   }
@@ -286,6 +291,44 @@
   });
 
   /* ---------------- tabs ---------------- */
+  var GROUP_NAMES = {
+    dashboard: 'Workspace',
+    projects: 'Workspace',
+    project: 'Workspace',
+    team: 'Workspace',
+    content: 'Content',
+    blog: 'Content',
+    leads: 'Site',
+    visitors: 'Site',
+    settings: 'System'
+  };
+
+  function updateBreadcrumb(tab, detailLabel) {
+    var bc = $('adminBreadcrumb');
+    if (!bc) return;
+    var group = GROUP_NAMES[tab] || 'Workspace';
+    var title = TAB_META[tab] ? TAB_META[tab][0] : tab;
+
+    if (tab === 'project') {
+      var projName = detailLabel || (state.project && state.project.name) || 'Project';
+      bc.innerHTML = '<a href="#projects" class="breadcrumb-link">' + esc(group) + '</a>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<a href="#projects" class="breadcrumb-link">Projects</a>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<span class="breadcrumb-current">' + esc(projName) + '</span>';
+    } else if (tab === 'blog' && detailLabel) {
+      bc.innerHTML = '<a href="#blog" class="breadcrumb-link">' + esc(group) + '</a>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<a href="#blog" class="breadcrumb-link">Blog</a>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<span class="breadcrumb-current">' + esc(detailLabel) + '</span>';
+    } else {
+      bc.innerHTML = '<span class="breadcrumb-group">' + esc(group) + '</span>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<span class="breadcrumb-current">' + esc(title) + '</span>';
+    }
+  }
+
   function confirmLeaveTab(next) {
     if (next === state.tab) return true;
 
@@ -308,7 +351,13 @@
 
     var navTab = tab === 'project' ? 'projects' : tab;
     Array.prototype.forEach.call(document.querySelectorAll('#adminNav [data-tab]'), function (button) {
-      button.classList.toggle('active', button.getAttribute('data-tab') === navTab);
+      var isActive = button.getAttribute('data-tab') === navTab;
+      button.classList.toggle('active', isActive);
+      if (isActive) {
+        button.setAttribute('aria-current', 'page');
+      } else {
+        button.removeAttribute('aria-current');
+      }
     });
     Array.prototype.forEach.call(document.querySelectorAll('.admin-view'), function (view) {
       view.classList.toggle('active', view.id === 'view-' + tab);
@@ -316,6 +365,7 @@
 
     $('viewTitle').textContent = TAB_META[tab][0];
     $('viewSubtitle').textContent = TAB_META[tab][1];
+    updateBreadcrumb(tab);
 
     var hash = (tab === 'project' && state.projectId)
       ? '#project/' + state.projectId
@@ -436,6 +486,28 @@
         statCard(visitors.today, 'Views today') +
         statCard(visitors.week, 'Views 7 days') +
         statCard(visitors.month, 'Views 30 days');
+
+      var attentionStrip = $('attentionStrip');
+      var attentionItems = $('attentionItems');
+      if (attentionStrip && attentionItems) {
+        var items = [];
+        if (newLeads > 0) {
+          items.push('<button type="button" class="attention-link" data-goto="leads"><strong>' + newLeads + '</strong> new lead' + (newLeads === 1 ? '' : 's') + ' awaiting review &rarr;</button>');
+        }
+        try {
+          var pendingInvites = await countRows('profiles', function (q) { return q.eq('status', 'invited'); });
+          if (pendingInvites > 0) {
+            items.push('<button type="button" class="attention-link" data-goto="team"><strong>' + pendingInvites + '</strong> pending team invite' + (pendingInvites === 1 ? '' : 's') + ' &rarr;</button>');
+          }
+        } catch (_) {}
+
+        if (items.length) {
+          attentionItems.innerHTML = items.join('<span class="attention-sep">&middot;</span>');
+          attentionStrip.hidden = false;
+        } else {
+          attentionStrip.hidden = true;
+        }
+      }
 
       renderBars(trafficEl, [
         { label: 'Today', value: visitors.today || 0 },
@@ -1200,6 +1272,7 @@
 
     $('blogEditorCard').hidden = false;
     $('blogEditorTitle').textContent = row ? 'Edit post' : 'New post';
+    updateBreadcrumb('blog', row ? ('Edit: ' + (row.title || 'Untitled')) : 'New post');
     $('blogEditorMeta').textContent = row
       ? (row.status === 'published'
         ? 'Published — save to push a new build.'
@@ -1230,6 +1303,7 @@
   function closeBlogEditor() {
     state.blogEditing = null;
     $('blogEditorCard').hidden = true;
+    updateBreadcrumb('blog');
   }
 
   function collectBlogFields() {
@@ -1633,6 +1707,7 @@
     state.modules = results[1].data || [];
     state.tasks = results[2].data || [];
     state.people = results[3].error ? [] : (results[3].data || []);
+    updateBreadcrumb('project');
 
     if (results[3].error) {
       toast('Run supabase/migrations/0003_collab.sql to show project people.', true);

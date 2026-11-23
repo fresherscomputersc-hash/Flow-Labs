@@ -213,6 +213,31 @@ p, li, .body-text {
 
 .btn-ghost:hover { color: var(--text); border-color: var(--text); }
 
+/* ---------- bright theme (light / "dome") variant ---------- */
+[data-theme="bright"] {
+  --bg-deep:    #F8FAFC;
+  --bg:         #FFFFFF;
+  --bg-surface: #EEF2FF;
+  --bg-elevated: #F5F5FA;
+  --border:     #E5E7EB;
+  --border-strong: #D1D5DB;
+  --border-accent: rgba(59,130,246,0.25);
+  --text:       #111827;
+  --text-secondary: #6B7280;
+  --text-muted: #4B5563;
+  --text-inverse: #000000;
+  --accent:     #3B82F6;
+  --accent-hover: #60A5FA;
+  --accent-soft: rgba(59,130,246,0.10);
+  --highlight:  #F59E0B;
+  --success:   #22C55E;
+  --error:     #EF4444;
+
+  --section-padding: clamp(5rem, 10vw, 9rem);
+  --container-max: 1200px;
+  --container-padding: clamp(1.25rem, 3vw, 3rem);
+}
+
 /* ---------- navigation ---------- */
 .nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;

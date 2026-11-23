@@ -41,14 +41,26 @@
   <aside class="admin-sidebar">
     <div class="admin-brand">Flow HQ<span>.</span><small>The Flow Labs</small></div>
     <nav class="admin-nav" id="adminNav" aria-label="Admin sections">
-      <button type="button" data-tab="dashboard" class="active">Dashboard</button>
-      <button type="button" data-tab="leads">Leads</button>
-      <button type="button" data-tab="visitors">Visitors</button>
-      <button type="button" data-tab="content">Content</button>
-      <button type="button" data-tab="blog">Blog</button>
-      <button type="button" data-tab="projects">Projects</button>
-      <button type="button" data-tab="team">Team</button>
-      <button type="button" data-tab="settings">Settings</button>
+      <div class="admin-nav-group" data-group="workspace">
+        <span class="admin-nav-group-title">Workspace</span>
+        <button type="button" data-tab="dashboard" class="active">Dashboard</button>
+        <button type="button" data-tab="projects">Projects</button>
+        <button type="button" data-tab="team">Team</button>
+      </div>
+      <div class="admin-nav-group" data-group="content">
+        <span class="admin-nav-group-title">Content</span>
+        <button type="button" data-tab="content">Content</button>
+        <button type="button" data-tab="blog">Blog</button>
+      </div>
+      <div class="admin-nav-group" data-group="site">
+        <span class="admin-nav-group-title">Site</span>
+        <button type="button" data-tab="leads">Leads</button>
+        <button type="button" data-tab="visitors">Visitors</button>
+      </div>
+      <div class="admin-nav-group" data-group="system">
+        <span class="admin-nav-group-title">System</span>
+        <button type="button" data-tab="settings">Settings</button>
+      </div>
     </nav>
     <div class="admin-sidebar-foot">
       <div class="admin-user" id="adminUser"></div>
@@ -59,15 +71,25 @@
   <main class="admin-main">
     <header class="admin-topbar">
       <div>
+        <nav class="admin-breadcrumb" id="adminBreadcrumb" aria-label="Breadcrumb">
+          <span class="breadcrumb-group" id="bcGroup">Workspace</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-current" id="bcCurrent">Dashboard</span>
+        </nav>
         <h1 id="viewTitle">Dashboard</h1>
         <p id="viewSubtitle">Site health at a glance.</p>
       </div>
       <a class="admin-btn ghost" href="/" target="_blank" rel="noopener">View public site ↗</a>
     </header>
 
-    <!-- Dashboard -->
-    <section class="admin-view active" id="view-dashboard">
-      <div class="admin-stats" id="dashboardStats">
+    <div class="workspace">
+      <!-- Dashboard -->
+      <section class="admin-view active" id="view-dashboard">
+        <div class="admin-attention-strip" id="attentionStrip" hidden>
+          <span class="attention-badge">Needs attention</span>
+          <div class="attention-items" id="attentionItems"></div>
+        </div>
+        <div class="admin-stats" id="dashboardStats">
         <div class="admin-stat"><strong>—</strong><span>Loading</span></div>
       </div>
       <div class="admin-grid-2">
@@ -628,6 +650,7 @@
         </div>
       </form>
     </section>
+    </div>
   </main>
 </div>
 
