@@ -214,7 +214,8 @@
                 </div>
               </div>
               <div class="rail-search">
-                <input class="admin-input" id="contentSearch" type="search" placeholder="Search pages…" autocomplete="off">
+                <input class="admin-input" id="contentSearch" type="search" placeholder="Search pages…"
+                  autocomplete="off">
               </div>
               <nav class="rail-list" id="contentPages" aria-label="Pages"></nav>
               <p class="rail-note">Leave a field empty and the page keeps the copy it was built with.</p>
@@ -228,23 +229,28 @@
                   <p id="contentPageMeta">Loading…</p>
                 </div>
                 <div class="admin-actions">
-                  <a class="admin-btn ghost" id="contentOpen" href="/" target="_blank" rel="noopener">View live page ↗</a>
+                  <a class="admin-btn ghost" id="contentOpen" href="/" target="_blank" rel="noopener">View live page
+                    ↗</a>
                 </div>
               </div>
 
               <!-- Live Preview Controls -->
               <div class="cms-preview-bar" id="previewBar">
                 <div class="preview-mode-group">
-                  <button type="button" class="admin-btn ghost sm active" data-preview-mode="desktop" id="btnPreviewDesktop">Desktop</button>
-                  <button type="button" class="admin-btn ghost sm" data-preview-mode="mobile" id="btnPreviewMobile">Mobile (375px)</button>
-                  <button type="button" class="admin-btn ghost sm" data-preview-mode="hide" id="btnPreviewHide">Hide preview</button>
+                  <button type="button" class="admin-btn ghost sm active" data-preview-mode="desktop"
+                    id="btnPreviewDesktop">Desktop</button>
+                  <button type="button" class="admin-btn ghost sm" data-preview-mode="mobile"
+                    id="btnPreviewMobile">Mobile (375px)</button>
+                  <button type="button" class="admin-btn ghost sm" data-preview-mode="hide" id="btnPreviewHide">Hide
+                    preview</button>
                 </div>
                 <span class="preview-status" id="previewStatus">● Live sync</span>
               </div>
 
               <!-- Live Preview Iframe -->
               <div class="cms-iframe-container" id="iframeWrap">
-                <iframe id="contentIframe" class="cms-iframe desktop" title="Live Preview" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+                <iframe id="contentIframe" class="cms-iframe desktop" title="Live Preview"
+                  sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
               </div>
 
               <div class="cms-preview" id="contentPreview" aria-live="polite"></div>
@@ -468,6 +474,7 @@
             <button type="button" class="project-tab-btn active" data-subtab="board">Board</button>
             <button type="button" class="project-tab-btn" data-subtab="modules">Modules</button>
             <button type="button" class="project-tab-btn" data-subtab="tasks">Tasks</button>
+            <button type="button" class="project-tab-btn" data-subtab="updates">Updates</button>
             <button type="button" class="project-tab-btn" data-subtab="activity">Activity</button>
             <button type="button" class="project-tab-btn" data-subtab="files">Files</button>
             <button type="button" class="project-tab-btn" data-subtab="settings">Settings</button>
@@ -573,6 +580,30 @@
                     <button type="submit" class="admin-btn primary">Add to project</button>
                   </div>
                 </form>
+
+                <!-- Project Clients (Phase D) -->
+                <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border);">
+                  <div class="admin-card-head" style="margin-bottom: 0.75rem;">
+                    <div>
+                      <h3 style="font-size:0.9rem;font-weight:600;">Clients</h3>
+                      <p style="font-size:0.75rem;color:var(--text-muted)">Accounts with access to this project's client portal.</p>
+                    </div>
+                  </div>
+                  <div class="member-list" id="projectClientsList">
+                    <p class="admin-empty">Loading clients…</p>
+                  </div>
+                  <form class="admin-form" id="clientLinkForm" hidden style="margin-top:0.75rem;">
+                    <div class="admin-grid-2">
+                      <div class="admin-field">
+                        <label for="client-select">Link client</label>
+                        <select class="admin-select" id="client-select"></select>
+                      </div>
+                      <div class="admin-actions" style="align-items:flex-end;">
+                        <button type="submit" class="admin-btn primary" style="width:100%;">Link to project</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
@@ -591,6 +622,48 @@
               </div>
               <div class="admin-table-wrap" id="projectTasksTable">
                 <p class="admin-empty">Loading…</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel: Updates (Client Updates - Phase D) -->
+          <div class="project-subpanel" id="subpanel-updates">
+            <div class="admin-card">
+              <div class="admin-card-head">
+                <div>
+                  <h2>Client Updates</h2>
+                  <p>Milestone reports and sprint communications published to the client portal.</p>
+                </div>
+                <div class="admin-actions">
+                  <button type="button" class="admin-btn primary" id="newClientUpdateBtn">New update</button>
+                  <a class="admin-btn ghost" href="/client/" target="_blank" rel="noopener">Open client portal ↗</a>
+                </div>
+              </div>
+
+              <!-- New update form -->
+              <form class="admin-form" id="clientUpdateForm" hidden style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
+                <div class="admin-field">
+                  <label for="cu-title">Update title</label>
+                  <input class="admin-input" id="cu-title" required placeholder="Sprint 2: Authentication & Core Dashboard shipped">
+                </div>
+                <div class="admin-field">
+                  <label for="cu-body">Update body</label>
+                  <textarea class="admin-textarea" id="cu-body" rows="4" required placeholder="Summary of shipped features, next milestone, and any blockers..."></textarea>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                  <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;cursor:pointer;">
+                    <input type="checkbox" id="cu-published" checked>
+                    <span>Publish to client portal immediately</span>
+                  </label>
+                </div>
+                <div class="admin-actions" style="margin-top:0.75rem;">
+                  <button type="submit" class="admin-btn primary" id="cuSubmitBtn">Post update</button>
+                  <button type="button" class="admin-btn ghost" id="cuCancelBtn">Cancel</button>
+                </div>
+              </form>
+
+              <div class="activity-feed" id="projectUpdatesList">
+                <p class="admin-empty">Loading updates…</p>
               </div>
             </div>
           </div>

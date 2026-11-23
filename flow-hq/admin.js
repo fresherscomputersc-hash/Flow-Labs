@@ -161,8 +161,7 @@
     }
 
     if (profile.role === 'client') {
-      await db.auth.signOut();
-      showAuth('Client accounts use the client portal, which is not built yet. Ask an admin for a team account.');
+      window.location.href = '/client/';
       return;
     }
 
@@ -1967,8 +1966,9 @@
     });
 
     if (state.projectSubTab === 'board') renderBoard();
-    else if (state.projectSubTab === 'modules') { renderModules(); renderMembers(); }
+    else if (state.projectSubTab === 'modules') { renderModules(); renderMembers(); renderProjectClients(); }
     else if (state.projectSubTab === 'tasks') renderProjectTasksTable();
+    else if (state.projectSubTab === 'updates') loadProjectUpdates();
     else if (state.projectSubTab === 'activity') loadProjectActivity();
     else if (state.projectSubTab === 'files') loadProjectFiles();
     else if (state.projectSubTab === 'settings') loadProjectSettings();
@@ -2115,8 +2115,10 @@
         return;
       }
 
+      var canManage = canManageProject();
+
       container.innerHTML = '<table class="admin-table"><thead><tr>' +
-        '<th>File</th><th>Size</th><th>Uploaded by</th><th>Date</th><th>Client visible</th>' +
+        '<th>File</th><th>Size</th><th>Uploaded by</th><th>Date</th><th>Client visible</th><th>Actions</th>' +
         '</tr></thead><tbody>' +
         files.map(function (f) {
           var uploader = f.profiles ? (f.profiles.full_name || f.profiles.email) : '—';
@@ -2127,11 +2129,124 @@
             '<td>' + esc(uploader) + '</td>' +
             '<td class="mono">' + esc(fmtDate(f.created_at)) + '</td>' +
             '<td><span class="badge ' + (f.client_visible ? 'active' : 'draft') + '">' + (f.client_visible ? 'Yes' : 'No') + '</span></td>' +
+            '<td>' +
+              (canManage ? '<button type="button" class="admin-btn ghost sm" data-toggle-file-vis="' + esc(f.id) + '" data-vis="' + (f.client_visible ? 'true' : 'false') + '">' + (f.client_visible ? 'Hide from client' : 'Show to client') + '</button>' : '—') +
+            '</td>' +
             '</tr>';
         }).join('') +
         '</tbody></table>';
     } catch (err) {
       container.innerHTML = '<p class="admin-empty error">Could not load files.</p>';
+    }
+  }
+
+  /* ---------------- Phase D: Client Updates & Portal Linking ---------------- */
+  async function loadProjectUpdates() {
+    var container = $('projectUpdatesList');
+    if (!container) return;
+    container.innerHTML = '<p class="admin-empty">Loading updates…</p>';
+
+    try {
+      var res = await db.from('client_updates')
+        .select('*, profiles(full_name, email)')
+        .eq('project_id', state.projectId)
+        .order('created_at', { ascending: false });
+
+      if (res.error) throw res.error;
+      var updates = res.data || [];
+
+      if (!updates.length) {
+        container.innerHTML = '<p class="admin-empty">No updates posted yet. Use the form above to share milestone reports with the client.</p>';
+        return;
+      }
+
+      var canManage = canManageProject();
+
+      container.innerHTML = updates.map(function (u) {
+        var author = u.profiles ? (u.profiles.full_name || u.profiles.email) : 'Founders';
+        var isPub = u.published;
+        return '<div class="activity-item">' +
+          '<div class="activity-icon" style="background:' + (isPub ? 'var(--success-soft)' : 'var(--accent-soft)') + ';color:' + (isPub ? 'var(--success)' : 'var(--accent)') + '">📢</div>' +
+          '<div class="activity-content">' +
+            '<div class="activity-head">' +
+              '<strong>' + esc(u.title) + '</strong>' +
+              '<span class="badge ' + (isPub ? 'active' : 'draft') + '">' + (isPub ? 'Published to Client' : 'Internal Draft') + '</span>' +
+              '<span class="activity-time mono">' + esc(fmtDate(u.published_at || u.created_at)) + '</span>' +
+            '</div>' +
+            '<p class="activity-summary" style="margin-top:0.4rem;white-space:pre-wrap;">' + esc(u.body) + '</p>' +
+            '<div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.75rem;">' +
+              (canManage ? '<button type="button" class="admin-btn ghost sm" data-toggle-update="' + esc(u.id) + '" data-pub="' + (isPub ? 'true' : 'false') + '">' +
+                (isPub ? 'Unpublish' : 'Publish to Client') +
+              '</button>' : '') +
+              (canManage ? '<button type="button" class="admin-btn danger sm" data-delete-update="' + esc(u.id) + '">Delete</button>' : '') +
+              '<span style="font-size:0.68rem;color:var(--text-muted);margin-left:auto;">By ' + esc(author) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+    } catch (err) {
+      container.innerHTML = '<p class="admin-empty error">Could not load client updates.</p>';
+    }
+  }
+
+  async function renderProjectClients() {
+    var container = $('projectClientsList');
+    var form = $('clientLinkForm');
+    var select = $('client-select');
+    if (!container) return;
+
+    var canManage = canManageProject();
+    if (form) form.hidden = !canManage;
+
+    try {
+      var res = await db.from('project_clients')
+        .select('project_id, user_id, profiles(id, full_name, email, status)')
+        .eq('project_id', state.projectId);
+
+      if (res.error) throw res.error;
+      var clients = res.data || [];
+      state.projectClients = clients;
+
+      if (!clients.length) {
+        container.innerHTML = '<p class="admin-empty">No client accounts linked to this project yet.</p>';
+      } else {
+        container.innerHTML = clients.map(function (c) {
+          var prof = c.profiles || {};
+          var name = prof.full_name || prof.email || 'Client';
+          return '<div class="member-item">' +
+            '<div><strong>' + esc(name) + '</strong>' +
+            '<span>' + esc(prof.email || '') + '</span></div>' +
+            '<div style="display:flex;align-items:center;gap:0.5rem">' +
+              '<span class="badge active">Client</span>' +
+              (canManage ? '<button type="button" class="admin-btn ghost sm" data-unlink-client="' + esc(c.user_id) + '">Unlink</button>' : '') +
+            '</div>' +
+            '</div>';
+        }).join('');
+      }
+
+      if (select && canManage) {
+        if (!state.team || !state.team.length) {
+          try {
+            var teamRes = await api('/team');
+            state.team = teamRes.members || [];
+          } catch (_) {
+            state.team = [];
+          }
+        }
+
+        var linkedIds = clients.map(function (c) { return c.user_id; });
+        var clientCandidates = state.team.filter(function (m) {
+          return m.role === 'client' && m.status === 'active' && linkedIds.indexOf(m.id) === -1;
+        });
+
+        select.innerHTML = clientCandidates.length
+          ? clientCandidates.map(function (m) {
+              return '<option value="' + esc(m.id) + '">' + esc((m.full_name || m.email)) + '</option>';
+            }).join('')
+          : '<option value="">No available clients to link</option>';
+      }
+    } catch (err) {
+      container.innerHTML = '<p class="admin-empty error">Could not load clients.</p>';
     }
   }
 
@@ -2654,6 +2769,154 @@
 
   if ($('tasksListNew')) {
     $('tasksListNew').addEventListener('click', function () { openTask(null); });
+  }
+
+  /* ---------------- Phase D: Client Updates & Portal event bindings ---------------- */
+  if ($('newClientUpdateBtn')) {
+    $('newClientUpdateBtn').addEventListener('click', function () {
+      var form = $('clientUpdateForm');
+      form.hidden = !form.hidden;
+      if (!form.hidden) $('cu-title').focus();
+    });
+  }
+
+  if ($('cuCancelBtn')) {
+    $('cuCancelBtn').addEventListener('click', function () {
+      $('clientUpdateForm').reset();
+      $('clientUpdateForm').hidden = true;
+    });
+  }
+
+  if ($('clientUpdateForm')) {
+    $('clientUpdateForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var btn = $('cuSubmitBtn');
+      btn.disabled = true;
+      var title = $('cu-title').value.trim();
+      var body = $('cu-body').value.trim();
+      var published = $('cu-published').checked;
+
+      var result = await db.from('client_updates').insert({
+        project_id: state.projectId,
+        author_id: state.profile.id,
+        title: title,
+        body: body,
+        published: published,
+        published_at: published ? new Date().toISOString() : null
+      });
+
+      btn.disabled = false;
+      if (result.error) {
+        fail(result.error.message);
+        return;
+      }
+
+      toast(published ? 'Update posted and published to client portal.' : 'Update saved as internal draft.');
+      $('clientUpdateForm').reset();
+      $('clientUpdateForm').hidden = true;
+      loadProjectUpdates();
+    });
+  }
+
+  if ($('projectUpdatesList')) {
+    $('projectUpdatesList').addEventListener('click', async function (event) {
+      var toggleBtn = event.target.closest('[data-toggle-update]');
+      if (toggleBtn) {
+        var id = toggleBtn.getAttribute('data-toggle-update');
+        var wasPub = toggleBtn.getAttribute('data-pub') === 'true';
+        var nowPub = !wasPub;
+        var res = await db.from('client_updates').update({
+          published: nowPub,
+          published_at: nowPub ? new Date().toISOString() : null
+        }).eq('id', id);
+
+        if (res.error) {
+          fail('Could not change publication status.');
+          return;
+        }
+        toast(nowPub ? 'Published to client portal.' : 'Unpublished from client portal.');
+        loadProjectUpdates();
+        return;
+      }
+
+      var delBtn = event.target.closest('[data-delete-update]');
+      if (delBtn) {
+        var delId = delBtn.getAttribute('data-delete-update');
+        if (!window.confirm('Delete this client update?')) return;
+        var delRes = await db.from('client_updates').delete().eq('id', delId);
+        if (delRes.error) {
+          fail('Could not delete update.');
+          return;
+        }
+        toast('Update deleted.');
+        loadProjectUpdates();
+      }
+    });
+  }
+
+  if ($('clientLinkForm')) {
+    $('clientLinkForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var userId = $('client-select').value;
+      if (!userId) return;
+
+      var res = await db.from('project_clients').insert({
+        project_id: state.projectId,
+        user_id: userId
+      });
+
+      if (res.error) {
+        fail(res.error.message || 'Could not link client.');
+        return;
+      }
+
+      toast('Client linked to project.');
+      renderProjectClients();
+    });
+  }
+
+  if ($('projectClientsList')) {
+    $('projectClientsList').addEventListener('click', async function (event) {
+      var unlinkBtn = event.target.closest('[data-unlink-client]');
+      if (!unlinkBtn) return;
+      var userId = unlinkBtn.getAttribute('data-unlink-client');
+      if (!window.confirm('Unlink this client from this project?')) return;
+
+      var res = await db.from('project_clients')
+        .delete()
+        .eq('project_id', state.projectId)
+        .eq('user_id', userId);
+
+      if (res.error) {
+        fail('Could not unlink client.');
+        return;
+      }
+
+      toast('Client unlinked.');
+      renderProjectClients();
+    });
+  }
+
+  if ($('projectFilesList')) {
+    $('projectFilesList').addEventListener('click', async function (event) {
+      var btn = event.target.closest('[data-toggle-file-vis]');
+      if (!btn) return;
+      var fileId = btn.getAttribute('data-toggle-file-vis');
+      var wasVis = btn.getAttribute('data-vis') === 'true';
+      var nowVis = !wasVis;
+
+      var res = await db.from('attachments').update({
+        client_visible: nowVis
+      }).eq('id', fileId);
+
+      if (res.error) {
+        fail('Could not update file visibility.');
+        return;
+      }
+
+      toast(nowVis ? 'File is now visible in client portal.' : 'File hidden from client portal.');
+      loadProjectFiles();
+    });
   }
 
   /* ---------------- team ---------------- */

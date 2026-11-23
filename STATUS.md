@@ -140,11 +140,18 @@ From `ADMIN-REDESIGN-PLAN.md`:
   - `flow-hq/admin.js`: Enhanced `renderContentRail(filterText)` with category grouping and instant search filtering, implemented `sendCmsPreview` and `broadcastCmsPreview` for live cross-window preview updates, wired live character counters on input, added per-field "Reset to default" buttons, and connected responsive preview toggles (`setPreviewMode`).
   - Public pages: Injected `data-cms` attributes across all 17 public pages and sub-pages matching their respective keys.
   - Tested: 100% automated pass across all 21 pages and elements via `scripts/verify_phase_c.py`, zero Node syntax errors.
-- **Phase D (Client Portal at `/client/`) — UP NEXT**:
-  - Lightweight standalone client portal (`client/index.html`, `client/client.css`, `client/client.js`).
-  - Gated access for `client` role users checking `project_clients` mapping.
-  - Read-only progress view: milestone progress bars, module deliverables, public client updates feed (`client_updates`), approved task attachments/files.
-  - Clean client sign-in / magic link entry point without admin chrome.
+- **Phase D (Client Portal at `/client/`) — VERIFIED & COMPLETED**:
+  - `client/index.html`: Standalone lightweight client portal entry point outside Flow HQ admin bundle. Auth view with email/password login, client header with multi-project selector, project hero with milestone completion progress bar, modules & deliverables list, published updates feed, and client-visible files.
+  - `client/client.css`: Clean dark-themed client design tokens, responsive cards, progress track, status badges, update feed cards, and founder support block.
+  - `client/client.js`: Authenticated session management, profile verification, automatic redirect of admins with preview banner, live query of client-assigned projects, scope modules, published updates, and files. Hardened security isolation ensuring zero queries to internal engineering tables (`tasks`, `task_comments`, `activity`, `daily_reports`).
+  - `flow-hq/index.html`: Added Updates subtab (`data-subtab="updates"`), `#subpanel-updates` with client update composer & list, and added Clients section in `#subpanel-modules` under People.
+  - `flow-hq/admin.js`: Gated login redirection for `client` role users straight to `/client/`, implemented `loadProjectUpdates()`, `renderProjectClients()`, client-visible toggle in `loadProjectFiles()`, and all associated event listeners.
+  - `supabase/migrations/0004_client_portal.sql`: RLS policies granting client read access to `client_visible` attachments and published `client_updates` for linked projects.
+  - Tested: 100% automated pass on all DOM elements, files, and security isolation rules via `scripts/verify_phase_d.py`, zero Node syntax errors.
+- **Phase E (Publishing & Media Storage) — UP NEXT**:
+  - Private Supabase Storage bucket for media and deliverable uploads.
+  - Blog post live publishing without redeployment delays; draft preview tokens.
+  - Debounced site rebuild triggers for search engine metadata.
 
 ## Pending user actions:
 
