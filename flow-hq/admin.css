@@ -416,7 +416,13 @@ h3 { font-size: 0.95rem; }
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
 }
+.project-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
 .project-card h3 { font-size: 0.92rem; font-weight: 500; color: var(--text); line-height: 1.35; }
 .project-key { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.06em; color: var(--text-muted); }
 .project-summary { font-size: 0.76rem; color: var(--text-secondary); line-height: 1.55; min-height: 2.2em; }
@@ -459,6 +465,102 @@ h3 { font-size: 0.95rem; }
   color: var(--text);
   word-break: break-all;
 }
+
+/* ---------- project workspace ---------- */
+.admin-grid-2 > .admin-card { align-self: start; }
+
+.project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.9rem;
+  margin: 0.85rem 0 0.7rem;
+}
+.project-meta span { font-size: 0.72rem; color: var(--text-muted); }
+.project-meta strong { color: var(--text-secondary); font-weight: 500; margin-right: 0.2rem; }
+
+.module-list { display: grid; gap: 0.5rem; }
+.module-row {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.module-row-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.module-row-head strong { font-size: 0.82rem; font-weight: 500; color: var(--text); }
+.module-row p { font-size: 0.72rem; color: var(--text-muted); line-height: 1.5; }
+.module-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.68rem; color: var(--text-muted); }
+.module-foot .admin-btn { padding: 0.2rem 0.5rem; font-size: 0.66rem; }
+
+.member-list { display: grid; gap: 0.4rem; margin-bottom: 0.85rem; }
+.member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.member-row > div { min-width: 0; }
+.member-row strong { display: block; font-size: 0.78rem; font-weight: 500; color: var(--text); }
+.member-row span { font-size: 0.68rem; color: var(--text-muted); word-break: break-all; }
+
+.kanban {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(205px, 1fr);
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+}
+.kanban-col {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.5rem;
+  min-height: 190px;
+  padding: 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.kanban-col.drop { border-color: var(--border-accent); background: var(--accent-soft); }
+.kanban-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.kanban-col-head b { color: var(--text-secondary); font-weight: 500; }
+.kanban-cards { display: grid; gap: 0.4rem; align-content: start; }
+.kanban-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  cursor: pointer;
+}
+.kanban-card:hover { border-color: var(--border-strong); }
+.kanban-card.dragging { opacity: 0.45; }
+.kanban-card strong { font-size: 0.76rem; font-weight: 500; color: var(--text); line-height: 1.4; }
+.kanban-card small { font-size: 0.65rem; color: var(--text-muted); }
+.kanban-key { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); }
+.kanban-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+.prio { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.prio.low { background: #64748B; }
+.prio.medium { background: #3B82F6; }
+.prio.high { background: #F59E0B; }
+.prio.urgent { background: #EF4444; }
 
 [hidden] { display: none !important; }
 
