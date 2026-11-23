@@ -16,7 +16,12 @@
     leadsPageSize: 25,
     leadsTotal: 0,
     contentPage: 'home',
+    contentCounts: null,
+    contentSnapshot: {},
+    contentDirty: false,
     settings: {},
+    settingsSnapshot: {},
+    settingsDirty: false,
     blogPosts: [],
     blogEditing: null,
     blogSlugTouched: false,
@@ -33,12 +38,12 @@
     dashboard: ['Dashboard', 'Site health at a glance.'],
     leads: ['Leads', 'Every enquiry, newest first.'],
     visitors: ['Visitors', 'Cookie-less page views and traffic sources.'],
-    content: ['Content', 'Override public copy without a deploy.'],
+    content: ['Content', 'The words on your public pages.'],
     blog: ['Blog', 'Write, draft and publish posts.'],
     projects: ['Projects', 'Your projects, progress and modules.'],
     project: ['Project', 'Modules, tasks and progress.'],
     team: ['Team', 'Create logins, set roles, suspend access.'],
-    settings: ['Settings', 'Accent, sections and SEO defaults.']
+    settings: ['Settings', 'Brand colour, homepage blocks and search listings.']
   };
 
   // What each role is allowed to open. The server (RLS) is the real
@@ -63,14 +68,7 @@
     return state.role === 'owner' || state.role === 'admin';
   }
 
-  var SECTION_LABELS = {
-    section_home_work: 'Selected work',
-    section_home_process: 'Process',
-    section_home_faq: 'FAQ',
-    section_home_team: 'Team',
-    section_home_testimonials: 'Testimonials',
-    section_home_cta: 'Contact CTA'
-  };
+  var SECTION_LABELS = window.SECTION_LABELS || {};
 
   function esc(value) {
     return String(value == null ? '' : value)
@@ -288,9 +286,24 @@
   });
 
   /* ---------------- tabs ---------------- */
+  function confirmLeaveTab(next) {
+    if (next === state.tab) return true;
+
+    if (state.tab === 'content' && state.contentDirty) {
+      return window.confirm('You have unsaved content changes. Leave without saving?');
+    }
+
+    if (state.tab === 'settings' && state.settingsDirty) {
+      return window.confirm('You have unsaved settings. Leave without saving?');
+    }
+
+    return true;
+  }
+
   function activateTab(tab) {
     if (!TAB_META[tab]) tab = 'dashboard';
     if (!canOpen(tab)) tab = allowedTabs(state.role)[0] || 'dashboard';
+    if (!confirmLeaveTab(tab)) return false;
     state.tab = tab;
 
     var navTab = tab === 'project' ? 'projects' : tab;
@@ -320,6 +333,8 @@
     if (tab === 'project') loadProjectScreen();
     if (tab === 'team') loadTeam();
     if (tab === 'settings') loadSettings();
+
+    return true;
   }
 
   $('adminNav').addEventListener('click', function (event) {
@@ -347,7 +362,9 @@
     }
 
     if (TAB_META[route.tab] && canOpen(route.tab) && route.tab !== state.tab) {
-      activateTab(route.tab);
+      if (activateTab(route.tab) === false) {
+        history.replaceState(null, '', '#' + state.tab);
+      }
     }
   });
 
@@ -643,63 +660,302 @@
   $('refreshVisitors').addEventListener('click', loadVisitors);
 
   /* ---------------- content ---------------- */
-  function initContentPages() {
-    var select = $('contentPage');
-    select.innerHTML = Object.keys(SCHEMA).map(function (key) {
-      return '<option value="' + esc(key) + '">' + esc(SCHEMA[key].label) + '</option>';
+  var CMS_TAGS = { BR: 1, EM: 1, STRONG: 1, B: 1, I: 1, A: 1 };
+
+  /* Inline tags only — the same allowlist the public overlay uses. */
+  function cmsSanitize(value) {
+    var box = document.createElement('div');
+    box.innerHTML = String(value == null ? '' : value);
+
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        if (child.nodeType !== 1) return;
+
+        if (!CMS_TAGS[child.tagName]) {
+          if (/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|LINK|META)$/.test(child.tagName)) {
+            child.remove();
+            return;
+          }
+          while (child.firstChild) node.insertBefore(child.firstChild, child);
+          child.remove();
+          return;
+        }
+
+        Array.prototype.slice.call(child.attributes).forEach(function (attr) {
+          if (child.tagName === 'A' && attr.name === 'href') return;
+          child.removeAttribute(attr.name);
+        });
+
+        if (child.tagName === 'A') {
+          var href = child.getAttribute('href') || '';
+          if (!/^(https?:|mailto:|\/|#)/i.test(href)) child.removeAttribute('href');
+        }
+
+        walk(child);
+      });
+    })(box);
+
+    return box.innerHTML;
+  }
+
+  function contentGroups(schema) {
+    var order = [];
+    var groups = {};
+
+    schema.fields.forEach(function (field) {
+      var name = field.group || 'Copy';
+      if (!groups[name]) {
+        groups[name] = [];
+        order.push(name);
+      }
+      groups[name].push(field);
+    });
+
+    return order.map(function (name) {
+      return { name: name, fields: groups[name] };
+    });
+  }
+
+  function contentInput(field, value) {
+    var id = 'cms-' + field.key;
+    var placeholder = esc(stripTags(field.default).slice(0, 90));
+
+    if (field.type === 'text') {
+      return '<input class="admin-input" id="' + id + '" data-key="' + esc(field.key) +
+        '" type="text" placeholder="' + placeholder + '" value="' + esc(value) + '">';
+    }
+
+    return '<textarea class="admin-textarea" id="' + id + '" data-key="' + esc(field.key) +
+      '" rows="' + (field.type === 'html' ? 3 : 2) + '" placeholder="' + placeholder + '">' +
+      esc(value) + '</textarea>';
+  }
+
+  function contentField(field) {
+    var input = document.getElementById('cms-' + field.key);
+    if (!input) return null;
+    return { input: input, value: input.value.trim() };
+  }
+
+  function contentResolved(field) {
+    var read = contentField(field);
+    return (read ? read.value : '') || field.default;
+  }
+
+  function renderContentRail() {
+    var counts = state.contentCounts || {};
+
+    $('contentPages').innerHTML = Object.keys(SCHEMA).map(function (key) {
+      var edits = counts[key] || 0;
+      return '<button type="button" class="rail-item' + (key === state.contentPage ? ' active' : '') +
+        '" data-page="' + esc(key) + '"' + (key === state.contentPage ? ' aria-current="page"' : '') + '>' +
+        '<span>' + esc(SCHEMA[key].label) + '</span>' +
+        '<em class="rail-count' + (edits ? ' on' : '') + '">' +
+          (edits ? edits + (edits === 1 ? ' edit' : ' edits') : 'Default') +
+        '</em>' +
+        '</button>';
     }).join('');
-    select.value = state.contentPage;
+  }
+
+  async function refreshContentCounts() {
+    var result = await db.from('site_content').select('page');
+    var counts = {};
+
+    if (!result.error) {
+      (result.data || []).forEach(function (row) {
+        counts[row.page] = (counts[row.page] || 0) + 1;
+      });
+    }
+
+    state.contentCounts = counts;
+    renderContentRail();
   }
 
   async function loadContent() {
-    initContentPages();
-    var page = state.contentPage;
+    var page = state.contentPage || 'home';
     var schema = SCHEMA[page];
     if (!schema) return;
 
-    $('contentOpen').href = schema.path;
+    if (state.contentCounts === null) await refreshContentCounts();
 
-    var result = await db.from('site_content').select('*').eq('page', page);
+    $('contentPath').textContent = schema.path;
+    $('contentPageTitle').textContent = schema.label;
+    $('contentOpen').href = schema.path;
+    $('contentForm').innerHTML = '<p class="admin-empty">Loading…</p>';
+    $('contentPreview').innerHTML = '';
+    $('contentPageMeta').textContent = 'Loading…';
+
+    var result = await db.from('site_content').select('field_key,field_value').eq('page', page);
     var overrides = {};
-    if (!result.error) {
-      (result.data || []).forEach(function (row) { overrides[row.field_key] = row.field_value; });
+
+    if (result.error) {
+      fail('Could not load this page. Check that you are still signed in.');
+    } else {
+      (result.data || []).forEach(function (row) {
+        overrides[row.field_key] = row.field_value;
+      });
     }
 
-    $('contentForm').innerHTML = schema.fields.map(function (field) {
-      var value = Object.prototype.hasOwnProperty.call(overrides, field.key) ? overrides[field.key] : '';
-      var input = field.type === 'longtext'
-        ? '<textarea class="admin-textarea" id="cms-' + esc(field.key) + '" data-key="' + esc(field.key) + '" rows="3" placeholder="' + esc(field.default) + '">' + esc(value) + '</textarea>'
-        : '<input class="admin-input" id="cms-' + esc(field.key) + '" data-key="' + esc(field.key) + '" type="text" placeholder="' + esc(field.default) + '" value="' + esc(value) + '">';
-      return '<div class="admin-field">' +
-        '<label for="cms-' + esc(field.key) + '">' + esc(field.label) + ' <span class="mono">' + esc(field.key) + '</span></label>' +
-        input +
-        '<small>Default: ' + esc(stripTags(field.default).slice(0, 110)) + '</small>' +
-        '</div>';
+    var snapshot = {};
+    var edited = 0;
+
+    snapshotFromOverrides(schema, overrides, snapshot);
+    schema.fields.forEach(function (field) {
+      if (snapshot[field.key]) edited += 1;
+    });
+
+    $('contentForm').innerHTML = contentGroups(schema).map(function (group) {
+      return '<section class="fieldblock">' +
+        '<h3 class="fieldblock-title">' + esc(group.name) + '</h3>' +
+        group.fields.map(function (field) {
+          var stored = Object.prototype.hasOwnProperty.call(overrides, field.key) ? overrides[field.key] : '';
+          var allowHtml = field.type === 'html';
+
+          return '<div class="fieldrow" data-field="' + esc(field.key) + '">' +
+            '<div class="fieldrow-head">' +
+              '<label for="cms-' + esc(field.key) + '">' + esc(field.label) + '</label>' +
+              '<span class="fieldrow-flag" data-flag="' + esc(field.key) + '"></span>' +
+            '</div>' +
+            contentInput(field, stored) +
+            '<div class="fieldrow-foot">' +
+              '<span>' + (allowHtml ? 'Line breaks and italic emphasis are allowed.' : '') + '</span>' +
+              '<button type="button" class="linkbtn" data-revert="' + esc(field.key) + '">Use default</button>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</section>';
     }).join('');
 
-    renderContentPreview(page, overrides);
+    $('contentPageMeta').textContent = edited
+      ? edited + (edited === 1 ? ' field' : ' fields') + ' rewritten on this page'
+      : 'Everything on this page is still the original copy';
+
+    state.contentSnapshot = snapshot;
+    state.contentDirty = false;
+
+    refreshContentFlags();
+    renderContentPreview();
+    updateContentState();
+    renderContentRail();
   }
 
-  function renderContentPreview(page, overrides) {
-    var schema = SCHEMA[page];
+  function snapshotFromOverrides(schema, overrides, into) {
+    schema.fields.forEach(function (field) {
+      var stored = Object.prototype.hasOwnProperty.call(overrides, field.key) ? overrides[field.key] : '';
+      into[field.key] = String(stored == null ? '' : stored).trim();
+    });
+    return into;
+  }
+
+  function refreshContentFlags() {
+    Array.prototype.forEach.call(document.querySelectorAll('#contentForm .fieldrow'), function (row) {
+      var key = row.getAttribute('data-field');
+      var input = document.getElementById('cms-' + key);
+      var flag = row.querySelector('[data-flag]');
+      var revert = row.querySelector('[data-revert]');
+      if (!input || !flag) return;
+
+      var value = input.value.trim();
+      var stored = state.contentSnapshot[key] || '';
+
+      if (value !== stored) {
+        flag.textContent = 'Unsaved';
+        flag.className = 'fieldrow-flag pending';
+      } else if (value) {
+        flag.textContent = 'Custom copy';
+        flag.className = 'fieldrow-flag custom';
+      } else {
+        flag.textContent = '';
+        flag.className = 'fieldrow-flag';
+      }
+
+      if (revert) revert.hidden = value === '';
+    });
+  }
+
+  function renderContentPreview() {
+    var schema = SCHEMA[state.contentPage];
     if (!schema) return;
 
-    $('contentPreview').innerHTML = schema.fields.map(function (field) {
-      var has = Object.prototype.hasOwnProperty.call(overrides, field.key);
-      var value = has ? overrides[field.key] : field.default;
-      return '<h4>' + esc(field.label) + (has ? ' · override' : ' · default') + '</h4>' +
-        '<p>' + esc(stripTags(value)).slice(0, 500) + '</p>';
-    }).join('');
+    var groups = contentGroups(schema);
+    var hero = groups.length ? groups[0].fields : [];
+    var eyebrow = hero[0] ? contentResolved(hero[0]) : '';
+    var headline = hero[1] ? contentResolved(hero[1]) : '';
+    var standfirst = hero[2] ? contentResolved(hero[2]) : '';
+
+    $('contentPreview').innerHTML =
+      '<div class="cms-preview-body">' +
+        (eyebrow ? '<p class="cms-eyebrow">' + esc(stripTags(eyebrow)) + '</p>' : '') +
+        '<p class="cms-headline">' + cmsSanitize(headline) + '</p>' +
+        (standfirst ? '<p class="cms-standfirst">' + esc(stripTags(standfirst)) + '</p>' : '') +
+      '</div>' +
+      '<span class="cms-preview-tag">Top of page · ' + esc(schema.label) + '</span>';
   }
 
-  $('contentPage').addEventListener('change', function () {
-    state.contentPage = $('contentPage').value;
+  function updateContentState() {
+    if (!SCHEMA[state.contentPage]) return;
+
+    var changed = 0;
+    var seen = {};
+
+    Array.prototype.forEach.call(document.querySelectorAll('#contentForm [data-key]'), function (input) {
+      var key = input.getAttribute('data-key');
+      if (seen[key]) return;
+      seen[key] = true;
+      if (input.value.trim() !== (state.contentSnapshot[key] || '')) changed += 1;
+    });
+
+    state.contentDirty = changed > 0;
+
+    $('contentState').textContent = changed
+      ? changed + (changed === 1 ? ' unsaved change' : ' unsaved changes')
+      : 'No unsaved changes';
+    $('contentState').classList.toggle('dirty', changed > 0);
+
+    $('contentSave').disabled = !changed;
+    $('contentDiscard').disabled = !changed;
+  }
+
+  $('contentPages').addEventListener('click', function (event) {
+    var item = event.target.closest('[data-page]');
+    if (!item) return;
+
+    var page = item.getAttribute('data-page');
+    if (page === state.contentPage) return;
+    if (state.contentDirty && !window.confirm('Leave this page without saving your changes?')) return;
+
+    state.contentPage = page;
     loadContent();
+  });
+
+  $('contentForm').addEventListener('input', function (event) {
+    if (!event.target.closest('[data-key]')) return;
+    refreshContentFlags();
+    updateContentState();
+    renderContentPreview();
+  });
+
+  $('contentForm').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-revert]');
+    if (!button) return;
+
+    var input = document.getElementById('cms-' + button.getAttribute('data-revert'));
+    if (!input) return;
+
+    input.value = '';
+    refreshContentFlags();
+    updateContentState();
+    renderContentPreview();
+    input.focus();
   });
 
   $('contentForm').addEventListener('submit', async function (event) {
     event.preventDefault();
     await saveContent();
+  });
+
+  $('contentDiscard').addEventListener('click', function () {
+    loadContent();
+    toast('Changes discarded.');
   });
 
   async function saveContent() {
@@ -712,20 +968,25 @@
     var now = new Date().toISOString();
 
     schema.fields.forEach(function (field) {
-      var input = document.getElementById('cms-' + field.key);
-      if (!input) return;
-      var value = input.value.trim();
-      if (value === '') {
-        removeKeys.push(field.key);
-      } else {
+      var read = contentField(field);
+      if (!read) return;
+
+      if (read.value === '') {
+        if (state.contentSnapshot[field.key]) removeKeys.push(field.key);
+      } else if (read.value !== (state.contentSnapshot[field.key] || '')) {
         rows.push({
           page: page,
           field_key: field.key,
-          field_value: value,
+          field_value: read.value,
           updated_at: now
         });
       }
     });
+
+    if (!rows.length && !removeKeys.length) {
+      toast('Nothing to save.');
+      return;
+    }
 
     var button = $('contentSave');
     button.disabled = true;
@@ -744,29 +1005,34 @@
         if (removed.error) throw removed.error;
       }
 
-      toast('Content saved. Public cache clears in about 60 seconds.');
+      await refreshContentCounts();
       await loadContent();
+      toast('Saved. The live page picks this up within a minute.');
     } catch (error) {
-      fail('Could not save content. Check that you are an authorized admin.');
-    } finally {
-      button.disabled = false;
+      fail('Could not save. Check that you are still signed in as an admin.');
+      updateContentState();
     }
   }
 
   $('contentReset').addEventListener('click', async function () {
     var page = state.contentPage;
-    if (!window.confirm('Remove every override for ' + (SCHEMA[page] ? SCHEMA[page].label : page) + '?')) return;
+    var schema = SCHEMA[page];
+    if (!schema) return;
+    if (!window.confirm('Restore every field on ' + schema.label + ' to the copy written into the page?')) return;
 
     var result = await db.from('site_content').delete().eq('page', page);
     if (result.error) {
-      fail('Reset failed.');
-    } else {
-      toast('Page reset to hardcoded defaults.');
-      loadContent();
+      fail('Could not restore this page.');
+      return;
     }
+
+    await refreshContentCounts();
+    await loadContent();
+    toast(schema.label + ' restored to the original copy.');
   });
 
   /* ---------------- blog ---------------- */
+
   var BLOG_FALLBACK = /relation .* does not exist|schema cache/i;
 
   function blogSlug(value) {
@@ -1969,101 +2235,306 @@
   });
 
   /* ---------------- settings ---------------- */
+  var SEO_PAGES = [
+    ['home', 'Homepage', '/'],
+    ['about', 'About', '/about/'],
+    ['services', 'Services', '/services/'],
+    ['contact', 'Contact', '/contact/']
+  ];
+
+  var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+
+  var COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six'];
+
+  function rgbaFromHex(hex, alpha) {
+    var match = /^#([0-9a-f]{6})$/i.exec(hex);
+    if (!match) return 'transparent';
+    var value = parseInt(match[1], 16);
+    return 'rgba(' + ((value >> 16) & 255) + ', ' + ((value >> 8) & 255) + ', ' + (value & 255) + ', ' + alpha + ')';
+  }
+
+  function paintAccent(hex) {
+    var box = $('accentPreview');
+    if (!box) return;
+
+    var colour = /^#[0-9a-f]{6}$/i.test(hex) ? hex : SETTINGS_DEFAULTS.accent_color;
+    box.style.setProperty('--accent', colour);
+    box.style.setProperty('--accent-hover', 'color-mix(in srgb, ' + colour + ' 78%, white)');
+    box.style.setProperty('--accent-soft', rgbaFromHex(colour, 0.08));
+    box.style.setProperty('--border-accent', rgbaFromHex(colour, 0.25));
+  }
+
+  function renderSectionSwitches() {
+    $('sectionToggles').innerHTML = Object.keys(SECTION_LABELS).map(function (key) {
+      var meta = SECTION_LABELS[key];
+      var on = (state.settings[key] || 'on') !== 'off';
+
+      return '<div class="switch-row">' +
+        '<div class="switch-copy">' +
+          '<label for="set-' + esc(key) + '">' + esc(meta.label) + '</label>' +
+          '<p>' + esc(meta.note) + '</p>' +
+        '</div>' +
+        '<input class="switch" type="checkbox" id="set-' + esc(key) + '" data-setting="' + esc(key) + '"' + (on ? ' checked' : '') + '>' +
+      '</div>';
+    }).join('');
+  }
+
+  function seoValue(key) {
+    var value = state.settings[key];
+    return value == null || value === '' ? (SETTINGS_DEFAULTS[key] || '') : value;
+  }
+
+  function renderSeoFields() {
+    $('seoFields').innerHTML = SEO_PAGES.map(function (page) {
+      var key = page[0];
+
+      return '<section class="seo-item" data-seo-page="' + esc(key) + '">' +
+        '<div class="seo-item-head">' +
+          '<h3>' + esc(page[1]) + '</h3>' +
+          '<span class="mono">' + esc(page[2]) + '</span>' +
+        '</div>' +
+        '<div class="admin-field">' +
+          '<label for="seo-title-' + esc(key) + '">Page title</label>' +
+          '<input class="admin-input" id="seo-title-' + esc(key) + '" data-seo="seo_title_' + esc(key) +
+            '" type="text" maxlength="90" value="' + esc(seoValue('seo_title_' + key)) + '">' +
+          '<span class="counter" data-counter="seo-title-' + esc(key) + '"></span>' +
+        '</div>' +
+        '<div class="admin-field">' +
+          '<label for="seo-desc-' + esc(key) + '">Description</label>' +
+          '<textarea class="admin-textarea" id="seo-desc-' + esc(key) + '" data-seo="seo_description_' + esc(key) +
+            '" rows="2" maxlength="240">' + esc(seoValue('seo_description_' + key)) + '</textarea>' +
+          '<span class="counter" data-counter="seo-desc-' + esc(key) + '"></span>' +
+        '</div>' +
+        '<div class="seo-snippet">' +
+          '<p class="seo-snippet-title" data-snippet-title></p>' +
+          '<p class="seo-snippet-url">theflowlabs.online' + esc(page[2]) + '</p>' +
+          '<p class="seo-snippet-desc" data-snippet-desc></p>' +
+        '</div>' +
+      '</section>';
+    }).join('');
+
+    updateSeoUi();
+  }
+
+  function updateSeoUi() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-seo]'), function (input) {
+      var limit = input.getAttribute('data-seo').indexOf('seo_title_') === 0 ? 60 : 155;
+      var length = input.value.trim().length;
+      var counter = document.querySelector('[data-counter="' + input.id + '"]');
+
+      if (counter) {
+        counter.textContent = length + ' / ' + limit;
+        counter.className = 'counter' + (length > limit ? ' over' : (length > limit * 0.9 ? ' near' : ''));
+      }
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-seo-page]'), function (item) {
+      var page = item.getAttribute('data-seo-page');
+      var titleInput = document.getElementById('seo-title-' + page);
+      var descInput = document.getElementById('seo-desc-' + page);
+      var titleEl = item.querySelector('[data-snippet-title]');
+      var descEl = item.querySelector('[data-snippet-desc]');
+
+      if (titleEl) {
+        titleEl.textContent = (titleInput && titleInput.value.trim()) ||
+          SETTINGS_DEFAULTS['seo_title_' + page] || '';
+      }
+      if (descEl) {
+        descEl.textContent = (descInput && descInput.value.trim()) ||
+          SETTINGS_DEFAULTS['seo_description_' + page] || '';
+      }
+    });
+  }
+
+  function slotNote() {
+    var month = String($('slotMonth').value || '');
+    var total = parseInt($('slotTotal').value, 10);
+    var taken = parseInt($('slotTaken').value, 10);
+
+    var match = /^(\d{4})-(\d{2})$/.exec(month);
+    if (!match) return 'Pick a month to describe availability.';
+
+    var index = parseInt(match[2], 10) - 1;
+    if (index < 0 || index > 11) return 'Pick a valid month.';
+
+    var name = MONTH_NAMES[index];
+    var next = MONTH_NAMES[(index + 1) % 12];
+
+    if (isNaN(total) || total <= 0 || isNaN(taken) || taken < 0) {
+      return 'Set how many seats the month offers and how many are taken.';
+    }
+
+    var left = Math.max(0, total - taken);
+
+    if (left <= 0) return name + ' is full. The next opening is ' + next + '.';
+    if (left === 1) return 'One ' + name + ' seat is left. After that, the next opening is ' + next + '.';
+
+    var word = COUNT_WORDS[left] ? COUNT_WORDS[left].charAt(0).toUpperCase() + COUNT_WORDS[left].slice(1) : String(left);
+    return word + ' ' + name + ' seats are still open. After those, the next opening is ' + next + '.';
+  }
+
+  function updateSlotPreview() {
+    $('slotPreview').innerHTML = '<span>Public copy:</span> ' + esc(slotNote());
+  }
+
+  function collectSettings() {
+    var values = {};
+
+    values.accent_color = String($('accentHex').value || '').trim().toUpperCase();
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-setting]'), function (input) {
+      var key = input.getAttribute('data-setting');
+      values[key] = input.type === 'checkbox'
+        ? (input.checked ? 'on' : 'off')
+        : String(input.value || '').trim();
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-seo]'), function (input) {
+      values[input.getAttribute('data-seo')] = input.value.trim();
+    });
+
+    return values;
+  }
+
+  function updateSettingsState() {
+    var current = collectSettings();
+    var changed = 0;
+
+    Object.keys(current).forEach(function (key) {
+      if (current[key] !== (state.settingsSnapshot[key] || '')) changed += 1;
+    });
+
+    state.settingsDirty = changed > 0;
+
+    $('settingsState').textContent = changed
+      ? changed + (changed === 1 ? ' unsaved change' : ' unsaved changes')
+      : 'No unsaved changes';
+    $('settingsState').classList.toggle('dirty', changed > 0);
+
+    $('settingsSave').disabled = !changed;
+  }
+
   async function loadSettings() {
     var result = await db.from('site_settings').select('*');
     var stored = {};
-    if (!result.error) {
+
+    if (result.error) {
+      fail('Could not load settings. Check that you are still signed in.');
+    } else {
       (result.data || []).forEach(function (row) { stored[row.key] = row.value; });
     }
+
     state.settings = Object.assign({}, SETTINGS_DEFAULTS, stored);
 
-    var accent = state.settings.accent_color || '#3B82F6';
-    $('accentColor').value = /^#[0-9a-f]{6}$/i.test(accent) ? accent : '#3B82F6';
-    $('accentHex').value = accent;
+    var accent = /^#[0-9a-f]{6}$/i.test(state.settings.accent_color || '')
+      ? state.settings.accent_color
+      : SETTINGS_DEFAULTS.accent_color;
 
-    $('sectionToggles').innerHTML = Object.keys(SECTION_LABELS).map(function (key) {
-      var on = (state.settings[key] || 'on') !== 'off';
-      return '<div class="toggle-row">' +
-        '<label for="set-' + esc(key) + '">' + esc(SECTION_LABELS[key]) + '</label>' +
-        '<input type="checkbox" id="set-' + esc(key) + '" data-setting="' + esc(key) + '"' + (on ? ' checked' : '') + '>' +
-        '</div>';
-    }).join('');
+    $('accentColor').value = accent.toLowerCase();
+    $('accentHex').value = accent.toUpperCase();
+    paintAccent(accent);
 
-    var seoPages = [
-      ['home', 'Home'],
-      ['about', 'About'],
-      ['services', 'Services'],
-      ['contact', 'Contact']
-    ];
+    renderSectionSwitches();
 
-    $('seoFields').innerHTML = seoPages.map(function (pair) {
-      var key = pair[0];
-      var label = pair[1];
-      return '<div class="admin-field">' +
-        '<label for="seo-title-' + key + '">' + label + ' — meta title</label>' +
-        '<input class="admin-input" id="seo-title-' + key + '" data-seo="seo_title_' + key + '" type="text" value="' + esc(state.settings['seo_title_' + key] || '') + '">' +
-        '</div>' +
-        '<div class="admin-field">' +
-        '<label for="seo-desc-' + key + '">' + label + ' — meta description</label>' +
-        '<textarea class="admin-textarea" id="seo-desc-' + key + '" data-seo="seo_description_' + key + '" rows="2">' + esc(state.settings['seo_description_' + key] || '') + '</textarea>' +
-        '</div>';
-    }).join('');
+    $('slotMonth').value = state.settings.slot_month || '';
+    $('slotTotal').value = state.settings.slot_total || '';
+    $('slotTaken').value = state.settings.slot_taken || '';
+    updateSlotPreview();
+
+    renderSeoFields();
+
+    state.settingsSnapshot = collectSettings();
+    state.settingsDirty = false;
+    updateSettingsState();
   }
 
   $('accentColor').addEventListener('input', function () {
     $('accentHex').value = $('accentColor').value.toUpperCase();
+    paintAccent($('accentColor').value);
+    updateSettingsState();
   });
 
   $('accentHex').addEventListener('input', function () {
     var value = $('accentHex').value.trim();
-    if (/^#[0-9a-f]{6}$/i.test(value)) $('accentColor').value = value;
+    if (/^#[0-9a-f]{6}$/i.test(value)) $('accentColor').value = value.toLowerCase();
+    paintAccent(value);
+    updateSettingsState();
+  });
+
+  $('accentReset').addEventListener('click', function () {
+    var fallback = SETTINGS_DEFAULTS.accent_color;
+    $('accentColor').value = fallback.toLowerCase();
+    $('accentHex').value = fallback.toUpperCase();
+    paintAccent(fallback);
+    updateSettingsState();
+  });
+
+  $('settingsForm').addEventListener('input', function (event) {
+    if (event.target.closest('[data-seo]')) updateSeoUi();
+    if (event.target.id === 'slotMonth' || event.target.id === 'slotTotal' || event.target.id === 'slotTaken') {
+      updateSlotPreview();
+    }
+    updateSettingsState();
+  });
+
+  $('settingsForm').addEventListener('change', function (event) {
+    if (event.target.type === 'checkbox' || event.target.type === 'month') updateSettingsState();
+    if (event.target.type === 'month') updateSlotPreview();
   });
 
   $('settingsForm').addEventListener('submit', async function (event) {
     event.preventDefault();
 
-    var now = new Date().toISOString();
-    var rows = [];
-    var accent = $('accentHex').value.trim();
+    var values = collectSettings();
 
-    if (!/^#[0-9a-f]{6}$/i.test(accent)) {
-      fail('Accent must be a six-digit hex colour, e.g. #3B82F6.');
+    if (!/^#[0-9A-F]{6}$/.test(values.accent_color)) {
+      fail('Accent must be a six-digit hex colour, for example #3B82F6.');
       return;
     }
 
-    rows.push({ key: 'accent_color', value: accent, updated_at: now });
+    var total = parseInt(values.slot_total, 10);
+    var taken = parseInt(values.slot_taken, 10);
 
-    Array.prototype.forEach.call(document.querySelectorAll('[data-setting]'), function (input) {
-      rows.push({
-        key: input.getAttribute('data-setting'),
-        value: input.checked ? 'on' : 'off',
-        updated_at: now
-      });
+    if (isNaN(total) || total < 0 || isNaN(taken) || taken < 0) {
+      fail('Availability needs a whole number of seats.');
+      return;
+    }
+
+    if (taken > total) {
+      fail('Seats taken cannot be higher than seats offered.');
+      return;
+    }
+
+    var now = new Date().toISOString();
+    var rows = [];
+
+    Object.keys(values).forEach(function (key) {
+      if (values[key] === (state.settingsSnapshot[key] || '')) return;
+      rows.push({ key: key, value: values[key], updated_at: now });
     });
 
-    Array.prototype.forEach.call(document.querySelectorAll('[data-seo]'), function (input) {
-      rows.push({
-        key: input.getAttribute('data-seo'),
-        value: input.value.trim(),
-        updated_at: now
-      });
-    });
+    if (!rows.length) {
+      toast('Nothing to save.');
+      return;
+    }
 
     var button = $('settingsSave');
     button.disabled = true;
 
     var result = await db.from('site_settings').upsert(rows, { onConflict: 'key' });
-    button.disabled = false;
-
     if (result.error) {
-      fail('Could not save settings.');
-    } else {
-      toast('Settings saved. Public cache clears in about 60 seconds.');
-      loadSettings();
+      button.disabled = false;
+      fail('Could not save settings. Check that you are still signed in as an admin.');
+      return;
     }
+
+    await loadSettings();
+    toast('Settings saved. The live site picks this up within a minute.');
   });
 
   /* ---------------- start ---------------- */
+
   boot().catch(function () {
     showAuth('Could not reach Supabase. Check the project URL and anon key.');
   });

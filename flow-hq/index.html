@@ -136,26 +136,39 @@
 
     <!-- Content -->
     <section class="admin-view" id="view-content">
-      <div class="admin-card">
-        <div class="admin-card-head">
-          <div><h2>Content overrides</h2><p>Blank fields fall back to the hardcoded HTML.</p></div>
-          <div class="admin-actions">
-            <select class="admin-select" id="contentPage" aria-label="Page"></select>
+      <div class="split">
+        <aside class="admin-card rail">
+          <div class="admin-card-head">
+            <div><h2>Pages</h2><p>Public copy you can rewrite.</p></div>
           </div>
-        </div>
-        <p class="admin-hint">Changes go live within about 60 seconds because the public endpoint is cached. Use <strong>Open page</strong> after saving to verify.</p>
-        <div class="content-grid">
-          <form class="admin-form" id="contentForm"></form>
-          <div>
-            <div class="admin-actions" style="margin-bottom:0.75rem">
-              <a class="admin-btn ghost" id="contentOpen" href="/" target="_blank" rel="noopener">Open page ↗</a>
-              <button type="button" class="admin-btn danger" id="contentReset">Reset page</button>
+          <nav class="rail-list" id="contentPages" aria-label="Pages"></nav>
+          <p class="rail-note">Leave a field empty and the page keeps the copy it was built with.</p>
+        </aside>
+
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div>
+              <p class="mono eyebrow" id="contentPath">/</p>
+              <h2 id="contentPageTitle">Home</h2>
+              <p id="contentPageMeta">Loading…</p>
             </div>
-            <div class="content-preview" id="contentPreview"><p class="admin-empty">Select a page.</p></div>
+            <div class="admin-actions">
+              <a class="admin-btn ghost" id="contentOpen" href="/" target="_blank" rel="noopener">View live page ↗</a>
+            </div>
           </div>
-        </div>
-        <div class="admin-actions" style="margin-top:1rem">
-          <button type="submit" form="contentForm" class="admin-btn primary" id="contentSave">Save changes</button>
+
+          <div class="cms-preview" id="contentPreview" aria-live="polite"></div>
+
+          <form class="admin-form" id="contentForm"></form>
+
+          <div class="savebar">
+            <span class="savebar-state" id="contentState">No unsaved changes</span>
+            <div class="admin-actions">
+              <button type="button" class="admin-btn ghost" id="contentDiscard" disabled>Discard</button>
+              <button type="button" class="admin-btn danger" id="contentReset">Restore defaults</button>
+              <button type="submit" form="contentForm" class="admin-btn primary" id="contentSave" disabled>Save changes</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -549,37 +562,71 @@
 
     <!-- Settings -->
     <section class="admin-view" id="view-settings">
-      <div class="admin-card">
-        <div class="admin-card-head">
-          <div><h2>Site settings</h2><p>Accent, section visibility and SEO defaults.</p></div>
-        </div>
-        <form class="admin-form" id="settingsForm">
-          <div class="settings-section">
-            <h3>Appearance</h3>
+      <form class="admin-form" id="settingsForm">
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div><h2>Brand accent</h2><p>One colour drives links, buttons and focus rings across the public site.</p></div>
+          </div>
+          <div class="settings-row">
             <div class="admin-field">
-              <label for="accentColor">Accent colour</label>
+              <label for="accentHex">Accent colour</label>
               <div class="color-row">
-                <input type="color" id="accentColor" value="#3B82F6">
-                <input class="admin-input" id="accentHex" type="text" maxlength="7" spellcheck="false">
+                <input type="color" id="accentColor" value="#3B82F6" aria-label="Accent colour picker">
+                <input class="admin-input" id="accentHex" type="text" maxlength="7" spellcheck="false" aria-label="Accent colour as hex">
+                <button type="button" class="admin-btn ghost" id="accentReset">Default</button>
               </div>
-              <small>Applied as the CSS custom property on the public site.</small>
+              <small>Six-digit hex. The site goes back to the default if the value is invalid.</small>
+            </div>
+            <div class="swatch" id="accentPreview" aria-hidden="true">
+              <div class="swatch-row"><span class="swatch-dot"></span><span>Accent on dark</span></div>
+              <div class="swatch-row"><a class="swatch-link" href="#" tabindex="-1">Link text</a><span class="swatch-soft">Soft fill</span></div>
+              <button type="button" class="admin-btn primary swatch-btn" tabindex="-1">Primary button</button>
             </div>
           </div>
+        </div>
 
-          <div class="settings-section">
-            <h3>Homepage sections</h3>
-            <div id="sectionToggles"></div>
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div><h2>Homepage sections</h2><p>Switch a block off and it disappears from the homepage for every visitor.</p></div>
           </div>
+          <div class="switch-list" id="sectionToggles"></div>
+        </div>
 
-          <div class="settings-section">
-            <h3>SEO</h3>
-            <div id="seoFields" class="admin-form"></div>
-            <p class="admin-hint">SEO overrides are applied by JavaScript, so search crawlers may keep seeing the static build defaults. Edit <code>tools/site/build.py</code> for permanent SEO changes.</p>
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div><h2>Availability</h2><p>The build meter on the homepage and contact page.</p></div>
           </div>
+          <div class="admin-grid-2">
+            <div class="admin-field">
+              <label for="slotMonth">Month</label>
+              <input class="admin-input" id="slotMonth" type="month" data-setting="slot_month">
+            </div>
+            <div class="admin-field">
+              <label for="slotTotal">Seats offered</label>
+              <input class="admin-input" id="slotTotal" type="number" min="0" max="12" step="1" data-setting="slot_total">
+            </div>
+            <div class="admin-field">
+              <label for="slotTaken">Seats taken</label>
+              <input class="admin-input" id="slotTaken" type="number" min="0" max="12" step="1" data-setting="slot_taken">
+            </div>
+          </div>
+          <p class="slot-preview" id="slotPreview">—</p>
+        </div>
 
-          <button type="submit" class="admin-btn primary" id="settingsSave">Save settings</button>
-        </form>
-      </div>
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div><h2>Search appearance</h2><p>What a page shows in a search result. Roughly 60 characters for the title, 155 for the description.</p></div>
+          </div>
+          <div class="seo-list" id="seoFields"></div>
+        </div>
+
+        <div class="savebar">
+          <span class="savebar-state" id="settingsState">No unsaved changes</span>
+          <div class="admin-actions">
+            <button type="submit" class="admin-btn primary" id="settingsSave" disabled>Save settings</button>
+          </div>
+        </div>
+      </form>
     </section>
   </main>
 </div>
