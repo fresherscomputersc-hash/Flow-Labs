@@ -148,10 +148,18 @@ From `ADMIN-REDESIGN-PLAN.md`:
   - `flow-hq/admin.js`: Gated login redirection for `client` role users straight to `/client/`, implemented `loadProjectUpdates()`, `renderProjectClients()`, client-visible toggle in `loadProjectFiles()`, and all associated event listeners.
   - `supabase/migrations/0004_client_portal.sql`: RLS policies granting client read access to `client_visible` attachments and published `client_updates` for linked projects.
   - Tested: 100% automated pass on all DOM elements, files, and security isolation rules via `scripts/verify_phase_d.py`, zero Node syntax errors.
-- **Phase E (Publishing & Media Storage) — UP NEXT**:
-  - Private Supabase Storage bucket for media and deliverable uploads.
-  - Blog post live publishing without redeployment delays; draft preview tokens.
-  - Debounced site rebuild triggers for search engine metadata.
+- **Phase E (Publishing & Media Storage) — VERIFIED & COMPLETED**:
+  - `supabase/migrations/0005_storage.sql`: Configured Supabase storage buckets `media` (public, 10MB limit for images) and `attachments` (private, 50MB limit for project files/deliverables) with full authenticated and client-visible RLS policies.
+  - `assets/blog-feed.js`: Client-side live index feed querying `site_blog_posts` in real-time, rendering published posts in <1s without waiting for Vercel rebuilds. Added dynamic post rendering fallback and draft preview renderer with unlisted preview warning.
+  - `blog/index.html`: Wired `assets/blog-feed.js` and Supabase JS SDK.
+  - `flow-hq/index.html`: Added "Insert image" media uploader (`#blogUploadMediaBtn`, `#blogMediaInput`), "Preview draft" button (`#blogPreviewDraft`), and "Upload file" in project files subtab (`#btnUploadProjectFile`, `#projectFileInput`).
+  - `flow-hq/admin.js`: Integrated direct Supabase storage uploads for blog images (with auto-markdown insertion at cursor) and project files (with metadata recording in `attachments`), added `scheduleDebouncedRebuild()` with 15-second debounce window to prevent build thrashing.
+  - Tested: 100% automated pass via `scripts/verify_phase_e.py`, zero Node syntax errors.
+- **Phase F (Notifications & Realtime) — UP NEXT**:
+  - Realtime subscriptions via Supabase `channel()` for tasks, comments, activity, and notifications feed.
+  - Notification drawer/dropdown in Flow HQ topbar (`#notificationsBtn`, `#notificationsMenu`).
+  - Email notification triggers via existing SMTP setup.
+  - Member-wise and project-wise summary reporting rollups.
 
 ## Pending user actions:
 

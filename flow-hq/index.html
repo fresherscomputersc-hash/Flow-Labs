@@ -357,7 +357,14 @@
               </details>
 
               <div class="admin-field">
-                <label for="bp-body">Body (Markdown)</label>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.35rem;">
+                  <label for="bp-body" style="margin:0;">Body (Markdown)</label>
+                  <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <input type="file" id="blogMediaInput" accept="image/*" hidden>
+                    <button type="button" class="admin-btn ghost sm" id="blogUploadMediaBtn">Insert image</button>
+                    <button type="button" class="admin-btn ghost sm" id="blogPreviewDraft">Preview draft ↗</button>
+                  </div>
+                </div>
                 <textarea class="admin-textarea blog-body" id="bp-body" rows="18" spellcheck="true"></textarea>
                 <small>Supported: paragraphs, ##/###/#### headings, - and 1. lists, **bold**, *italic*, `code`,
                   [links](/path/), ![images](/assets/blog/x.png), &gt; quotes and fenced code. Raw HTML is
@@ -693,6 +700,10 @@
                 <div>
                   <h2>Files</h2>
                   <p>Project deliverables and attachments.</p>
+                </div>
+                <div class="admin-actions">
+                  <input type="file" id="projectFileInput" hidden>
+                  <button type="button" class="admin-btn primary" id="btnUploadProjectFile">Upload file</button>
                 </div>
               </div>
               <div class="file-list" id="projectFilesList">

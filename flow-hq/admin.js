@@ -1566,6 +1566,14 @@
     triggerRebuild();
   }
 
+  var rebuildTimer = null;
+  function scheduleDebouncedRebuild(delayMs) {
+    if (rebuildTimer) clearTimeout(rebuildTimer);
+    rebuildTimer = setTimeout(function () {
+      triggerRebuild();
+    }, delayMs || 15000);
+  }
+
   $('blogRefresh').addEventListener('click', loadBlog);
   $('blogRebuild').addEventListener('click', triggerRebuild);
   $('blogNew').addEventListener('click', function () { openBlogEditor(null); });
@@ -1584,12 +1592,68 @@
     state.blogSlugTouched = $('bp-slug').value.trim() !== '';
   });
 
+  if ($('blogUploadMediaBtn') && $('blogMediaInput')) {
+    $('blogUploadMediaBtn').addEventListener('click', function () {
+      $('blogMediaInput').click();
+    });
+
+    $('blogMediaInput').addEventListener('change', async function () {
+      var file = this.files && this.files[0];
+      if (!file) return;
+
+      var btn = $('blogUploadMediaBtn');
+      btn.disabled = true;
+      btn.textContent = 'Uploading…';
+
+      var ext = file.name.split('.').pop();
+      var path = 'blog/' + Date.now() + '-' + slugify(file.name.replace(/\.[^/.]+$/, '')) + '.' + ext;
+
+      try {
+        var uploadRes = await db.storage.from('media').upload(path, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+        if (uploadRes.error) throw uploadRes.error;
+
+        var publicUrlRes = db.storage.from('media').getPublicUrl(path);
+        var url = publicUrlRes && publicUrlRes.data ? publicUrlRes.data.publicUrl : ('/assets/' + path);
+
+        var body = $('bp-body');
+        var snippet = '\n![' + esc(file.name) + '](' + url + ')\n';
+        var pos = body.selectionStart || body.value.length;
+        body.value = body.value.slice(0, pos) + snippet + body.value.slice(pos);
+        updateBlogPreview();
+        toast('Image uploaded and inserted into markdown.');
+      } catch (err) {
+        fail('Upload failed: ' + (err.message || 'Check storage policies.'));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Insert image';
+        $('blogMediaInput').value = '';
+      }
+    });
+  }
+
+  if ($('blogPreviewDraft')) {
+    $('blogPreviewDraft').addEventListener('click', async function () {
+      var slug = $('bp-slug').value.trim() || blogSlug($('bp-title').value);
+      if (!slug) {
+        fail('Enter a title or slug first to preview.');
+        return;
+      }
+      await saveBlog(null);
+      window.open('/blog/?preview=' + encodeURIComponent(slug), '_blank');
+    });
+  }
+
   $('blogForm').addEventListener('submit', async function (event) {
     event.preventDefault();
     var row = await saveBlog(null);
     if (!row) return;
     if (row.status === 'published') {
-      triggerRebuild();
+      toast('Post saved and live on blog.');
+      scheduleDebouncedRebuild();
     } else {
       toast('Draft saved.');
     }
@@ -1597,7 +1661,10 @@
 
   $('blogPublish').addEventListener('click', async function () {
     var row = await saveBlog('published');
-    if (row) triggerRebuild();
+    if (row) {
+      toast('Post published! Live immediately on blog.');
+      scheduleDebouncedRebuild();
+    }
   });
 
   $('blogUnpublish').addEventListener('click', async function () {
@@ -2916,6 +2983,55 @@
 
       toast(nowVis ? 'File is now visible in client portal.' : 'File hidden from client portal.');
       loadProjectFiles();
+    });
+  }
+
+  if ($('btnUploadProjectFile') && $('projectFileInput')) {
+    $('btnUploadProjectFile').addEventListener('click', function () {
+      $('projectFileInput').click();
+    });
+
+    $('projectFileInput').addEventListener('change', async function () {
+      var file = this.files && this.files[0];
+      if (!file || !state.projectId) return;
+
+      var btn = $('btnUploadProjectFile');
+      btn.disabled = true;
+      btn.textContent = 'Uploading…';
+
+      var ext = file.name.split('.').pop();
+      var safeName = slugify(file.name.replace(/\.[^/.]+$/, '')) + '.' + ext;
+      var path = 'projects/' + state.projectId + '/' + Date.now() + '-' + safeName;
+
+      try {
+        var uploadRes = await db.storage.from('attachments').upload(path, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+        var storagePath = (uploadRes.data && uploadRes.data.path) || path;
+
+        var attachRes = await db.from('attachments').insert({
+          project_id: state.projectId,
+          uploaded_by: state.profile.id,
+          file_name: file.name,
+          storage_path: storagePath,
+          size_bytes: file.size,
+          mime_type: file.type || null,
+          client_visible: false
+        });
+
+        if (attachRes.error) throw attachRes.error;
+
+        toast('File uploaded to project.');
+        loadProjectFiles();
+      } catch (err) {
+        fail('File upload failed: ' + (err.message || 'Check storage bucket configuration.'));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Upload file';
+        $('projectFileInput').value = '';
+      }
     });
   }
 
