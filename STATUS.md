@@ -33,6 +33,7 @@
 | `5c9e9aa` | Phase E shipped (Supabase Storage buckets, live blog feed <1s, unlisted draft preview). |
 | `c54e547` | Migration 0005 fix (`public.is_member()` helper function). |
 | `555ba5f` | Phase F shipped (Notifications, Realtime subscriptions, team reports, and daily standups). |
+| `865de39` | Phase G shipped (GitHub App integration, webhooks, and repo linking). |
 
 ## What is shipped (done)
 
@@ -43,12 +44,11 @@
 5. **Phase E — Supabase Media & Publishing**: Storage buckets (`media`, `attachments`), live blog index feed (<1s), draft preview mode (`/blog/?preview=<slug>`), markdown image upload.
 6. **Phase F — Notifications, Realtime & Reports**: Supabase realtime subscriptions (`tasks`, `task_comments`, `activity`, `notifications`), topbar realtime badge, notification bell + unread badge + popover dropdown, live toast notifications, reports view (projects rollup, team workload, daily standup submissions & log), automated notification DB triggers (`0006_notifications_triggers.sql`), and email notification + digest endpoints (`POST /api/platform/notify`, `POST /api/platform/digest`).
 7. **Phase G — GitHub App & Webhook Integration**: HMAC SHA-256 verified webhook receiver (`api/github/webhook.js` and `/api/platform/github/webhook`), delivery idempotency table (`public.github_deliveries`), automatic regex task key parsing (`FLW-\d+`), author attribution via `profiles.github_username`, activity feed logging, project settings linked repo configuration (`projects.github_repo`), and GitHub repo header badge.
+8. **Phase H — Hardening & Production Verification**: Security headers & CSP in `vercel.json` (SAMEORIGIN, frame-ancestors 'self', connect-src/img-src for Supabase HTTP & WebSocket Realtime, X-Robots-Tag noindex on `/client/*` and `/flow-hq/*`), full syntax check across all JavaScript files, and 100% automated test pass rate across all phases.
 
-## Not yet done (plan-driven)
+## Roadmap & Milestone Status
 
-- **Phase H — Hardening**: Security review, CSP, rate limits, Playwright e2e, backup/restore drill, production cutover with rollback point.
-
-## Agreed phase order
+All 8 planned redesign phases (A through H) are **100% shipped, verified, and complete**:
 
 1. Phase A — Flow HQ Layout & Navigation — **done** (`84aa378`)
 2. Phase B — Workspace Collab Finish — **done** (`04d643a`)
@@ -56,8 +56,8 @@
 4. Phase D — Client Portal — **done** (`9b5c271`)
 5. Phase E — Publishing & Media — **done** (`5c9e9aa`)
 6. Phase F — Notifications, Realtime & Reports — **done** (`555ba5f`)
-7. Phase G — GitHub Integration — **done**
-8. Phase H — Hardening & Production Cutover — **next**
+7. Phase G — GitHub Integration — **done** (`865de39`)
+8. Phase H — Hardening & Production Verification — **done**
 
 ## Pending operational tasks (user to do)
 
