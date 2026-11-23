@@ -1,834 +1,969 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>The Flow Labs — Interfaces, Systems &amp; Intelligence</title>
-<meta name="description" content="A founder-led engineering studio building interfaces, systems and intelligence for growing businesses. Fixed price before code. Four builds a month. Source code always handed over." />
-<link rel="canonical" href="https://www.theflowlabs.online/" />
-<meta property="og:title" content="The Flow Labs — Interfaces, Systems &amp; Intelligence" />
-<meta property="og:description" content="A founder-led engineering studio building interfaces, systems and intelligence for growing businesses. Fixed price before code. Four builds a month." />
-<meta property="og:url" content="https://www.theflowlabs.online/" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<meta property="og:locale" content="en_IN" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="The Flow Labs — Interfaces, Systems &amp; Intelligence" />
-<meta name="twitter:description" content="Interfaces, systems and intelligence, built by one team. Fixed price before code. Four builds a month." />
-<meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<meta name="theme-color" content="#FFFFFF" />
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/assets/icon-180.png" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
-<script src="assets/site.config.js?v=7" defer></script>
-<link rel="stylesheet" href="assets/site.css?v=13">
-<script>
-/* First-load brand reveal. Runs before paint so the page never flashes.
-   Homepage only, once per browser per 7 days, honouring reduced motion,
-   save-data and crawlers. ?intro=1 replays it without resetting the timer. */
-(function () {
-  try {
-    var root = document.documentElement;
-    if (/[?&]intro=1\b/.test(location.search)) { root.classList.add('intro-on'); return; }
-    if (location.pathname !== '/' && location.pathname !== '/index.html') return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (navigator.connection && navigator.connection.saveData) return;
-    if (/bot|crawl|spider|slurp|lighthouse|pagespeed|headless|prerender/i.test(navigator.userAgent)) return;
-    var last = 0;
-    try { last = parseInt(localStorage.getItem('fl_intro_at') || '0', 10) || 0; } catch (e) {}
-    if (Date.now() - last < 604800000) return;
-    root.classList.add('intro-on');
-    try { localStorage.setItem('fl_intro_at', String(Date.now())); } catch (e) {}
-  } catch (e) {}
-})();
-</script>
-<script type="application/ld+json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Flow Labs — Interfaces, Systems &amp; Intelligence</title>
+  <meta name="description"
+    content="A founder-led engineering studio building interfaces, systems and intelligence for growing businesses. Fixed price before code. Four builds a month. Source code always handed over." />
+  <link rel="canonical" href="https://www.theflowlabs.online/" />
+  <meta property="og:title" content="The Flow Labs — Interfaces, Systems &amp; Intelligence" />
+  <meta property="og:description"
+    content="A founder-led engineering studio building interfaces, systems and intelligence for growing businesses. Fixed price before code. Four builds a month." />
+  <meta property="og:url" content="https://www.theflowlabs.online/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
+  <meta property="og:locale" content="en_IN" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="The Flow Labs — Interfaces, Systems &amp; Intelligence" />
+  <meta name="twitter:description"
+    content="Interfaces, systems and intelligence, built by one team. Fixed price before code. Four builds a month." />
+  <meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
+  <meta name="theme-color" content="#FFFFFF" />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/icon-180.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <script src="assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="assets/site.css?v=14">
+  <script>
+    /* First-load brand reveal. Runs before paint so the page never flashes.
+       Homepage only, once per browser per 7 days, honouring reduced motion,
+       save-data and crawlers. ?intro=1 replays it without resetting the timer. */
+    (function () {
+      try {
+        var root = document.documentElement;
+        if (/[?&]intro=1\b/.test(location.search)) { root.classList.add('intro-on'); return; }
+        if (location.pathname !== '/' && location.pathname !== '/index.html') return;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (navigator.connection && navigator.connection.saveData) return;
+        if (/bot|crawl|spider|slurp|lighthouse|pagespeed|headless|prerender/i.test(navigator.userAgent)) return;
+        var last = 0;
+        try { last = parseInt(localStorage.getItem('fl_intro_at') || '0', 10) || 0; } catch (e) { }
+        if (Date.now() - last < 604800000) return;
+        root.classList.add('intro-on');
+        try { localStorage.setItem('fl_intro_at', String(Date.now())); } catch (e) { }
+      } catch (e) { }
+    })();
+  </script>
+  <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Organization","name":"The Flow Labs","url":"https://www.theflowlabs.online/","logo":"https://www.theflowlabs.online/assets/icon-180.png","email":"hello@theflowlabs.online","image":"https://www.theflowlabs.online/assets/work-droovee.png","description":"Founder-led engineering studio building interfaces, systems and applied intelligence for growing businesses. Fixed-price delivery, four builds a month, source code handed over on every project.","founder":[{"@type":"Person","name":"Smruti Ranjan","jobTitle":"Founder"},{"@type":"Person","name":"Biswash","jobTitle":"Co-Founder"},{"@type":"Person","name":"Arpita","jobTitle":"Co-Founder"}],"address":{"@type":"PostalAddress","addressLocality":"Bhubaneswar","addressRegion":"Odisha","addressCountry":"IN"},"areaServed":[{"@type":"City","name":"Bhubaneswar"},{"@type":"AdministrativeArea","name":"Odisha"},{"@type":"Country","name":"India"}],"sameAs":["https://www.instagram.com/the.flow.labs/"]}
 </script>
-<script type="application/ld+json">
+  <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"The Flow Labs","url":"https://www.theflowlabs.online/"}
 </script>
 </head>
+
 <body data-page="home" data-theme="bright">
 
-<!-- ================= BRAND REVEAL (once per visit-window) ================= -->
-<div class="intro" id="intro" aria-hidden="true">
-  <div class="intro-half top"></div>
-  <div class="intro-half bottom"></div>
-  <div class="intro-core">
-    <div class="intro-word" id="introText" data-text="The Flow Labs">The Flow Labs</div>
-    <div class="intro-sub">Interfaces · Systems · Intelligence</div>
+  <!-- ================= BRAND REVEAL (once per visit-window) ================= -->
+  <div class="intro" id="intro" aria-hidden="true">
+    <div class="intro-half top"></div>
+    <div class="intro-half bottom"></div>
+    <div class="intro-core">
+      <div class="intro-word" id="introText" data-text="The Flow Labs">The Flow Labs</div>
+      <div class="intro-sub">Interfaces · Systems · Intelligence</div>
+    </div>
   </div>
-</div>
 
-<!-- ================= NAVIGATION ================= -->
-<header class="nav" id="nav">
-  <div class="container nav-inner">
-    <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-    <div class="nav-links" id="nav-links">
-      <a href="/work/">Work</a>
-      <a href="/services/">Services</a>
-      <a href="/lab-report/">Lab Report</a>
-      <a href="/about/">About</a>
-      <a href="/blog/">Blog</a>
-      <a href="/contact/" class="nav-cta">Start a project</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</header>
-
-<main id="top">
-
-  <!-- ================= 1. HERO ================= -->
-  <section class="hero hero--centered">
-    <canvas id="flowField" aria-hidden="true"></canvas>
-    <div class="container">
-      <span class="pill"><span class="dot"></span> <span data-cms="hero-label">Interfaces · Systems · Intelligence</span></span>
-      <h1 class="hero-title" data-cms="hero-title">If it lives on a screen,<br>we build <em>it.</em></h1>
-      <p class="hero-subtitle" data-cms="hero-subtitle">A founder-led studio that designs the interface, engineers the system, and wires in the intelligence. One team, fixed price, no handoffs.</p>
-      <div class="hero-actions">
-        <a href="#contact" class="btn btn-primary magnetic">Start a project</a>
-        <a href="#work" class="btn magnetic">See the work</a>
+  <!-- ================= NAVIGATION ================= -->
+  <header class="nav" id="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+          <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.6 6.5 L11.4 33.5" />
+            <path d="M14.6 6.5 H29.5" />
+            <path d="M13.2 19.8 H24.6" />
+          </g>
+        </svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
+      <div class="nav-links" id="nav-links">
+        <a href="/work/">Work</a>
+        <a href="/services/">Services</a>
+        <a href="/lab-report/">Lab Report</a>
+        <a href="/about/">About</a>
+        <a href="/blog/">Blog</a>
+        <a href="/contact/" class="nav-cta">Start a project</a>
       </div>
-      <div class="stat-strip reveal">
-        <div class="stat"><b data-count="4">4</b><span>Builds / month</span></div>
-        <div class="stat"><b>48h</b><span>Reply window</span></div>
-        <div class="stat"><b data-count="3">3</b><span>Founders</span></div>
-        <div class="stat"><b data-count="0">0</b><span>Outsourced</span></div>
-      </div>
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false"
+        aria-controls="nav-links">
+        <span></span><span></span><span></span>
+      </button>
     </div>
-  </section>
+  </header>
 
-  <!-- ================= 2. SERVICES ================= -->
-  <section class="section" id="services">
-    <div class="container">
-      <span class="section-index" aria-hidden="true">01</span>
-      <div class="section-label">What we build</div>
-      <h2 class="section-title" data-cms="services-title">Three layers. <em>One team.</em></h2>
-      <p class="section-subtitle" data-cms="services-subtitle">Open a layer to see what is inside it. Most projects need one. The good ones end up using all three.</p>
+  <main id="top">
 
-      <div class="stack">
-        <div class="stack-item open">
-          <button class="stack-head" type="button" aria-expanded="true" aria-controls="layer-1">
-            <span class="stack-num">01</span>
-            <span class="stack-name">Interfaces</span>
-            <span class="stack-promise">The screens people actually touch.</span>
-            <span class="stack-plus" aria-hidden="true">+</span>
-          </button>
-          <div class="stack-body" id="layer-1"><div>
-            <div class="stack-grid">
+    <!-- ================= 1. HERO ================= -->
+    <section class="hero hero--centered">
+      <canvas id="flowField" aria-hidden="true"></canvas>
+      <div class="container">
+        <span class="pill"><span class="dot"></span> <span data-cms="hero-label">Interfaces · Systems ·
+            Intelligence</span></span>
+        <h1 class="hero-title" data-cms="hero-title">If it lives on a screen,<br>we build <em>it.</em></h1>
+        <p class="hero-subtitle" data-cms="hero-subtitle">A founder-led studio that designs the interface, engineers the
+          system, and wires in the intelligence. One team, fixed price, no handoffs.</p>
+        <div class="hero-actions">
+          <a href="#contact" class="btn btn-primary magnetic">Start a project</a>
+          <a href="#work" class="btn magnetic">See the work</a>
+        </div>
+        <div class="stat-strip reveal">
+          <div class="stat"><b data-count="4">4</b><span>Builds / month</span></div>
+          <div class="stat"><b>48h</b><span>Reply window</span></div>
+          <div class="stat"><b data-count="3">3</b><span>Founders</span></div>
+          <div class="stat"><b data-count="0">0</b><span>Outsourced</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 2. SERVICES ================= -->
+    <section class="section" id="services">
+      <div class="container">
+        <span class="section-index" aria-hidden="true">01</span>
+        <div class="section-label">What we build</div>
+        <h2 class="section-title" data-cms="services-title">Three layers. <em>One team.</em></h2>
+        <p class="section-subtitle" data-cms="services-subtitle">Open a layer to see what is inside it. Most projects
+          need one. The good ones end up using all three.</p>
+
+        <div class="stack">
+          <div class="stack-item open">
+            <button class="stack-head" type="button" aria-expanded="true" aria-controls="layer-1">
+              <span class="stack-num">01</span>
+              <span class="stack-name">Interfaces</span>
+              <span class="stack-promise">The screens people actually touch.</span>
+              <span class="stack-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="stack-body" id="layer-1">
               <div>
-                <h5>Inside the layer</h5>
-                <ul>
-                  <li>Marketing sites and landing pages</li>
-                  <li>Web apps and customer portals</li>
-                  <li>Design systems and component libraries</li>
-                  <li>Performance and accessibility passes</li>
-                </ul>
-              </div>
-              <div>
-                <h5>Usually asked for when</h5>
-                <ul>
-                  <li>The current site looks dated or loads slowly</li>
-                  <li>Enquiries arrive but nobody converts</li>
-                  <li>You need a portal, not a brochure</li>
-                </ul>
-              </div>
-              <div>
-                <div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div>
-                <p class="stack-meta" style="margin-top:0.9rem">Typical build <b>2–4 weeks</b>. Fixed quote after one call.</p>
-                <div class="stack-links">
-                  <a href="/services/web-development/">See Interfaces →</a>
+                <div class="stack-tags">
+                  <span class="stack-tag">Design Systems</span>
+                  <span class="stack-tag">Next.js &amp; React</span>
+                  <span class="stack-tag">Customer Portals</span>
+                  <span class="stack-tag">Responsive Web</span>
+                  <span class="stack-tag">Figma Handover</span>
+                </div>
+                <div class="stack-grid">
+                  <div>
+                    <h5>Inside the layer</h5>
+                    <ul>
+                      <li>Marketing sites and landing pages</li>
+                      <li>Web apps and customer portals</li>
+                      <li>Design systems and component libraries</li>
+                      <li>Performance and accessibility passes</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h5>Usually asked for when</h5>
+                    <ul>
+                      <li>The current site looks dated or loads slowly</li>
+                      <li>Enquiries arrive but nobody converts</li>
+                      <li>You need a portal, not a brochure</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div>
+                    <p class="stack-meta" style="margin-top:0.9rem">Typical build <b>2–4 weeks</b>. Fixed quote after
+                      one call.</p>
+                    <div class="stack-links">
+                      <a href="/services/web-development/">See Interfaces →</a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div></div>
-        </div>
+          </div>
 
-        <div class="stack-item">
-          <button class="stack-head" type="button" aria-expanded="false" aria-controls="layer-2">
-            <span class="stack-num">02</span>
-            <span class="stack-name">Systems</span>
-            <span class="stack-promise">The engine under the interface.</span>
-            <span class="stack-plus" aria-hidden="true">+</span>
-          </button>
-          <div class="stack-body" id="layer-2"><div>
-            <div class="stack-grid">
+          <div class="stack-item">
+            <button class="stack-head" type="button" aria-expanded="false" aria-controls="layer-2">
+              <span class="stack-num">02</span>
+              <span class="stack-name">Systems</span>
+              <span class="stack-promise">The engine under the interface.</span>
+              <span class="stack-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="stack-body" id="layer-2">
               <div>
-                <h5>Inside the layer</h5>
-                <ul>
-                  <li>Custom platforms and internal tools</li>
-                  <li>APIs, integrations and data pipelines</li>
-                  <li>Dashboards with real permissions</li>
-                  <li>Migration off spreadsheets and legacy tools</li>
-                </ul>
-              </div>
-              <div>
-                <h5>Usually asked for when</h5>
-                <ul>
-                  <li>Off-the-shelf software fights your process</li>
-                  <li>Three tools hold the same customer record</li>
-                  <li>Reporting takes a person a full day</li>
-                </ul>
-              </div>
-              <div>
-                <div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div>
-                <p class="stack-meta" style="margin-top:0.9rem">Typical build <b>4–10 weeks</b>, shipped in phases.</p>
-                <div class="stack-links">
-                  <a href="/services/custom-software-development/">See Systems →</a>
+                <div class="stack-tags">
+                  <span class="stack-tag">PostgreSQL &amp; Supabase</span>
+                  <span class="stack-tag">REST &amp; Realtime APIs</span>
+                  <span class="stack-tag">Custom Dashboards</span>
+                  <span class="stack-tag">Role-Based Auth</span>
+                  <span class="stack-tag">Data Pipelines</span>
+                </div>
+                <div class="stack-grid">
+                  <div>
+                    <h5>Inside the layer</h5>
+                    <ul>
+                      <li>Custom platforms and internal tools</li>
+                      <li>APIs, integrations and data pipelines</li>
+                      <li>Dashboards with real permissions</li>
+                      <li>Migration off spreadsheets and legacy tools</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h5>Usually asked for when</h5>
+                    <ul>
+                      <li>Off-the-shelf software fights your process</li>
+                      <li>Three tools hold the same customer record</li>
+                      <li>Reporting takes a person a full day</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div>
+                    <p class="stack-meta" style="margin-top:0.9rem">Typical build <b>4–10 weeks</b>, shipped in phases.
+                    </p>
+                    <div class="stack-links">
+                      <a href="/services/custom-software-development/">See Systems →</a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div></div>
-        </div>
+          </div>
 
-        <div class="stack-item">
-          <button class="stack-head" type="button" aria-expanded="false" aria-controls="layer-3">
-            <span class="stack-num">03</span>
-            <span class="stack-name">Intelligence</span>
-            <span class="stack-promise">The part that decides, drafts and routes.</span>
-            <span class="stack-plus" aria-hidden="true">+</span>
-          </button>
-          <div class="stack-body" id="layer-3"><div>
-            <div class="stack-grid">
+          <div class="stack-item">
+            <button class="stack-head" type="button" aria-expanded="false" aria-controls="layer-3">
+              <span class="stack-num">03</span>
+              <span class="stack-name">Intelligence</span>
+              <span class="stack-promise">The part that decides, drafts and routes.</span>
+              <span class="stack-plus" aria-hidden="true">+</span>
+            </button>
+            <div class="stack-body" id="layer-3">
               <div>
-                <h5>Inside the layer</h5>
-                <ul>
-                  <li>AI triage, drafting and routing</li>
-                  <li>Assistants over your own documents</li>
-                  <li>Workflow automation across existing tools</li>
-                  <li>Evaluation, guardrails and cost limits</li>
-                </ul>
-              </div>
-              <div>
-                <h5>Usually asked for when</h5>
-                <ul>
-                  <li>The same questions get answered daily</li>
-                  <li>Staff copy data between systems</li>
-                  <li>You tried a chatbot that made things up</li>
-                </ul>
-              </div>
-              <div>
-                <div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div>
-                <p class="stack-meta" style="margin-top:0.9rem">Typical build <b>2–6 weeks</b>. Priced per workflow, not per token.</p>
-                <div class="stack-links">
-                  <a href="/services/ai-automation/">See Intelligence →</a>
+                <div class="stack-tags">
+                  <span class="stack-tag">Claude &amp; OpenAI Integration</span>
+                  <span class="stack-tag">Document RAG</span>
+                  <span class="stack-tag">Workflow Automation</span>
+                  <span class="stack-tag">Evaluation Guardrails</span>
+                  <span class="stack-tag">Cost Telemetry</span>
+                </div>
+                <div class="stack-grid">
+                  <div>
+                    <h5>Inside the layer</h5>
+                    <ul>
+                      <li>AI triage, drafting and routing</li>
+                      <li>Assistants over your own documents</li>
+                      <li>Workflow automation across existing tools</li>
+                      <li>Evaluation, guardrails and cost limits</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h5>Usually asked for when</h5>
+                    <ul>
+                      <li>The same questions get answered daily</li>
+                      <li>Staff copy data between systems</li>
+                      <li>You tried a chatbot that made things up</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div>
+                    <p class="stack-meta" style="margin-top:0.9rem">Typical build <b>2–6 weeks</b>. Priced per workflow,
+                      not per token.</p>
+                    <div class="stack-links">
+                      <a href="/services/ai-automation/">See Intelligence →</a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div></div>
-        </div>
-      </div>
-
-      <button class="compare-toggle" type="button" data-compare aria-expanded="false" aria-controls="compareTable">Compare the three layers <span aria-hidden="true">+</span></button>
-      <div class="compare-table" id="compareTable">
-        <table>
-          <thead>
-            <tr><th>Question</th><th>Interfaces</th><th>Systems</th><th>Intelligence</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>What it solves</td><td>How it looks and converts</td><td>How the business runs</td><td>What happens without a human</td></tr>
-            <tr><td>Starting point</td><td>Custom quote</td><td>Custom quote</td><td>Custom quote</td></tr>
-            <tr><td>Typical timeline</td><td>2–4 weeks</td><td>4–10 weeks</td><td>2–6 weeks</td></tr>
-            <tr><td>Best first project</td><td>New site or portal</td><td>Ops tool, CRM, dashboard</td><td>One repetitive workflow</td></tr>
-            <tr><td>Needs the other layers?</td><td>Not always</td><td>Usually needs an interface</td><td>Almost always needs both</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="chooser" data-chooser style="margin-top:2.5rem">
-        <p class="chooser-q">Not sure which layer you are actually asking for?</p>
-        <div class="chooser-opts">
-          <button type="button" data-layer="interfaces" data-answer="&lt;strong&gt;Start with Interfaces.&lt;/strong&gt; You need something people look at and trust. We scope the pages, write the structure, build it, and hand over a site you can edit.">We need a site or a portal</button>
-          <button type="button" data-layer="systems" data-answer="&lt;strong&gt;Start with Systems.&lt;/strong&gt; Your process is the product. We map the workflow, replace the spreadsheets, and build the tool your team will actually use.">Our process is held together by spreadsheets</button>
-          <button type="button" data-layer="intelligence" data-answer="&lt;strong&gt;Start with Intelligence.&lt;/strong&gt; Pick the one workflow that eats the most hours. We automate that, measure it, then expand — instead of rebuilding everything at once.">We answer the same things all day</button>
-        </div>
-        <div class="chooser-result" data-chooser-result role="status" aria-live="polite"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 3. LAB REPORT ================= -->
-  <section class="section" id="lab-report">
-    <div class="container">
-      <span class="section-index" aria-hidden="true">02</span>
-      <div class="section-label">Free, no signup</div>
-      <h2 class="section-title">The <em>Lab Report.</em></h2>
-      <p class="section-subtitle">Paste any URL. Get a scored, plain-English read on speed, accessibility and search readiness in about ten seconds. No account, no email gate, no sales call required.</p>
-
-      <form class="lab-form" id="labForm" novalidate>
-        <label for="labUrl" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Website URL</label>
-        <input id="labUrl" name="url" type="url" inputmode="url" placeholder="yourbusiness.com" autocomplete="url" required>
-        <button class="btn btn-primary" type="submit">Run the report</button>
-      </form>
-      <p class="lab-note">Public data only. We store nothing except the score, cached for 24 hours.</p>
-      <p class="report-err" id="labError" hidden></p>
-
-      <div class="report" id="labReport" aria-live="polite"></div>
-    </div>
-  </section>
-
-  <!-- ================= 4. SELECTED WORK ================= -->
-  <section class="section" id="work" data-section="work">
-    <div class="container">
-      <span class="section-index" aria-hidden="true">03</span>
-      <div class="section-label">Selected work</div>
-      <h2 class="section-title">Built in the lab.<br><em>Running in production.</em></h2>
-      <p class="section-subtitle">Four systems we own and operate, plus the ones still on the bench. No invented metrics — every label below is one we can prove.</p>
-
-      <div class="work-filter" data-work-filter role="group" aria-label="Filter work">
-        <button type="button" data-filter="all" aria-pressed="true">All</button>
-        <button type="button" data-filter="web" aria-pressed="false">Interfaces</button>
-        <button type="button" data-filter="software" aria-pressed="false">Systems</button>
-        <button type="button" data-filter="ai" aria-pressed="false">Intelligence</button>
-        <button type="button" data-filter="oss" aria-pressed="false">Open source</button>
-      </div>
-
-      <div class="work-grid" style="margin-top:1.5rem">
-        <a class="work-card work-feature reveal" href="/work/droovee/" data-cat="web software" data-name="droovee">
-          <span class="status">Live</span>
-          <div class="cover">
-            <img src="assets/work-droovee.png" alt="Droovee chauffeur booking platform" width="1440" height="900" loading="lazy" decoding="async">
-            <span class="scan"></span><span class="corner tl"></span><span class="corner br"></span>
           </div>
-          <div class="work-body">
-            <div class="work-top">
-              <h3>Droovee</h3>
-              <span class="type">Interfaces<br>+ Systems</span>
+        </div>
+
+        <button class="compare-toggle" type="button" data-compare aria-expanded="false"
+          aria-controls="compareTable">Compare the three layers <span aria-hidden="true">+</span></button>
+        <div class="compare-table" id="compareTable">
+          <table>
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Interfaces</th>
+                <th>Systems</th>
+                <th>Intelligence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>What it solves</td>
+                <td>How it looks and converts</td>
+                <td>How the business runs</td>
+                <td>What happens without a human</td>
+              </tr>
+              <tr>
+                <td>Starting point</td>
+                <td>Custom quote</td>
+                <td>Custom quote</td>
+                <td>Custom quote</td>
+              </tr>
+              <tr>
+                <td>Typical timeline</td>
+                <td>2–4 weeks</td>
+                <td>4–10 weeks</td>
+                <td>2–6 weeks</td>
+              </tr>
+              <tr>
+                <td>Best first project</td>
+                <td>New site or portal</td>
+                <td>Ops tool, CRM, dashboard</td>
+                <td>One repetitive workflow</td>
+              </tr>
+              <tr>
+                <td>Needs the other layers?</td>
+                <td>Not always</td>
+                <td>Usually needs an interface</td>
+                <td>Almost always needs both</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="chooser" data-chooser style="margin-top:2.5rem">
+          <p class="chooser-q">Not sure which layer you are actually asking for?</p>
+          <div class="chooser-opts">
+            <button type="button" data-layer="interfaces"
+              data-answer="&lt;strong&gt;Start with Interfaces.&lt;/strong&gt; You need something people look at and trust. We scope the pages, write the structure, build it, and hand over a site you can edit.">We
+              need a site or a portal</button>
+            <button type="button" data-layer="systems"
+              data-answer="&lt;strong&gt;Start with Systems.&lt;/strong&gt; Your process is the product. We map the workflow, replace the spreadsheets, and build the tool your team will actually use.">Our
+              process is held together by spreadsheets</button>
+            <button type="button" data-layer="intelligence"
+              data-answer="&lt;strong&gt;Start with Intelligence.&lt;/strong&gt; Pick the one workflow that eats the most hours. We automate that, measure it, then expand — instead of rebuilding everything at once.">We
+              answer the same things all day</button>
+          </div>
+          <div class="chooser-result" data-chooser-result role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. LAB REPORT ================= -->
+    <section class="section" id="lab-report">
+      <div class="container">
+        <span class="section-index" aria-hidden="true">02</span>
+        <div class="section-label">Free, no signup</div>
+        <h2 class="section-title">The <em>Lab Report.</em></h2>
+        <p class="section-subtitle">Paste any URL. Get a scored, plain-English read on speed, accessibility and search
+          readiness in about ten seconds. No account, no email gate, no sales call required.</p>
+
+        <form class="lab-form" id="labForm" novalidate>
+          <label for="labUrl" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Website
+            URL</label>
+          <input id="labUrl" name="url" type="url" inputmode="url" placeholder="yourbusiness.com" autocomplete="url"
+            required>
+          <button class="btn btn-primary" type="submit">Run the report</button>
+        </form>
+        <p class="lab-note">Public data only. We store nothing except the score, cached for 24 hours.</p>
+        <p class="report-err" id="labError" hidden></p>
+
+        <div class="report" id="labReport" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ================= 4. SELECTED WORK ================= -->
+    <section class="section" id="work" data-section="work">
+      <div class="container">
+        <span class="section-index" aria-hidden="true">03</span>
+        <div class="section-label">Selected work</div>
+        <h2 class="section-title">Built in the lab.<br><em>Running in production.</em></h2>
+        <p class="section-subtitle">Four systems we own and operate, plus the ones still on the bench. No invented
+          metrics — every label below is one we can prove.</p>
+
+        <div class="work-filter" data-work-filter role="group" aria-label="Filter work">
+          <button type="button" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-filter="web" aria-pressed="false">Interfaces</button>
+          <button type="button" data-filter="software" aria-pressed="false">Systems</button>
+          <button type="button" data-filter="ai" aria-pressed="false">Intelligence</button>
+          <button type="button" data-filter="oss" aria-pressed="false">Open source</button>
+        </div>
+
+        <div class="work-grid" style="margin-top:1.5rem">
+          <a class="work-card work-feature reveal" href="/work/droovee/" data-cat="web software" data-name="droovee">
+            <span class="status">Live</span>
+            <div class="cover">
+              <img src="assets/work-droovee.png" alt="Droovee chauffeur booking platform" width="1440" height="900"
+                loading="lazy" decoding="async">
+              <span class="scan"></span><span class="corner tl"></span><span class="corner br"></span>
             </div>
-            <p class="work-line">An on-demand chauffeur booking platform: verified drivers, transparent fares, instant trip requests and a live operations view behind it.</p>
-            <p class="work-proof">500+ verified drivers, 10k+ customers, 4.9/5 from 1,000+ trips.</p>
-            <div class="work-tags"><span>Booking flow</span><span>Ops console</span><span>Payments</span></div>
-            <span class="work-arrow">Read the build <span aria-hidden="true">→</span></span>
-          </div>
-        </a>
-
-        <a class="work-card reveal" href="/work/drishti/" data-cat="software ai" data-name="drishti">
-          <span class="status inhouse">In-house</span>
-          <div class="cover">
-            <img src="assets/work-drishti.png" alt="Drishti fleet operations intelligence console" width="1440" height="900" loading="lazy" decoding="async">
-            <span class="scan"></span><span class="corner tl"></span><span class="corner br"></span>
-          </div>
-          <div class="work-body">
-            <div class="work-top">
-              <h3>Drishti</h3>
-              <span class="type">Intelligence<br>+ Systems</span>
+            <div class="work-body">
+              <div class="work-top">
+                <h3>Droovee</h3>
+                <span class="type">Interfaces<br>+ Systems</span>
+              </div>
+              <p class="work-line">An on-demand chauffeur booking platform: verified drivers, transparent fares, instant
+                trip requests and a live operations view behind it.</p>
+              <p class="work-proof">500+ verified drivers, 10k+ customers, 4.9/5 from 1,000+ trips.</p>
+              <div class="work-tags"><span>Booking flow</span><span>Ops console</span><span>Payments</span></div>
+              <span class="work-arrow">Read the build <span aria-hidden="true">→</span></span>
             </div>
-            <p class="work-line">A fleet operations console that reads live telemetry, forecasts demand and flags risk before a dispatcher has to ask.</p>
-            <p class="work-proof">Built to answer one question: what needs attention right now.</p>
-            <div class="work-tags"><span>Telemetry</span><span>Forecasting</span><span>Alerting</span></div>
-            <span class="work-arrow">Read the build <span aria-hidden="true">→</span></span>
-          </div>
-        </a>
+          </a>
 
-        <a class="work-card reveal" href="/work/flowops/" data-cat="ai software" data-name="flowops">
-          <span class="status inhouse">In-house</span>
-          <div class="cover">
-            <img src="assets/work-flowops.png" alt="FlowOps AI support ticket triage console" width="1440" height="900" loading="lazy" decoding="async">
-            <span class="scan"></span><span class="corner tl"></span><span class="corner br"></span>
-          </div>
-          <div class="work-body">
-            <div class="work-top">
-              <h3>FlowOps</h3>
-              <span class="type">Intelligence</span>
+          <a class="work-card reveal" href="/work/drishti/" data-cat="software ai" data-name="drishti">
+            <span class="status inhouse">In-house</span>
+            <div class="cover">
+              <img src="assets/work-drishti.png" alt="Drishti fleet operations intelligence console" width="1440"
+                height="900" loading="lazy" decoding="async">
+              <span class="scan"></span><span class="corner tl"></span><span class="corner br"></span>
             </div>
-            <p class="work-line">A triage layer for support teams: classifies each ticket, drafts the reply, and escalates only what a human should see.</p>
-            <p class="work-proof">Every draft is checkable. Nothing is sent automatically.</p>
-            <div class="work-tags"><span>Triage</span><span>Drafting</span><span>Escalation</span></div>
-            <span class="work-arrow">Read the build <span aria-hidden="true">→</span></span>
-          </div>
-        </a>
-
-        <a class="work-card reveal" href="/work/bhuverify/" data-cat="software oss" data-name="bhoomi">
-          <span class="status oss">Open source</span>
-          <div class="cover">
-            <img src="assets/work-bhoomi.svg" alt="BHOOMI land records intelligence stack" width="1440" height="900" loading="lazy" decoding="async">
-            <span class="scan"></span><span class="corner tl"></span><span class="corner br"></span>
-          </div>
-          <div class="work-body">
-            <div class="work-top">
-              <h3>BHOOMI</h3>
-              <span class="type">Systems<br>+ Open source</span>
+            <div class="work-body">
+              <div class="work-top">
+                <h3>Drishti</h3>
+                <span class="type">Intelligence<br>+ Systems</span>
+              </div>
+              <p class="work-line">A fleet operations console that reads live telemetry, forecasts demand and flags risk
+                before a dispatcher has to ask.</p>
+              <p class="work-proof">Built to answer one question: what needs attention right now.</p>
+              <div class="work-tags"><span>Telemetry</span><span>Forecasting</span><span>Alerting</span></div>
+              <span class="work-arrow">Read the build <span aria-hidden="true">→</span></span>
             </div>
-            <p class="work-line">A land-records intelligence stack: verification tooling and geography-aware data pipelines, published openly because the problem is public.</p>
-            <p class="work-proof">Components are readable and reusable, not a black box.</p>
-            <div class="work-tags"><span>Data pipelines</span><span>Verification</span><span>MIT</span></div>
-            <span class="work-arrow">Read the build <span aria-hidden="true">→</span></span>
+          </a>
+
+          <a class="work-card reveal" href="/work/flowops/" data-cat="ai software" data-name="flowops">
+            <span class="status inhouse">In-house</span>
+            <div class="cover">
+              <img src="assets/work-flowops.png" alt="FlowOps AI support ticket triage console" width="1440"
+                height="900" loading="lazy" decoding="async">
+              <span class="scan"></span><span class="corner tl"></span><span class="corner br"></span>
+            </div>
+            <div class="work-body">
+              <div class="work-top">
+                <h3>FlowOps</h3>
+                <span class="type">Intelligence</span>
+              </div>
+              <p class="work-line">A triage layer for support teams: classifies each ticket, drafts the reply, and
+                escalates only what a human should see.</p>
+              <p class="work-proof">Every draft is checkable. Nothing is sent automatically.</p>
+              <div class="work-tags"><span>Triage</span><span>Drafting</span><span>Escalation</span></div>
+              <span class="work-arrow">Read the build <span aria-hidden="true">→</span></span>
+            </div>
+          </a>
+
+          <a class="work-card reveal" href="/work/bhuverify/" data-cat="software oss" data-name="bhoomi">
+            <span class="status oss">Open source</span>
+            <div class="cover">
+              <img src="assets/work-bhoomi.svg" alt="BHOOMI land records intelligence stack" width="1440" height="900"
+                loading="lazy" decoding="async">
+              <span class="scan"></span><span class="corner tl"></span><span class="corner br"></span>
+            </div>
+            <div class="work-body">
+              <div class="work-top">
+                <h3>BHOOMI</h3>
+                <span class="type">Systems<br>+ Open source</span>
+              </div>
+              <p class="work-line">A land-records intelligence stack: verification tooling and geography-aware data
+                pipelines, published openly because the problem is public.</p>
+              <p class="work-proof">Components are readable and reusable, not a black box.</p>
+              <div class="work-tags"><span>Data pipelines</span><span>Verification</span><span>MIT</span></div>
+              <span class="work-arrow">Read the build <span aria-hidden="true">→</span></span>
+            </div>
+          </a>
+        </div>
+
+        <div class="ai-lab reveal" style="margin-top:2rem">
+          <p>Still on the bench</p>
+          <div class="ai-lab-chips">
+            <a class="ai-chip" href="/work/interview-copilot/"><span class="live"></span>Interview Copilot</a>
+            <a class="ai-chip" href="/work/carbon-coach/"><span class="live"></span>Carbon Coach</a>
+            <a class="ai-chip" href="/work/qr-platform/"><span class="live"></span>QR Business Platform</a>
           </div>
-        </a>
-      </div>
+        </div>
 
-      <div class="ai-lab reveal" style="margin-top:2rem">
-        <p>Still on the bench</p>
-        <div class="ai-lab-chips">
-          <a class="ai-chip" href="/work/interview-copilot/"><span class="live"></span>Interview Copilot</a>
-          <a class="ai-chip" href="/work/carbon-coach/"><span class="live"></span>Carbon Coach</a>
-          <a class="ai-chip" href="/work/qr-platform/"><span class="live"></span>QR Business Platform</a>
+        <p style="margin-top:1.75rem"><a class="btn" href="/work/">All work</a></p>
+      </div>
+    </section>
+
+    <!-- ================= 5. PROCESS ================= -->
+    <section class="section" id="process" data-section="process">
+      <div class="container">
+        <span class="section-index" aria-hidden="true">04</span>
+        <div class="section-label">How it works</div>
+        <h2 class="section-title">A predictable <em>process.</em></h2>
+        <p class="section-subtitle">Clear milestones, an agreed price, and direct contact with the people writing the
+          code.</p>
+
+        <div class="process-grid reveal" style="margin-top:2.5rem">
+          <div class="process-card">
+            <span class="num">01</span>
+            <h3>Discovery</h3>
+            <p>One focused call. What you need, where the friction is, and what success looks like in numbers.</p>
+          </div>
+          <div class="process-card">
+            <span class="num">02</span>
+            <h3>Scope &amp; quote</h3>
+            <p>Requirements become a written spec with fixed deliverables, milestones and a price that does not move.
+            </p>
+          </div>
+          <div class="process-card">
+            <span class="num">03</span>
+            <h3>Build</h3>
+            <p>Weekly demos on a real, clickable build. You validate against your workflow, not against slides.</p>
+          </div>
+          <div class="process-card">
+            <span class="num">04</span>
+            <h3>Ship</h3>
+            <p>Production launch, source code handover, documentation, and a support window after go-live.</p>
+          </div>
         </div>
       </div>
+    </section>
 
-      <p style="margin-top:1.75rem"><a class="btn" href="/work/">All work</a></p>
-    </div>
-  </section>
+    <!-- ================= 6. TEAM ================= -->
+    <section class="section" id="team" data-section="team">
+      <div class="container">
+        <span class="section-index" aria-hidden="true">05</span>
+        <div class="section-label">The team</div>
+        <h2 class="section-title">The people who <em>build it.</em></h2>
+        <p class="section-subtitle">No account managers, no outsourced middle layer. You work with the founders from the
+          first call to handover.</p>
 
-  <!-- ================= 5. PROCESS ================= -->
-  <section class="section" id="process" data-section="process">
+        <div class="team-grid" style="margin-top:2.5rem">
+          <div class="team-member reveal">
+            <div class="team-avatar" aria-hidden="true">S</div>
+            <h3 class="team-name" data-cms="team-1-name">Smruti Ranjan</h3>
+            <p class="team-role" data-cms="team-1-role">Founder</p>
+            <p class="team-bio" data-cms="team-1-bio">Architects the systems and AI infrastructure behind every project.
+            </p>
+          </div>
+          <div class="team-member reveal">
+            <div class="team-avatar" aria-hidden="true">B</div>
+            <h3 class="team-name" data-cms="team-2-name">Biswash</h3>
+            <p class="team-role" data-cms="team-2-role">Co-Founder</p>
+            <p class="team-bio" data-cms="team-2-bio">Builds the platforms, APIs and backend infrastructure that scale.
+            </p>
+          </div>
+          <div class="team-member reveal">
+            <div class="team-avatar" aria-hidden="true">A</div>
+            <h3 class="team-name" data-cms="team-3-name">Arpita</h3>
+            <p class="team-role" data-cms="team-3-role">Co-Founder</p>
+            <p class="team-bio" data-cms="team-3-bio">Shapes the interfaces, user experience and visual identity across
+              all products.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 7. FAQ ================= -->
+    <section class="section" id="faq" data-section="faq">
+      <div class="container">
+        <span class="section-index" aria-hidden="true">06</span>
+        <div class="section-label">FAQ</div>
+        <h2 class="section-title">Straight <em>answers.</em></h2>
+
+        <div class="faq reveal" style="margin-top:2.5rem;max-width:820px">
+          <details>
+            <summary>How much does a project cost?</summary>
+            <p>Every project is priced individually and quoted as a fixed, all-in number after discovery — before any
+              code is written. There is no rate card, because no two builds are the same. If the scope changes, we agree
+              the new price in writing first.</p>
+          </details>
+          <details open>
+            <summary>How many projects do you take at once?</summary>
+            <p>Four per month, and no more. It is the honest ceiling for a three-person team that does not subcontract.
+              When the month is full we start a waiting list rather than quietly spread thin.</p>
+          </details>
+          <details>
+            <summary>How long does delivery take?</summary>
+            <p>Single automations and landing pages ship in days. Interfaces run two to four weeks. Platforms run four
+              to ten weeks and ship in phases, so something working is in your hands early.</p>
+          </details>
+          <details>
+            <summary>Do you work remotely?</summary>
+            <p>Yes. We work with businesses across India and abroad over weekly video demos and short written updates.
+              Time zone has not been a blocker yet.</p>
+          </details>
+          <details>
+            <summary>Who owns the code?</summary>
+            <p>You do. Every project ends with the repository, deployment access and documentation handed over. No
+              lock-in, no licence fee to keep using your own product.</p>
+          </details>
+          <details>
+            <summary>How is data handled?</summary>
+            <p>We deploy onto your cloud accounts and databases wherever possible, enforce role-based access, and retain
+              no proprietary business data after handover.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 8. CONTACT ================= -->
+    <section class="section" id="contact" data-section="cta">
+      <div class="container">
+        <div class="section-label">Contact</div>
+        <h2 class="section-title" data-cms="cta-title">Have a project in mind?<br>Let's <em>talk.</em></h2>
+        <p class="section-subtitle" data-cms="cta-subtitle">No pitch decks required. Tell us what you are building and
+          we will tell you honestly whether we are the right fit.</p>
+
+        <div class="slot-meter" data-slots data-month="2026-12" style="margin-top:2.5rem">
+          <span class="slot-dot" aria-hidden="true"></span>
+          <span class="slot-label">Build slots · <span data-slots-label>December</span></span>
+          <span class="slot-count"><b data-slots-taken>2</b> of <span data-slots-total>4</span> taken</span>
+          <span class="slot-bars" data-slots-bars aria-hidden="true"></span>
+          <span class="slot-note">Two December seats are already reserved. When they go, the next opening is
+            January.</span>
+        </div>
+
+        <div class="contact-email-card reveal">
+          <div>
+            <span class="label">Prefer email?</span>
+            <span data-email data-user="hello" data-domain="theflowlabs.online">hello</span>
+            <noscript><span>hello [at] theflowlabs [dot] online</span></noscript>
+          </div>
+          <button class="copy-mail" type="button" data-copy-email data-user="hello"
+            data-domain="theflowlabs.online">Copy address</button>
+        </div>
+
+        <ul class="contact-checklist reveal">
+          <li>What you are building, in one or two sentences</li>
+          <li>The rough budget you have in mind</li>
+          <li>Your deadline, if you have one</li>
+        </ul>
+
+        <div class="contact-card reveal">
+          <div id="formView">
+            <form id="ideaForm" novalidate>
+              <div class="field">
+                <label for="fName">Your name <span aria-hidden="true">*</span></label>
+                <input id="fName" name="name" type="text" placeholder="Full name or company name" autocomplete="name"
+                  required aria-describedby="errName" aria-invalid="false">
+                <div class="err" id="errName" role="alert">Please enter your name.</div>
+              </div>
+
+              <div class="field">
+                <label for="fContact">Email or phone number <span aria-hidden="true">*</span></label>
+                <input id="fContact" name="contact" type="text" placeholder="name@company.com or +91..."
+                  autocomplete="email" required aria-describedby="errContact" aria-invalid="false">
+                <div class="err" id="errContact" role="alert">Please enter a valid email address or phone number.</div>
+              </div>
+
+              <div class="field">
+                <span class="field-label" id="typeLabel">Project category <span aria-hidden="true">*</span></span>
+                <div class="chips-row" id="typeChips" role="radiogroup" aria-labelledby="typeLabel"
+                  aria-describedby="errType">
+                  <span class="chip-opt" data-val="Website" role="radio" aria-checked="false"
+                    tabindex="0">Website</span>
+                  <span class="chip-opt" data-val="AI tool" role="radio" aria-checked="false" tabindex="0">AI
+                    tool</span>
+                  <span class="chip-opt" data-val="Automation" role="radio" aria-checked="false"
+                    tabindex="0">Automation</span>
+                  <span class="chip-opt" data-val="Software" role="radio" aria-checked="false"
+                    tabindex="0">Software</span>
+                  <span class="chip-opt" data-val="Not sure yet" role="radio" aria-checked="false" tabindex="0">Other /
+                    Discuss</span>
+                </div>
+                <div class="err" id="errType" role="alert">Please select a project category.</div>
+              </div>
+
+              <div class="field">
+                <label for="fIdea">Project requirements <span aria-hidden="true">*</span></label>
+                <textarea id="fIdea" name="idea"
+                  placeholder="Describe what you want to build, the problems you are solving, or key features needed..."
+                  required aria-describedby="errIdea" aria-invalid="false"></textarea>
+                <div class="err" id="errIdea" role="alert">Please describe your project or requirements.</div>
+              </div>
+
+              <div class="field">
+                <label for="fBudget">Estimated budget (₹)</label>
+                <select id="fBudget" name="budget">
+                  <option value="">To be discussed during scoping</option>
+                  <option value="under25k">Under ₹25,000</option>
+                  <option value="25k-1L">₹25,000 – ₹1,00,000</option>
+                  <option value="1L+">₹1,00,000+</option>
+                  <option value="discuss">Flexible / Phased implementation</option>
+                </select>
+              </div>
+
+              <div class="field hp" aria-hidden="true">
+                <label for="fCompany">Company</label>
+                <input id="fCompany" name="company" type="text" tabindex="-1" autocomplete="off">
+              </div>
+
+              <div class="field" style="margin-top:24px;">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                  <span class="label">Send project details</span>
+                  <span class="spin" aria-hidden="true"></span>
+                </button>
+                <p class="form-note" id="formNote">Direct reply within 48 hours. No spam, guaranteed.</p>
+                <p class="form-note">Submitting shares your details so we can reply with scope and pricing. See our <a
+                    href="/privacy-policy/">privacy policy</a>.</p>
+              </div>
+            </form>
+          </div>
+
+          <template id="successTpl">
+            <div class="success" id="successView" role="status" aria-live="polite">
+              <div class="check" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 12.5 9.5 18 20 6.5" />
+                </svg>
+              </div>
+              <h3 id="successHeading" tabindex="-1">Project details received.</h3>
+              <p>Thank you for reaching out. We will review your requirements and respond within 48 hours with next
+                steps on scope, timeline, and pricing.</p>
+              <button class="btn btn-primary" id="successClose" type="button" style="margin-top:22px;">Send another
+                message</button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
     <div class="container">
-      <span class="section-index" aria-hidden="true">04</span>
-      <div class="section-label">How it works</div>
-      <h2 class="section-title">A predictable <em>process.</em></h2>
-      <p class="section-subtitle">Clear milestones, an agreed price, and direct contact with the people writing the code.</p>
-
-      <div class="process-grid reveal" style="margin-top:2.5rem">
-        <div class="process-card">
-          <span class="num">01</span>
-          <h3>Discovery</h3>
-          <p>One focused call. What you need, where the friction is, and what success looks like in numbers.</p>
-        </div>
-        <div class="process-card">
-          <span class="num">02</span>
-          <h3>Scope &amp; quote</h3>
-          <p>Requirements become a written spec with fixed deliverables, milestones and a price that does not move.</p>
-        </div>
-        <div class="process-card">
-          <span class="num">03</span>
-          <h3>Build</h3>
-          <p>Weekly demos on a real, clickable build. You validate against your workflow, not against slides.</p>
-        </div>
-        <div class="process-card">
-          <span class="num">04</span>
-          <h3>Ship</h3>
-          <p>Production launch, source code handover, documentation, and a support window after go-live.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 6. TEAM ================= -->
-  <section class="section" id="team" data-section="team">
-    <div class="container">
-      <span class="section-index" aria-hidden="true">05</span>
-      <div class="section-label">The team</div>
-      <h2 class="section-title">The people who <em>build it.</em></h2>
-      <p class="section-subtitle">No account managers, no outsourced middle layer. You work with the founders from the first call to handover.</p>
-
-      <div class="team-grid" style="margin-top:2.5rem">
-        <div class="team-member reveal">
-          <div class="team-avatar" aria-hidden="true">S</div>
-          <h3 class="team-name" data-cms="team-1-name">Smruti Ranjan</h3>
-          <p class="team-role" data-cms="team-1-role">Founder</p>
-          <p class="team-bio" data-cms="team-1-bio">Architects the systems and AI infrastructure behind every project.</p>
-        </div>
-        <div class="team-member reveal">
-          <div class="team-avatar" aria-hidden="true">B</div>
-          <h3 class="team-name" data-cms="team-2-name">Biswash</h3>
-          <p class="team-role" data-cms="team-2-role">Co-Founder</p>
-          <p class="team-bio" data-cms="team-2-bio">Builds the platforms, APIs and backend infrastructure that scale.</p>
-        </div>
-        <div class="team-member reveal">
-          <div class="team-avatar" aria-hidden="true">A</div>
-          <h3 class="team-name" data-cms="team-3-name">Arpita</h3>
-          <p class="team-role" data-cms="team-3-role">Co-Founder</p>
-          <p class="team-bio" data-cms="team-3-bio">Shapes the interfaces, user experience and visual identity across all products.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 7. FAQ ================= -->
-  <section class="section" id="faq" data-section="faq">
-    <div class="container">
-      <span class="section-index" aria-hidden="true">06</span>
-      <div class="section-label">FAQ</div>
-      <h2 class="section-title">Straight <em>answers.</em></h2>
-
-      <div class="faq reveal" style="margin-top:2.5rem;max-width:820px">
-        <details>
-          <summary>How much does a project cost?</summary>
-          <p>Every project is priced individually and quoted as a fixed, all-in number after discovery — before any code is written. There is no rate card, because no two builds are the same. If the scope changes, we agree the new price in writing first.</p>
-        </details>
-        <details open>
-          <summary>How many projects do you take at once?</summary>
-          <p>Four per month, and no more. It is the honest ceiling for a three-person team that does not subcontract. When the month is full we start a waiting list rather than quietly spread thin.</p>
-        </details>
-        <details>
-          <summary>How long does delivery take?</summary>
-          <p>Single automations and landing pages ship in days. Interfaces run two to four weeks. Platforms run four to ten weeks and ship in phases, so something working is in your hands early.</p>
-        </details>
-        <details>
-          <summary>Do you work remotely?</summary>
-          <p>Yes. We work with businesses across India and abroad over weekly video demos and short written updates. Time zone has not been a blocker yet.</p>
-        </details>
-        <details>
-          <summary>Who owns the code?</summary>
-          <p>You do. Every project ends with the repository, deployment access and documentation handed over. No lock-in, no licence fee to keep using your own product.</p>
-        </details>
-        <details>
-          <summary>How is data handled?</summary>
-          <p>We deploy onto your cloud accounts and databases wherever possible, enforce role-based access, and retain no proprietary business data after handover.</p>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 8. CONTACT ================= -->
-  <section class="section" id="contact" data-section="cta">
-    <div class="container">
-      <div class="section-label">Contact</div>
-      <h2 class="section-title" data-cms="cta-title">Have a project in mind?<br>Let's <em>talk.</em></h2>
-      <p class="section-subtitle" data-cms="cta-subtitle">No pitch decks required. Tell us what you are building and we will tell you honestly whether we are the right fit.</p>
-
-      <div class="slot-meter" data-slots data-month="2026-12" style="margin-top:2.5rem">
-        <span class="slot-dot" aria-hidden="true"></span>
-        <span class="slot-label">Build slots · <span data-slots-label>December</span></span>
-        <span class="slot-count"><b data-slots-taken>2</b> of <span data-slots-total>4</span> taken</span>
-        <span class="slot-bars" data-slots-bars aria-hidden="true"></span>
-        <span class="slot-note">Two December seats are already reserved. When they go, the next opening is January.</span>
-      </div>
-
-      <div class="contact-email-card reveal">
+      <div class="footer-top">
         <div>
-          <span class="label">Prefer email?</span>
-          <span data-email data-user="hello" data-domain="theflowlabs.online">hello</span>
-          <noscript><span>hello [at] theflowlabs [dot] online</span></noscript>
+          <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+              <g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.6 6.5 L11.4 33.5" />
+                <path d="M14.6 6.5 H29.5" />
+                <path d="M13.2 19.8 H24.6" />
+              </g>
+            </svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
+          <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four
+            builds a month, every layer in-house.</p>
+          <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
         </div>
-        <button class="copy-mail" type="button" data-copy-email data-user="hello" data-domain="theflowlabs.online">Copy address</button>
-      </div>
-
-      <ul class="contact-checklist reveal">
-        <li>What you are building, in one or two sentences</li>
-        <li>The rough budget you have in mind</li>
-        <li>Your deadline, if you have one</li>
-      </ul>
-
-      <div class="contact-card reveal">
-        <div id="formView">
-          <form id="ideaForm" novalidate>
-            <div class="field">
-              <label for="fName">Your name <span aria-hidden="true">*</span></label>
-              <input id="fName" name="name" type="text" placeholder="Full name or company name" autocomplete="name" required aria-describedby="errName" aria-invalid="false">
-              <div class="err" id="errName" role="alert">Please enter your name.</div>
-            </div>
-
-            <div class="field">
-              <label for="fContact">Email or phone number <span aria-hidden="true">*</span></label>
-              <input id="fContact" name="contact" type="text" placeholder="name@company.com or +91..." autocomplete="email" required aria-describedby="errContact" aria-invalid="false">
-              <div class="err" id="errContact" role="alert">Please enter a valid email address or phone number.</div>
-            </div>
-
-            <div class="field">
-              <span class="field-label" id="typeLabel">Project category <span aria-hidden="true">*</span></span>
-              <div class="chips-row" id="typeChips" role="radiogroup" aria-labelledby="typeLabel" aria-describedby="errType">
-                <span class="chip-opt" data-val="Website" role="radio" aria-checked="false" tabindex="0">Website</span>
-                <span class="chip-opt" data-val="AI tool" role="radio" aria-checked="false" tabindex="0">AI tool</span>
-                <span class="chip-opt" data-val="Automation" role="radio" aria-checked="false" tabindex="0">Automation</span>
-                <span class="chip-opt" data-val="Software" role="radio" aria-checked="false" tabindex="0">Software</span>
-                <span class="chip-opt" data-val="Not sure yet" role="radio" aria-checked="false" tabindex="0">Other / Discuss</span>
-              </div>
-              <div class="err" id="errType" role="alert">Please select a project category.</div>
-            </div>
-
-            <div class="field">
-              <label for="fIdea">Project requirements <span aria-hidden="true">*</span></label>
-              <textarea id="fIdea" name="idea" placeholder="Describe what you want to build, the problems you are solving, or key features needed..." required aria-describedby="errIdea" aria-invalid="false"></textarea>
-              <div class="err" id="errIdea" role="alert">Please describe your project or requirements.</div>
-            </div>
-
-            <div class="field">
-              <label for="fBudget">Estimated budget (₹)</label>
-              <select id="fBudget" name="budget">
-                <option value="">To be discussed during scoping</option>
-                <option value="under25k">Under ₹25,000</option>
-                <option value="25k-1L">₹25,000 – ₹1,00,000</option>
-                <option value="1L+">₹1,00,000+</option>
-                <option value="discuss">Flexible / Phased implementation</option>
-              </select>
-            </div>
-
-            <div class="field hp" aria-hidden="true">
-              <label for="fCompany">Company</label>
-              <input id="fCompany" name="company" type="text" tabindex="-1" autocomplete="off">
-            </div>
-
-            <div class="field" style="margin-top:24px;">
-              <button type="submit" class="submit-btn" id="submitBtn">
-                <span class="label">Send project details</span>
-                <span class="spin" aria-hidden="true"></span>
-              </button>
-              <p class="form-note" id="formNote">Direct reply within 48 hours. No spam, guaranteed.</p>
-              <p class="form-note">Submitting shares your details so we can reply with scope and pricing. See our <a href="/privacy-policy/">privacy policy</a>.</p>
-            </div>
-          </form>
-        </div>
-
-        <template id="successTpl">
-          <div class="success" id="successView" role="status" aria-live="polite">
-            <div class="check" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg>
-            </div>
-            <h3 id="successHeading" tabindex="-1">Project details received.</h3>
-            <p>Thank you for reaching out. We will review your requirements and respond within 48 hours with next steps on scope, timeline, and pricing.</p>
-            <button class="btn btn-primary" id="successClose" type="button" style="margin-top:22px;">Send another message</button>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h5>Navigate</h5>
+            <a href="/work/">Work</a>
+            <a href="/services/">Services</a>
+            <a href="/lab-report/">Lab Report</a>
+            <a href="/about/">About</a>
+            <a href="/blog/">Blog</a>
           </div>
-        </template>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<!-- ================= FOOTER ================= -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-top">
-      <div>
-        <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-        <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four builds a month, every layer in-house.</p>
-        <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h5>Navigate</h5>
-          <a href="/work/">Work</a>
-          <a href="/services/">Services</a>
-          <a href="/lab-report/">Lab Report</a>
-          <a href="/about/">About</a>
-          <a href="/blog/">Blog</a>
-        </div>
-        <div class="footer-col">
-          <h5>Connect</h5>
-          <a href="/contact/">Start a project</a>
-          <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-          <a href="/contact/">hello@theflowlabs.online</a>
-        </div>
-        <div class="footer-col">
-          <h5>Studio</h5>
-          <a href="/bhubaneswar/">Bhubaneswar studio</a>
-          <a href="/services/">What we build</a>
-          <a href="/privacy-policy/">Privacy Policy</a>
-          <a href="/terms/">Terms of Service</a>
-          <a href="/lab-report/">Free site report</a>
+          <div class="footer-col">
+            <h5>Connect</h5>
+            <a href="/contact/">Start a project</a>
+            <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
+            <a href="/contact/">hello@theflowlabs.online</a>
+          </div>
+          <div class="footer-col">
+            <h5>Studio</h5>
+            <a href="/bhubaneswar/">Bhubaneswar studio</a>
+            <a href="/services/">What we build</a>
+            <a href="/privacy-policy/">Privacy Policy</a>
+            <a href="/terms/">Terms of Service</a>
+            <a href="/lab-report/">Free site report</a>
+          </div>
         </div>
       </div>
+      <div class="footer-bottom" style="border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem">
+        <span>© <span id="year">2026</span> The Flow Labs. All rights reserved.</span>
+        <span class="footer-powered">Built and maintained in-house</span>
+      </div>
     </div>
-    <div class="footer-bottom" style="border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem">
-      <span>© <span id="year">2026</span> The Flow Labs. All rights reserved.</span>
-      <span class="footer-powered">Built and maintained in-house</span>
-    </div>
-  </div>
-</footer>
+  </footer>
 
-<script src="assets/site.js?v=8"></script>
-<script src="assets/site-cms.js" defer></script>
-<script src="assets/site-track.js" defer></script>
-<script>
-/* Safety net: if site.js never loads or throws, never leave the shutter up. */
-window.setTimeout(function () {
-  document.documentElement.classList.remove('intro-on');
-}, 3200);
-</script>
+  <script src="assets/site.js?v=8"></script>
+  <script src="assets/site-cms.js" defer></script>
+  <script src="assets/site-track.js" defer></script>
+  <script>
+    /* Safety net: if site.js never loads or throws, never leave the shutter up. */
+    window.setTimeout(function () {
+      document.documentElement.classList.remove('intro-on');
+    }, 3200);
+  </script>
 
-<script>
-  /* ---------- contact form handling (Supabase + fallback) ---------- */
-  const formView = document.getElementById('formView');
-  const ideaForm = document.getElementById('ideaForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const contactCard = document.querySelector('.contact-card');
-  let successView = null;
-  let projectType = '';
+  <script>
+    /* ---------- contact form handling (Supabase + fallback) ---------- */
+    const formView = document.getElementById('formView');
+    const ideaForm = document.getElementById('ideaForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const contactCard = document.querySelector('.contact-card');
+    let successView = null;
+    let projectType = '';
 
-  // Single-select accessible project type chips
-  const chipElements = document.querySelectorAll('#typeChips .chip-opt');
-  chipElements.forEach(chip => {
-    const pick = () => {
+    // Single-select accessible project type chips
+    const chipElements = document.querySelectorAll('#typeChips .chip-opt');
+    chipElements.forEach(chip => {
+      const pick = () => {
+        chipElements.forEach(c => {
+          c.classList.remove('sel');
+          c.setAttribute('aria-checked', 'false');
+        });
+        chip.classList.add('sel');
+        chip.setAttribute('aria-checked', 'true');
+        projectType = chip.dataset.val;
+        document.getElementById('errType').classList.remove('show');
+      };
+      chip.addEventListener('click', pick);
+      chip.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pick();
+        }
+      });
+    });
+
+    // Blur validation
+    function validContact(v) {
+      const s = v.trim();
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return true; // valid email
+      const digits = s.replace(/[^\d]/g, '');
+      return digits.length >= 8; // valid phone
+    }
+
+    /* Errors: visible class + aria-invalid on the control that owns them. */
+    function showError(id, show) {
+      const errEl = document.getElementById(id);
+      if (!errEl) return;
+      errEl.classList.toggle('show', show);
+      const field = errEl.parentElement && errEl.parentElement.querySelector('input, textarea, select');
+      if (field) field.setAttribute('aria-invalid', show ? 'true' : 'false');
+    }
+
+    ['fName', 'fIdea'].forEach(id => {
+      document.getElementById(id).addEventListener('blur', (e) =>
+        showError('err' + id.slice(1), !e.target.value.trim()));
+    });
+
+    document.getElementById('fContact').addEventListener('blur', (e) =>
+      showError('errContact', !validContact(e.target.value)));
+
+    // Backend config
+    const cfg = (typeof window !== 'undefined' && window.SITE_CONFIG) || {};
+    const supabaseReady = cfg && cfg.supabaseUrl && cfg.supabaseAnonKey &&
+      !cfg.supabaseUrl.includes('YOURPROJECT') && !cfg.supabaseUrl.includes('yourproject');
+    const leadSrc = new URLSearchParams(location.search).get('src') || 'site';
+
+    const err = (id) => document.getElementById(id);
+    const note = err('formNote');
+
+    function mailtoLink(name, cont, type, idea, budget) {
+      const body = `Name: ${name}\nContact: ${cont}\nProject Category: ${type}\nEstimated Budget: ${budget || '-'}\nSource: ${leadSrc}\n\nProject Requirements:\n${idea}`;
+      return 'mailto:hello@theflowlabs.online?subject=' +
+        encodeURIComponent('New project inquiry | The Flow Labs') +
+        '&body=' + encodeURIComponent(body);
+    }
+
+    async function postLead(payload) {
+      const url = cfg.supabaseUrl.replace(/\/+$/, '') + '/rest/v1/site_leads';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': cfg.supabaseAnonKey,
+          'Authorization': 'Bearer ' + cfg.supabaseAnonKey,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.status !== 201 && res.status !== 200) {
+        throw new Error('supabase ' + res.status);
+      }
+    }
+
+    /* The confirmation panel is not in the initial DOM: it is cloned from a
+       <template> on the first successful submit so crawlers and screen readers
+       never encounter "Project details received" before a message is sent. */
+    function closeSuccess() {
+      if (!successView) return;
+      successView.remove();
+      successView = null;
+      formView.hidden = false;
+      const nameField = document.getElementById('fName');
+      if (nameField) nameField.focus();
+    }
+
+    function showSuccess() {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      if (!successView) {
+        const tpl = document.getElementById('successTpl');
+        if (tpl && contactCard) {
+          contactCard.appendChild(tpl.content.cloneNode(true));
+          successView = document.getElementById('successView');
+          const closeBtn = document.getElementById('successClose');
+          if (closeBtn) closeBtn.addEventListener('click', closeSuccess);
+        }
+      }
+      formView.hidden = true;
+      if (successView) successView.classList.add('show');
+      ideaForm.reset();
       chipElements.forEach(c => {
         c.classList.remove('sel');
         c.setAttribute('aria-checked', 'false');
       });
-      chip.classList.add('sel');
-      chip.setAttribute('aria-checked', 'true');
-      projectType = chip.dataset.val;
-      document.getElementById('errType').classList.remove('show');
-    };
-    chip.addEventListener('click', pick);
-    chip.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        pick();
+      projectType = '';
+      note.textContent = 'Direct reply within 48 hours. No spam, guaranteed.';
+      const heading = document.getElementById('successHeading');
+      if (heading) heading.focus();
+    }
+
+    ideaForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nameC = document.getElementById('fName');
+      const contactC = document.getElementById('fContact');
+      const ideaC = document.getElementById('fIdea');
+      let ok = true;
+
+      const check = (input, errId, valid) => {
+        showError(errId, !valid);
+        if (!valid) ok = false;
+      };
+
+      check(nameC, 'errName', nameC.value.trim().length > 0);
+      check(contactC, 'errContact', validContact(contactC.value));
+      check(ideaC, 'errIdea', ideaC.value.trim().length > 0);
+      showError('errType', !projectType);
+      if (!projectType) ok = false;
+
+      if (!ok) {
+        const firstErr = document.querySelector('.err.show');
+        if (firstErr) {
+          const inputToFocus = firstErr.previousElementSibling;
+          if (inputToFocus && inputToFocus.focus) inputToFocus.focus();
+        }
+        return;
       }
-    });
-  });
 
-  // Blur validation
-  function validContact(v) {
-    const s = v.trim();
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return true; // valid email
-    const digits = s.replace(/[^\d]/g, '');
-    return digits.length >= 8; // valid phone
-  }
-
-  /* Errors: visible class + aria-invalid on the control that owns them. */
-  function showError(id, show) {
-    const errEl = document.getElementById(id);
-    if (!errEl) return;
-    errEl.classList.toggle('show', show);
-    const field = errEl.parentElement && errEl.parentElement.querySelector('input, textarea, select');
-    if (field) field.setAttribute('aria-invalid', show ? 'true' : 'false');
-  }
-
-  ['fName', 'fIdea'].forEach(id => {
-    document.getElementById(id).addEventListener('blur', (e) =>
-      showError('err' + id.slice(1), !e.target.value.trim()));
-  });
-
-  document.getElementById('fContact').addEventListener('blur', (e) =>
-    showError('errContact', !validContact(e.target.value)));
-
-  // Backend config
-  const cfg = (typeof window !== 'undefined' && window.SITE_CONFIG) || {};
-  const supabaseReady = cfg && cfg.supabaseUrl && cfg.supabaseAnonKey &&
-    !cfg.supabaseUrl.includes('YOURPROJECT') && !cfg.supabaseUrl.includes('yourproject');
-  const leadSrc = new URLSearchParams(location.search).get('src') || 'site';
-
-  const err = (id) => document.getElementById(id);
-  const note = err('formNote');
-
-  function mailtoLink(name, cont, type, idea, budget) {
-    const body = `Name: ${name}\nContact: ${cont}\nProject Category: ${type}\nEstimated Budget: ${budget || '-'}\nSource: ${leadSrc}\n\nProject Requirements:\n${idea}`;
-    return 'mailto:hello@theflowlabs.online?subject=' +
-      encodeURIComponent('New project inquiry | The Flow Labs') +
-      '&body=' + encodeURIComponent(body);
-  }
-
-  async function postLead(payload) {
-    const url = cfg.supabaseUrl.replace(/\/+$/, '') + '/rest/v1/site_leads';
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': cfg.supabaseAnonKey,
-        'Authorization': 'Bearer ' + cfg.supabaseAnonKey,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(payload)
-    });
-    if (res.status !== 201 && res.status !== 200) {
-      throw new Error('supabase ' + res.status);
-    }
-  }
-
-  /* The confirmation panel is not in the initial DOM: it is cloned from a
-     <template> on the first successful submit so crawlers and screen readers
-     never encounter "Project details received" before a message is sent. */
-  function closeSuccess() {
-    if (!successView) return;
-    successView.remove();
-    successView = null;
-    formView.hidden = false;
-    const nameField = document.getElementById('fName');
-    if (nameField) nameField.focus();
-  }
-
-  function showSuccess() {
-    submitBtn.disabled = false;
-    submitBtn.classList.remove('loading');
-    if (!successView) {
-      const tpl = document.getElementById('successTpl');
-      if (tpl && contactCard) {
-        contactCard.appendChild(tpl.content.cloneNode(true));
-        successView = document.getElementById('successView');
-        const closeBtn = document.getElementById('successClose');
-        if (closeBtn) closeBtn.addEventListener('click', closeSuccess);
-      }
-    }
-    formView.hidden = true;
-    if (successView) successView.classList.add('show');
-    ideaForm.reset();
-    chipElements.forEach(c => {
-      c.classList.remove('sel');
-      c.setAttribute('aria-checked', 'false');
-    });
-    projectType = '';
-    note.textContent = 'Direct reply within 48 hours. No spam, guaranteed.';
-    const heading = document.getElementById('successHeading');
-    if (heading) heading.focus();
-  }
-
-  ideaForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const nameC = document.getElementById('fName');
-    const contactC = document.getElementById('fContact');
-    const ideaC = document.getElementById('fIdea');
-    let ok = true;
-
-    const check = (input, errId, valid) => {
-      showError(errId, !valid);
-      if (!valid) ok = false;
-    };
-
-    check(nameC, 'errName', nameC.value.trim().length > 0);
-    check(contactC, 'errContact', validContact(contactC.value));
-    check(ideaC, 'errIdea', ideaC.value.trim().length > 0);
-    showError('errType', !projectType);
-    if (!projectType) ok = false;
-
-    if (!ok) {
-      const firstErr = document.querySelector('.err.show');
-      if (firstErr) {
-        const inputToFocus = firstErr.previousElementSibling;
-        if (inputToFocus && inputToFocus.focus) inputToFocus.focus();
-      }
-      return;
-    }
-
-    // Honeypot check for bots
-    const hp = document.getElementById('fCompany').value.trim();
-    if (hp) {
-      showSuccess();
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.classList.add('loading');
-
-    const payload = {
-      name: nameC.value.trim(),
-      contact: contactC.value.trim(),
-      project_type: projectType,
-      idea: ideaC.value.trim(),
-      budget: document.getElementById('fBudget').value || null,
-      source: leadSrc,
-      user_agent: (navigator.userAgent || '').slice(0, 250)
-    };
-
-    try {
-      if (supabaseReady) {
-        await postLead(payload);
-        fetch('/api/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
+      // Honeypot check for bots
+      const hp = document.getElementById('fCompany').value.trim();
+      if (hp) {
         showSuccess();
-      } else {
-        const a = document.createElement('a');
-        a.href = mailtoLink(payload.name, payload.contact, payload.project_type, payload.idea, payload.budget);
-        a.click();
-        showSuccess();
+        return;
       }
-    } catch (ex) {
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('loading');
-      note.innerHTML =
-        'Direct submission unavailable. <a href="' +
-        mailtoLink(payload.name, payload.contact, payload.project_type, payload.idea, payload.budget) +
-        '" style="color:var(--accent-amber);">Click here to email us these exact details &rarr;</a>';
-    }
-  });
-</script>
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('loading');
+
+      const payload = {
+        name: nameC.value.trim(),
+        contact: contactC.value.trim(),
+        project_type: projectType,
+        idea: ideaC.value.trim(),
+        budget: document.getElementById('fBudget').value || null,
+        source: leadSrc,
+        user_agent: (navigator.userAgent || '').slice(0, 250)
+      };
+
+      try {
+        if (supabaseReady) {
+          await postLead(payload);
+          fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(() => { });
+          showSuccess();
+        } else {
+          const a = document.createElement('a');
+          a.href = mailtoLink(payload.name, payload.contact, payload.project_type, payload.idea, payload.budget);
+          a.click();
+          showSuccess();
+        }
+      } catch (ex) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        note.innerHTML =
+          'Direct submission unavailable. <a href="' +
+          mailtoLink(payload.name, payload.contact, payload.project_type, payload.idea, payload.budget) +
+          '" style="color:var(--accent-amber);">Click here to email us these exact details &rarr;</a>';
+      }
+    });
+  </script>
 </body>
+
 </html>
