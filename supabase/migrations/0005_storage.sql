@@ -5,6 +5,28 @@
 -- client deliverables/attachments with appropriate RLS policies.
 -- ============================================================
 
+-- 0. Helper: verify authenticated user is an internal team member
+create or replace function public.is_member()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    public.is_admin()
+    or exists (
+      select 1
+      from public.profiles p
+      where p.id = auth.uid()
+        and p.role in ('manager', 'member')
+        and p.status = 'active'
+    );
+$$;
+
+revoke all on function public.is_member() from public;
+grant execute on function public.is_member() to authenticated;
+
 -- 1. Create storage buckets
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values
