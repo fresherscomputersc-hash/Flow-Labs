@@ -6,7 +6,24 @@
     '/': 'home',
     '/about': 'about',
     '/services': 'services',
-    '/contact': 'contact'
+    '/contact': 'contact',
+    '/bhubaneswar': 'bhubaneswar',
+    '/lab-report': 'lab_report',
+    '/work': 'work',
+    '/blog': 'blog_index',
+    '/privacy-policy': 'privacy',
+    '/terms': 'terms',
+    '/services/web-development': 'services_web_dev',
+    '/services/custom-software-development': 'services_custom_software',
+    '/services/ai-automation': 'services_ai_automation',
+    '/services/ai-chatbot-development': 'services_ai_chatbot',
+    '/work/droovee': 'work_droovee',
+    '/work/bhuverify': 'work_bhuverify',
+    '/work/carbon-coach': 'work_carbon_coach',
+    '/work/drishti': 'work_drishti',
+    '/work/flowops': 'work_flowops',
+    '/work/interview-copilot': 'work_interview_copilot',
+    '/work/qr-platform': 'work_qr_platform'
   };
 
   function currentPage() {
@@ -221,6 +238,13 @@
       if (page) applyContent(results[1]);
     }).catch(function () {
       /* defaults stay visible */
+    });
+
+    /* Live preview bridge for Flow HQ admin iframe */
+    window.addEventListener('message', function (event) {
+      if (!event.data || event.data.type !== 'cms-preview') return;
+      var el = document.querySelector('[data-cms="' + event.data.key + '"]');
+      if (el) el.innerHTML = sanitize(event.data.value || event.data.default || '');
     });
   }
 

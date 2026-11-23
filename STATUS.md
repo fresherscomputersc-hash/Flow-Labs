@@ -132,11 +132,19 @@ From `ADMIN-REDESIGN-PLAN.md`:
   - `flow-hq/admin.css`: Subtab button states, activity feed item layout with icons, task comment cards with author/time, task history items, kanban move dropdown menu with focus outlines.
   - `flow-hq/admin.js`: Subtab switching (`switchProjectSubTab`), task list rendering (`renderProjectTasksTable`), project activity loader (`loadProjectActivity`), files loader (`loadProjectFiles`), project settings management (`loadProjectSettings`, `saveProjectSettings`), task comments composer & history loader (`loadTaskComments`, `postTaskComment`), keyboard move menu (`showKanbanMoveMenu`, `moveTaskStatus`), assignee filter.
   - Tested: Node syntax test passed with zero errors, python element/function assertions passed, endpoints return 200 OK.
-- **Phase C (Every page editable / CMS expansion & Bright Dome templates) — UP NEXT**:
-  - `assets/site-cms.js`: Expand `PAGE_MAP` beyond the current 4 pages to cover all service, work, legal, contact, and blog index pages.
-  - Add SEO meta and JSON-LD schema fields per page in `content-schema.js`.
-  - Content search, grouping, per-field reset, and live iframe preview.
-  - Integrate Bright Dome / ThreeUI visual styles into public pages.
+- **Phase C (Every page editable / CMS expansion & Live Preview) — VERIFIED & COMPLETED**:
+  - `assets/site-cms.js`: Expanded `PAGE_MAP` from 4 paths to 21 paths covering all service sub-pages, work case studies, overview pages, legal docs, blog, Bhubaneswar, and lab report. Added `cms-preview` postMessage bridge for zero-reload live typing previews directly inside public pages.
+  - `flow-hq/content-schema.js`: Completely structured and expanded `window.CONTENT_SCHEMA` to define 21 pages across 5 clean categories (`Site`, `Services`, `Work`, `Blog`, `Legal`), with field groups, defaults, and updated `SETTINGS_DEFAULTS`.
+  - `flow-hq/index.html`: Added `#contentSearch` for real-time page tree search, `#previewBar` toolbar with Desktop, Mobile (375px), and Hide preview modes, live sync indicator `#previewStatus`, and responsive preview container `#iframeWrap` holding `<iframe id="contentIframe">`.
+  - `flow-hq/admin.css`: Added styles for `.rail-search`, uppercase category dividers `.rail-group-title`, live preview toolbar `.cms-preview-bar`, mode buttons `.preview-mode-group`, responsive container `.cms-iframe-container`, mobile device frame `.cms-iframe.mobile`, collapsible field groups `.fieldblock`, character counter `.field-counter`, and per-field reset buttons `.field-reset-btn`.
+  - `flow-hq/admin.js`: Enhanced `renderContentRail(filterText)` with category grouping and instant search filtering, implemented `sendCmsPreview` and `broadcastCmsPreview` for live cross-window preview updates, wired live character counters on input, added per-field "Reset to default" buttons, and connected responsive preview toggles (`setPreviewMode`).
+  - Public pages: Injected `data-cms` attributes across all 17 public pages and sub-pages matching their respective keys.
+  - Tested: 100% automated pass across all 21 pages and elements via `scripts/verify_phase_c.py`, zero Node syntax errors.
+- **Phase D (Client Portal at `/client/`) — UP NEXT**:
+  - Lightweight standalone client portal (`client/index.html`, `client/client.css`, `client/client.js`).
+  - Gated access for `client` role users checking `project_clients` mapping.
+  - Read-only progress view: milestone progress bars, module deliverables, public client updates feed (`client_updates`), approved task attachments/files.
+  - Clean client sign-in / magic link entry point without admin chrome.
 
 ## Pending user actions:
 

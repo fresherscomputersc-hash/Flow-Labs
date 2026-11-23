@@ -813,19 +813,82 @@
     return (read ? read.value : '') || field.default;
   }
 
-  function renderContentRail() {
+  function renderContentRail(filterText) {
     var counts = state.contentCounts || {};
+    var q = (filterText || '').toLowerCase().trim();
+    var keys = Object.keys(SCHEMA);
 
-    $('contentPages').innerHTML = Object.keys(SCHEMA).map(function (key) {
-      var edits = counts[key] || 0;
-      return '<button type="button" class="rail-item' + (key === state.contentPage ? ' active' : '') +
-        '" data-page="' + esc(key) + '"' + (key === state.contentPage ? ' aria-current="page"' : '') + '>' +
-        '<span>' + esc(SCHEMA[key].label) + '</span>' +
-        '<em class="rail-count' + (edits ? ' on' : '') + '">' +
-          (edits ? edits + (edits === 1 ? ' edit' : ' edits') : 'Default') +
-        '</em>' +
-        '</button>';
-    }).join('');
+    if (q) {
+      keys = keys.filter(function (key) {
+        var s = SCHEMA[key];
+        return (
+          key.toLowerCase().indexOf(q) !== -1 ||
+          s.label.toLowerCase().indexOf(q) !== -1 ||
+          s.path.toLowerCase().indexOf(q) !== -1 ||
+          (s.category && s.category.toLowerCase().indexOf(q) !== -1)
+        );
+      });
+    }
+
+    if (!keys.length) {
+      $('contentPages').innerHTML = '<p class="admin-empty" style="padding:1rem 0.5rem;font-size:0.75rem;">No matching pages</p>';
+      return;
+    }
+
+    var categories = {};
+    var categoryOrder = ['Site', 'Services', 'Work', 'Blog', 'Legal'];
+
+    keys.forEach(function (key) {
+      var cat = SCHEMA[key].category || 'Site';
+      if (!categories[cat]) {
+        categories[cat] = [];
+        if (categoryOrder.indexOf(cat) === -1) categoryOrder.push(cat);
+      }
+      categories[cat].push(key);
+    });
+
+    var html = '';
+    categoryOrder.forEach(function (cat) {
+      var catKeys = categories[cat];
+      if (!catKeys || !catKeys.length) return;
+
+      html += '<div class="rail-group-title">' + esc(cat) + '</div>';
+      html += catKeys.map(function (key) {
+        var edits = counts[key] || 0;
+        return '<button type="button" class="rail-item' + (key === state.contentPage ? ' active' : '') +
+          '" data-page="' + esc(key) + '"' + (key === state.contentPage ? ' aria-current="page"' : '') + '>' +
+          '<span>' + esc(SCHEMA[key].label) + '</span>' +
+          '<em class="rail-count' + (edits ? ' on' : '') + '">' +
+            (edits ? edits + (edits === 1 ? ' edit' : ' edits') : 'Default') +
+          '</em>' +
+          '</button>';
+      }).join('');
+    });
+
+    $('contentPages').innerHTML = html;
+  }
+
+  function sendCmsPreview(key, value, defaultValue) {
+    var iframe = $('contentIframe');
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      iframe.contentWindow.postMessage({
+        type: 'cms-preview',
+        key: key,
+        value: value,
+        default: defaultValue
+      }, '*');
+    } catch (e) {
+      /* cross-origin guard */
+    }
+  }
+
+  function broadcastCmsPreview(schema, overrides) {
+    if (!schema) return;
+    schema.fields.forEach(function (field) {
+      var val = Object.prototype.hasOwnProperty.call(overrides, field.key) ? overrides[field.key] : '';
+      sendCmsPreview(field.key, val, field.default);
+    });
   }
 
   async function refreshContentCounts() {
@@ -839,7 +902,8 @@
     }
 
     state.contentCounts = counts;
-    renderContentRail();
+    var curSearch = $('contentSearch') ? $('contentSearch').value : '';
+    renderContentRail(curSearch);
   }
 
   async function loadContent() {
@@ -875,26 +939,50 @@
       if (snapshot[field.key]) edited += 1;
     });
 
+    var iframe = $('contentIframe');
+    if (iframe) {
+      var currentIframePath = iframe.getAttribute('data-loaded-path');
+      if (currentIframePath !== schema.path) {
+        iframe.src = schema.path;
+        iframe.setAttribute('data-loaded-path', schema.path);
+        iframe.onload = function () {
+          broadcastCmsPreview(schema, overrides);
+        };
+      } else {
+        broadcastCmsPreview(schema, overrides);
+      }
+    }
+
     $('contentForm').innerHTML = contentGroups(schema).map(function (group) {
-      return '<section class="fieldblock">' +
-        '<h3 class="fieldblock-title">' + esc(group.name) + '</h3>' +
+      return '<details class="fieldblock" open>' +
+        '<summary class="fieldblock-summary">' +
+          '<span>' + esc(group.name) + '</span>' +
+          '<span class="field-counter">' + group.fields.length + (group.fields.length === 1 ? ' field' : ' fields') + '</span>' +
+        '</summary>' +
+        '<div class="fieldblock-body">' +
         group.fields.map(function (field) {
           var stored = Object.prototype.hasOwnProperty.call(overrides, field.key) ? overrides[field.key] : '';
           var allowHtml = field.type === 'html';
+          var val = stored || '';
 
           return '<div class="fieldrow" data-field="' + esc(field.key) + '">' +
             '<div class="fieldrow-head">' +
               '<label for="cms-' + esc(field.key) + '">' + esc(field.label) + '</label>' +
-              '<span class="fieldrow-flag" data-flag="' + esc(field.key) + '"></span>' +
+              '<div style="display:flex;align-items:center;gap:0.5rem">' +
+                '<span class="field-counter" id="cnt-' + esc(field.key) + '">' + val.length + ' chars</span>' +
+                '<span class="fieldrow-flag" data-flag="' + esc(field.key) + '"></span>' +
+              '</div>' +
             '</div>' +
             contentInput(field, stored) +
             '<div class="fieldrow-foot">' +
               '<span>' + (allowHtml ? 'Line breaks and italic emphasis are allowed.' : '') + '</span>' +
-              '<button type="button" class="linkbtn" data-revert="' + esc(field.key) + '">Use default</button>' +
+              '<button type="button" class="linkbtn field-reset-btn" data-revert="' + esc(field.key) + '"' +
+                (val === '' ? ' hidden' : '') + '>Reset to default</button>' +
             '</div>' +
           '</div>';
         }).join('') +
-      '</section>';
+        '</div>' +
+      '</details>';
     }).join('');
 
     $('contentPageMeta').textContent = edited
@@ -907,7 +995,8 @@
     refreshContentFlags();
     renderContentPreview();
     updateContentState();
-    renderContentRail();
+    var curSearch = $('contentSearch') ? $('contentSearch').value : '';
+    renderContentRail(curSearch);
   }
 
   function snapshotFromOverrides(schema, overrides, into) {
@@ -999,8 +1088,65 @@
     loadContent();
   });
 
+  if ($('contentSearch')) {
+    $('contentSearch').addEventListener('input', function () {
+      renderContentRail(this.value);
+    });
+  }
+
+  function setPreviewMode(mode) {
+    var iframe = $('contentIframe');
+    var wrap = $('iframeWrap');
+    var status = $('previewStatus');
+    var btnD = $('btnPreviewDesktop');
+    var btnM = $('btnPreviewMobile');
+    var btnH = $('btnPreviewHide');
+
+    [btnD, btnM, btnH].forEach(function (b) { if (b) b.classList.remove('active'); });
+
+    if (mode === 'desktop') {
+      if (wrap) wrap.classList.remove('hidden');
+      if (iframe) iframe.className = 'cms-iframe desktop';
+      if (status) status.textContent = '● Live sync (Desktop)';
+      if (btnD) btnD.classList.add('active');
+    } else if (mode === 'mobile') {
+      if (wrap) wrap.classList.remove('hidden');
+      if (iframe) iframe.className = 'cms-iframe mobile';
+      if (status) status.textContent = '● Live sync (Mobile 375px)';
+      if (btnM) btnM.classList.add('active');
+    } else if (mode === 'hide') {
+      if (wrap) wrap.classList.add('hidden');
+      if (status) status.textContent = '○ Preview hidden';
+      if (btnH) btnH.classList.add('active');
+    }
+  }
+
+  if ($('btnPreviewDesktop')) $('btnPreviewDesktop').addEventListener('click', function () { setPreviewMode('desktop'); });
+  if ($('btnPreviewMobile')) $('btnPreviewMobile').addEventListener('click', function () { setPreviewMode('mobile'); });
+  if ($('btnPreviewHide')) $('btnPreviewHide').addEventListener('click', function () { setPreviewMode('hide'); });
+
   $('contentForm').addEventListener('input', function (event) {
-    if (!event.target.closest('[data-key]')) return;
+    var input = event.target.closest('[data-key]');
+    if (!input) return;
+
+    var key = input.getAttribute('data-key');
+    var counter = document.getElementById('cnt-' + key);
+    if (counter) counter.textContent = input.value.length + ' chars';
+
+    var schema = SCHEMA[state.contentPage];
+    var field = null;
+    if (schema) {
+      for (var i = 0; i < schema.fields.length; i++) {
+        if (schema.fields[i].key === key) {
+          field = schema.fields[i];
+          break;
+        }
+      }
+    }
+    var defaultVal = field ? field.default : '';
+
+    sendCmsPreview(key, input.value, defaultVal);
+
     refreshContentFlags();
     updateContentState();
     renderContentPreview();
@@ -1010,10 +1156,28 @@
     var button = event.target.closest('[data-revert]');
     if (!button) return;
 
-    var input = document.getElementById('cms-' + button.getAttribute('data-revert'));
+    var key = button.getAttribute('data-revert');
+    var input = document.getElementById('cms-' + key);
     if (!input) return;
 
     input.value = '';
+    var counter = document.getElementById('cnt-' + key);
+    if (counter) counter.textContent = '0 chars';
+
+    var schema = SCHEMA[state.contentPage];
+    var field = null;
+    if (schema) {
+      for (var i = 0; i < schema.fields.length; i++) {
+        if (schema.fields[i].key === key) {
+          field = schema.fields[i];
+          break;
+        }
+      }
+    }
+    var defaultVal = field ? field.default : '';
+
+    sendCmsPreview(key, '', defaultVal);
+
     refreshContentFlags();
     updateContentState();
     renderContentPreview();
