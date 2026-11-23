@@ -1959,6 +1959,17 @@
     $('projectName').textContent = project.name;
     $('projectSummary').textContent = project.summary || 'No summary yet.';
 
+    var ghBadge = $('projectGithubBadge');
+    if (ghBadge) {
+      if (project.github_repo) {
+        ghBadge.textContent = project.github_repo + ' ↗';
+        ghBadge.href = 'https://github.com/' + project.github_repo;
+        ghBadge.hidden = false;
+      } else {
+        ghBadge.hidden = true;
+      }
+    }
+
     var done = state.tasks.filter(function (task) { return task.status === 'done'; }).length;
     var total = state.tasks.length;
     var percent = total ? Math.round(done * 100 / total) : 0;
@@ -2155,12 +2166,24 @@
       }
 
       container.innerHTML = rows.map(function (ev) {
-        var actor = ev.profiles ? (ev.profiles.full_name || ev.profiles.email) : 'System';
-        var icon = ev.kind === 'task.created' ? '+' : (ev.kind === 'task.status' ? '⇄' : '•');
-        return '<div class="activity-item">' +
+        var actor = ev.profiles ? (ev.profiles.full_name || ev.profiles.email) : (ev.actor_id ? 'Team member' : 'GitHub');
+        var icon = '•';
+        if (ev.kind === 'task.created') icon = '+';
+        else if (ev.kind === 'task.status') icon = '⇄';
+        else if (ev.kind === 'github.commit') icon = '⚡';
+        else if (ev.kind && ev.kind.indexOf('github.pr') === 0) icon = '🔀';
+
+        var extra = '';
+        if (ev.kind === 'github.commit' && ev.meta && ev.meta.url) {
+          extra = ' <a href="' + esc(ev.meta.url) + '" target="_blank" rel="noopener" style="font-size:0.72rem;color:var(--accent);">View commit ↗</a>';
+        } else if (ev.meta && ev.meta.url) {
+          extra = ' <a href="' + esc(ev.meta.url) + '" target="_blank" rel="noopener" style="font-size:0.72rem;color:var(--accent);">View on GitHub ↗</a>';
+        }
+
+        return '<div class="activity-item' + (ev.kind && ev.kind.indexOf('github') === 0 ? ' github-commit' : '') + '">' +
           '<div class="activity-icon">' + icon + '</div>' +
           '<div class="activity-content">' +
-            '<div><span class="activity-actor">' + esc(actor) + '</span> <span class="activity-summary">' + esc(ev.summary) + '</span></div>' +
+            '<div><span class="activity-actor">' + esc(actor) + '</span> <span class="activity-summary">' + esc(ev.summary) + extra + '</span></div>' +
             '<div class="activity-time mono">' + esc(fmtDate(ev.created_at)) + '</div>' +
           '</div>' +
           '</div>';
@@ -2331,6 +2354,7 @@
     $('ps-summary').value = p.summary || '';
     $('ps-status').value = p.status || 'active';
     $('ps-due').value = p.due_date || '';
+    if ($('ps-repo')) $('ps-repo').value = p.github_repo || '';
   }
 
   async function saveProjectSettings(event) {
@@ -2346,7 +2370,8 @@
       name: $('ps-name').value.trim(),
       summary: $('ps-summary').value.trim() || null,
       status: $('ps-status').value,
-      due_date: $('ps-due').value || null
+      due_date: $('ps-due').value || null,
+      github_repo: $('ps-repo') ? ($('ps-repo').value.trim() || null) : null
     };
 
     var result = await db.from('projects').update(payload).eq('id', state.projectId).select().single();

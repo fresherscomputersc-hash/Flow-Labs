@@ -32,6 +32,7 @@
 | `9b5c271` | Phase D shipped (Standalone Client Portal `/client/`, project updates, client deliverable visibility). |
 | `5c9e9aa` | Phase E shipped (Supabase Storage buckets, live blog feed <1s, unlisted draft preview). |
 | `c54e547` | Migration 0005 fix (`public.is_member()` helper function). |
+| `555ba5f` | Phase F shipped (Notifications, Realtime subscriptions, team reports, and daily standups). |
 
 ## What is shipped (done)
 
@@ -41,11 +42,11 @@
 4. **Phase D — Client Portal**: Dedicated `/client/` portal, client role routing, published milestones / updates tab, client-visible deliverable file toggles.
 5. **Phase E — Supabase Media & Publishing**: Storage buckets (`media`, `attachments`), live blog index feed (<1s), draft preview mode (`/blog/?preview=<slug>`), markdown image upload.
 6. **Phase F — Notifications, Realtime & Reports**: Supabase realtime subscriptions (`tasks`, `task_comments`, `activity`, `notifications`), topbar realtime badge, notification bell + unread badge + popover dropdown, live toast notifications, reports view (projects rollup, team workload, daily standup submissions & log), automated notification DB triggers (`0006_notifications_triggers.sql`), and email notification + digest endpoints (`POST /api/platform/notify`, `POST /api/platform/digest`).
+7. **Phase G — GitHub App & Webhook Integration**: HMAC SHA-256 verified webhook receiver (`api/github/webhook.js` and `/api/platform/github/webhook`), delivery idempotency table (`public.github_deliveries`), automatic regex task key parsing (`FLW-\d+`), author attribution via `profiles.github_username`, activity feed logging, project settings linked repo configuration (`projects.github_repo`), and GitHub repo header badge.
 
 ## Not yet done (plan-driven)
 
-- **Phase G — GitHub App**: Webhook integration for repo commits, PRs, issue linking (`FLW-\d+`).
-- **Phase H — Hardening**: Security review, CSP, rate limits, Playwright e2e, backup/restore drill.
+- **Phase H — Hardening**: Security review, CSP, rate limits, Playwright e2e, backup/restore drill, production cutover with rollback point.
 
 ## Agreed phase order
 
@@ -54,9 +55,9 @@
 3. Phase C — Every Page Editable — **done** (`81301eb`)
 4. Phase D — Client Portal — **done** (`9b5c271`)
 5. Phase E — Publishing & Media — **done** (`5c9e9aa`)
-6. Phase F — Notifications, Realtime & Reports — **done**
-7. Phase G — GitHub Integration — **next**
-8. Phase H — Hardening & Production Cutover
+6. Phase F — Notifications, Realtime & Reports — **done** (`555ba5f`)
+7. Phase G — GitHub Integration — **done**
+8. Phase H — Hardening & Production Cutover — **next**
 
 ## Pending operational tasks (user to do)
 

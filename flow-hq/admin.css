@@ -1509,3 +1509,31 @@ h3 { font-size: 0.95rem; }
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ---------------- Phase G: GitHub Integration ---------------- */
+.github-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #24292e;
+  color: #f6f8fa;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.github-badge:hover {
+  opacity: 0.85;
+}
+
+.activity-item.github-commit code {
+  background: var(--bg-elevated);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}

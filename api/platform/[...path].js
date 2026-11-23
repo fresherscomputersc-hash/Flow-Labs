@@ -188,6 +188,11 @@ const getProfileById = async (id) => {
 // Routes
 // ------------------------------------------------------------
 const handle = async (req, res, segments) => {
+  // Public webhook endpoints (HMAC-verified, no Supabase session JWT)
+  if (segments[0] === 'github') {
+    return require('../github/webhook.js')(req, res);
+  }
+
   const { profile, token } = await authenticate(req);
   const method = String(req.method || 'GET').toUpperCase();
   const route = segments.join('/');
