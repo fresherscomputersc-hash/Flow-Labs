@@ -127,12 +127,16 @@ From `ADMIN-REDESIGN-PLAN.md`:
   - `flow-hq/admin.css`: Clean uppercase nav group headers, sticky blurred topbar, breadcrumb typography, `.workspace` bounded surface container (`min(1180px, 100%)`), attention strip styling, state helpers (`.skeleton`, `.empty-state`, `.error-state`).
   - `flow-hq/admin.js`: Nav group role-gating in `applyRole()`, dynamic breadcrumb in `updateBreadcrumb(tab)` (including project and blog editor drilldowns), `confirmLeaveTab` dirty-state protection intact, attention strip data population in `loadDashboard()`, zero syntax errors.
   - Tested: Node syntax test passed, local server 200 OK on endpoints, DOM and authView verified.
-- **Phase B (Workspace finish / Collab UI) — UP NEXT**:
-  - Task drawer comments UI + author attribution (`task_comments` table).
-  - Project sub-tabs (**Board · Modules · Tasks · Activity · Files · Settings**).
-  - Project activity feed component (`activity` table).
-  - Kanban WIP counts & keyboard "Move to…" accessibility.
-  - Verify collab workflow between roles.
+- **Phase B VERIFIED & COMPLETED**:
+  - `flow-hq/index.html`: Project subtabs (`#projectSubTabs` with Board, Modules, Tasks, Activity, Files, Settings), `#boardAssigneeFilter`, `#projectTasksTable` table view, `#projectActivityList` feed, `#projectFilesList`, `#projectSettingsForm`, `#taskCollabSection` with `#taskCommentsList` and `#taskHistoryList`.
+  - `flow-hq/admin.css`: Subtab button states, activity feed item layout with icons, task comment cards with author/time, task history items, kanban move dropdown menu with focus outlines.
+  - `flow-hq/admin.js`: Subtab switching (`switchProjectSubTab`), task list rendering (`renderProjectTasksTable`), project activity loader (`loadProjectActivity`), files loader (`loadProjectFiles`), project settings management (`loadProjectSettings`, `saveProjectSettings`), task comments composer & history loader (`loadTaskComments`, `postTaskComment`), keyboard move menu (`showKanbanMoveMenu`, `moveTaskStatus`), assignee filter.
+  - Tested: Node syntax test passed with zero errors, python element/function assertions passed, endpoints return 200 OK.
+- **Phase C (Every page editable / CMS expansion & Bright Dome templates) — UP NEXT**:
+  - `assets/site-cms.js`: Expand `PAGE_MAP` beyond the current 4 pages to cover all service, work, legal, contact, and blog index pages.
+  - Add SEO meta and JSON-LD schema fields per page in `content-schema.js`.
+  - Content search, grouping, per-field reset, and live iframe preview.
+  - Integrate Bright Dome / ThreeUI visual styles into public pages.
 
 ## Pending user actions:
 

@@ -945,6 +945,167 @@ h3 { font-size: 0.95rem; }
 .prio.high { background: #F59E0B; }
 .prio.urgent { background: #EF4444; }
 
+/* ---------- Phase B: project subtabs ---------- */
+.project-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+.project-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.project-tab-btn:hover {
+  color: var(--text);
+  background: var(--bg-surface);
+}
+.project-tab-btn.active {
+  color: var(--text);
+  background: var(--bg-surface);
+  border-color: var(--border);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.project-subpanel { display: none; }
+.project-subpanel.active { display: block; }
+
+/* ---------- Phase B: activity feed ---------- */
+.activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.activity-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.activity-content { flex: 1; min-width: 0; }
+.activity-actor { font-weight: 600; color: var(--text); }
+.activity-summary { color: var(--text-secondary); margin-top: 0.2rem; line-height: 1.4; }
+.activity-time { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.35rem; }
+
+/* ---------- Phase B: task comments & history ---------- */
+.task-collab-section {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.task-collab-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+.task-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.task-comment-card {
+  padding: 0.75rem 0.9rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+}
+.task-comment-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+}
+.task-comment-author { font-weight: 600; color: var(--text); }
+.task-comment-time { color: var(--text-muted); font-size: 0.68rem; }
+.task-comment-body { color: var(--text-secondary); white-space: pre-wrap; line-height: 1.45; }
+
+.task-comment-composer {
+  margin-top: 0.5rem;
+}
+
+.task-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.task-history-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  border-left: 2px solid var(--border-accent);
+  margin-left: 0.25rem;
+}
+
+/* ---------- Phase B: kanban move menu & card focus ---------- */
+.kanban-move-menu {
+  position: absolute;
+  z-index: 100;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  padding: 0.35rem;
+  min-width: 160px;
+}
+.kanban-move-item {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+}
+.kanban-move-item:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.kanban-card {
+  position: relative;
+  cursor: grab;
+}
+.kanban-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 [hidden] { display: none !important; }
 
 /* ---------- responsive ---------- */

@@ -1714,9 +1714,7 @@
     }
 
     renderProjectHeader();
-    renderModules();
-    renderMembers();
-    renderBoard();
+    switchProjectSubTab(state.projectSubTab || 'board');
   }
 
   function renderProjectHeader() {
@@ -1792,20 +1790,52 @@
     }).join('');
   }
 
+  /* ---------------- Phase B: Project subtabs & views ---------------- */
+  function switchProjectSubTab(subtab) {
+    state.projectSubTab = subtab || 'board';
+    Array.prototype.forEach.call(document.querySelectorAll('.project-tab-btn'), function (btn) {
+      var isAct = btn.getAttribute('data-subtab') === state.projectSubTab;
+      btn.classList.toggle('active', isAct);
+      btn.setAttribute('aria-selected', isAct ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.project-subpanel'), function (panel) {
+      panel.classList.toggle('active', panel.id === 'subpanel-' + state.projectSubTab);
+    });
+
+    if (state.projectSubTab === 'board') renderBoard();
+    else if (state.projectSubTab === 'modules') { renderModules(); renderMembers(); }
+    else if (state.projectSubTab === 'tasks') renderProjectTasksTable();
+    else if (state.projectSubTab === 'activity') loadProjectActivity();
+    else if (state.projectSubTab === 'files') loadProjectFiles();
+    else if (state.projectSubTab === 'settings') loadProjectSettings();
+  }
+
   function renderBoard() {
-    var filter = $('boardModuleFilter').value || '';
+    var modFilter = $('boardModuleFilter').value || '';
+    var assFilter = $('boardAssigneeFilter') ? $('boardAssigneeFilter').value : '';
 
     $('boardModuleFilter').innerHTML = '<option value="">All modules</option>' +
       state.modules.map(function (module) {
         return '<option value="' + esc(module.id) + '">' + esc(module.name) + '</option>';
       }).join('');
-    $('boardModuleFilter').value = filter;
+    $('boardModuleFilter').value = modFilter;
+
+    if ($('boardAssigneeFilter')) {
+      $('boardAssigneeFilter').innerHTML = '<option value="">All assignees</option>' +
+        '<option value="unassigned">Unassigned</option>' +
+        state.people.map(function (person) {
+          return '<option value="' + esc(person.user_id) + '">' + esc(person.full_name || person.email) + '</option>';
+        }).join('');
+      $('boardAssigneeFilter').value = assFilter;
+    }
 
     var byId = {};
     state.people.forEach(function (person) { byId[person.user_id] = person; });
 
     var tasks = state.tasks.filter(function (task) {
-      return !filter || task.module_id === filter;
+      var modMatch = !modFilter || task.module_id === modFilter;
+      var assMatch = !assFilter || (assFilter === 'unassigned' ? !task.assignee_id : task.assignee_id === assFilter);
+      return modMatch && assMatch;
     });
 
     $('kanban').innerHTML = STATUS_COLUMNS.map(function (column) {
@@ -1814,7 +1844,7 @@
       var cards = items.length ? items.map(function (task) {
         var person = byId[task.assignee_id];
         var who = person ? (person.full_name || person.email) : 'Unassigned';
-        return '<div class="kanban-card" draggable="true" data-task-id="' + esc(task.id) + '">' +
+        return '<div class="kanban-card" draggable="true" tabindex="0" data-task-id="' + esc(task.id) + '" aria-label="' + esc(task.title) + '">' +
           '<div class="kanban-foot">' +
             '<span class="kanban-key">' + esc(task.key || '') + '</span>' +
             '<span class="prio ' + esc(task.priority) + '" title="' + esc(task.priority) + '"></span>' +
@@ -1832,6 +1862,316 @@
         '<div class="kanban-cards">' + cards + '</div>' +
         '</div>';
     }).join('');
+  }
+
+  function renderProjectTasksTable() {
+    var container = $('projectTasksTable');
+    if (!container) return;
+    if (!state.tasks || !state.tasks.length) {
+      container.innerHTML = '<p class="admin-empty">No tasks in this project yet.</p>';
+      return;
+    }
+
+    var byId = {};
+    state.people.forEach(function (person) { byId[person.user_id] = person; });
+    var moduleMap = {};
+    state.modules.forEach(function (m) { moduleMap[m.id] = m.name; });
+
+    container.innerHTML = '<table class="admin-table"><thead><tr>' +
+      '<th>Key</th><th>Title</th><th>Module</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Due</th><th>Actions</th>' +
+      '</tr></thead><tbody>' +
+      state.tasks.map(function (task) {
+        var person = byId[task.assignee_id];
+        var who = person ? (person.full_name || person.email) : 'Unassigned';
+        var modName = moduleMap[task.module_id] || '—';
+        return '<tr>' +
+          '<td class="mono">' + esc(task.key || '—') + '</td>' +
+          '<td><strong>' + esc(task.title) + '</strong></td>' +
+          '<td>' + esc(modName) + '</td>' +
+          '<td>' + esc(who) + '</td>' +
+          '<td><span class="prio ' + esc(task.priority) + '"></span> ' + esc(task.priority) + '</td>' +
+          '<td><span class="badge ' + esc(task.status) + '">' + esc(task.status) + '</span></td>' +
+          '<td class="mono">' + esc(task.due_date || '—') + '</td>' +
+          '<td><button type="button" class="admin-btn ghost" data-open-task="' + esc(task.id) + '">Edit</button></td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  async function loadProjectActivity() {
+    var container = $('projectActivityList');
+    if (!container) return;
+    container.innerHTML = '<p class="admin-empty">Loading activity…</p>';
+
+    try {
+      var result = await db.from('activity')
+        .select('*, profiles(full_name, email)')
+        .eq('project_id', state.projectId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (result.error) throw result.error;
+      var rows = result.data || [];
+      if (!rows.length) {
+        container.innerHTML = '<p class="admin-empty">No activity recorded for this project yet.</p>';
+        return;
+      }
+
+      container.innerHTML = rows.map(function (ev) {
+        var actor = ev.profiles ? (ev.profiles.full_name || ev.profiles.email) : 'System';
+        var icon = ev.kind === 'task.created' ? '+' : (ev.kind === 'task.status' ? '⇄' : '•');
+        return '<div class="activity-item">' +
+          '<div class="activity-icon">' + icon + '</div>' +
+          '<div class="activity-content">' +
+            '<div><span class="activity-actor">' + esc(actor) + '</span> <span class="activity-summary">' + esc(ev.summary) + '</span></div>' +
+            '<div class="activity-time mono">' + esc(fmtDate(ev.created_at)) + '</div>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+    } catch (err) {
+      container.innerHTML = '<p class="admin-empty error">Could not load activity feed.</p>';
+    }
+  }
+
+  async function loadProjectFiles() {
+    var container = $('projectFilesList');
+    if (!container) return;
+    container.innerHTML = '<p class="admin-empty">Loading files…</p>';
+
+    try {
+      var result = await db.from('attachments')
+        .select('*, profiles(full_name, email)')
+        .eq('project_id', state.projectId)
+        .order('created_at', { ascending: false });
+
+      if (result.error) throw result.error;
+      var files = result.data || [];
+      if (!files.length) {
+        container.innerHTML = '<p class="admin-empty">No files attached to this project yet.</p>';
+        return;
+      }
+
+      container.innerHTML = '<table class="admin-table"><thead><tr>' +
+        '<th>File</th><th>Size</th><th>Uploaded by</th><th>Date</th><th>Client visible</th>' +
+        '</tr></thead><tbody>' +
+        files.map(function (f) {
+          var uploader = f.profiles ? (f.profiles.full_name || f.profiles.email) : '—';
+          var size = f.size_bytes ? Math.round(f.size_bytes / 1024) + ' KB' : '—';
+          return '<tr>' +
+            '<td><strong>' + esc(f.file_name) + '</strong></td>' +
+            '<td class="mono">' + esc(size) + '</td>' +
+            '<td>' + esc(uploader) + '</td>' +
+            '<td class="mono">' + esc(fmtDate(f.created_at)) + '</td>' +
+            '<td><span class="badge ' + (f.client_visible ? 'active' : 'draft') + '">' + (f.client_visible ? 'Yes' : 'No') + '</span></td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table>';
+    } catch (err) {
+      container.innerHTML = '<p class="admin-empty error">Could not load files.</p>';
+    }
+  }
+
+  function loadProjectSettings() {
+    var p = state.project;
+    if (!p) return;
+    $('ps-name').value = p.name || '';
+    $('ps-key').value = p.key || '';
+    $('ps-summary').value = p.summary || '';
+    $('ps-status').value = p.status || 'active';
+    $('ps-due').value = p.due_date || '';
+  }
+
+  async function saveProjectSettings(event) {
+    event.preventDefault();
+    if (!canManageProject()) {
+      fail('Only project managers or admins can change project settings.');
+      return;
+    }
+    var btn = $('psSaveBtn');
+    btn.disabled = true;
+
+    var payload = {
+      name: $('ps-name').value.trim(),
+      summary: $('ps-summary').value.trim() || null,
+      status: $('ps-status').value,
+      due_date: $('ps-due').value || null
+    };
+
+    var result = await db.from('projects').update(payload).eq('id', state.projectId).select().single();
+    btn.disabled = false;
+
+    if (result.error) {
+      fail(result.error.message);
+      return;
+    }
+
+    state.project = result.data;
+    renderProjectHeader();
+    updateBreadcrumb('project');
+    toast('Project settings saved.');
+  }
+
+  /* ---------------- Phase B: Task Comments & History ---------------- */
+  async function loadTaskComments(taskId) {
+    var collabSec = $('taskCollabSection');
+    var commentsList = $('taskCommentsList');
+    var historyList = $('taskHistoryList');
+    if (!collabSec) return;
+
+    if (!taskId) {
+      collabSec.hidden = true;
+      return;
+    }
+    collabSec.hidden = false;
+    commentsList.innerHTML = '<p class="admin-empty">Loading comments…</p>';
+    historyList.innerHTML = '<p class="admin-empty">Loading history…</p>';
+
+    try {
+      var commRes = await db.from('task_comments')
+        .select('*, profiles(full_name, email)')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: true });
+
+      if (commRes.error) throw commRes.error;
+      var comments = commRes.data || [];
+      if (!comments.length) {
+        commentsList.innerHTML = '<p class="admin-empty">No comments yet. Start the discussion below.</p>';
+      } else {
+        commentsList.innerHTML = comments.map(function (c) {
+          var author = c.profiles ? (c.profiles.full_name || c.profiles.email) : 'Member';
+          return '<div class="task-comment-card">' +
+            '<div class="task-comment-head">' +
+              '<span class="task-comment-author">' + esc(author) + '</span>' +
+              '<span class="task-comment-time mono">' + esc(fmtDate(c.created_at)) + '</span>' +
+            '</div>' +
+            '<div class="task-comment-body">' + esc(c.body) + '</div>' +
+            '</div>';
+        }).join('');
+      }
+    } catch (err) {
+      commentsList.innerHTML = '<p class="admin-empty error">Could not load comments.</p>';
+    }
+
+    try {
+      var actRes = await db.from('activity')
+        .select('*, profiles(full_name, email)')
+        .eq('entity_id', taskId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (actRes.error) throw actRes.error;
+      var acts = actRes.data || [];
+      if (!acts.length) {
+        historyList.innerHTML = '<p class="admin-empty">No status changes recorded yet.</p>';
+      } else {
+        historyList.innerHTML = acts.map(function (a) {
+          var actor = a.profiles ? (a.profiles.full_name || a.profiles.email) : 'System';
+          return '<div class="task-history-item">' +
+            '<span><strong>' + esc(actor) + '</strong>: ' + esc(a.summary) + '</span>' +
+            '<span class="mono" style="margin-left:auto;font-size:0.65rem;color:var(--text-muted)">' + esc(fmtDate(a.created_at)) + '</span>' +
+            '</div>';
+        }).join('');
+      }
+    } catch (_) {
+      historyList.innerHTML = '<p class="admin-empty">Could not load history.</p>';
+    }
+  }
+
+  async function postTaskComment() {
+    var taskId = $('taskId').value;
+    if (!taskId) return;
+    var input = $('taskCommentInput');
+    var body = (input.value || '').trim();
+    if (!body) return;
+
+    var btn = $('taskCommentSubmit');
+    btn.disabled = true;
+
+    var result = await db.from('task_comments').insert({
+      task_id: taskId,
+      author_id: state.profile.id,
+      body: body
+    });
+    btn.disabled = false;
+
+    if (result.error) {
+      fail(result.error.message || 'Could not post comment.');
+      return;
+    }
+
+    input.value = '';
+    toast('Comment posted.');
+    loadTaskComments(taskId);
+  }
+
+  /* ---------------- Phase B: Keyboard Move Menu ---------------- */
+  function showKanbanMoveMenu(card, taskId) {
+    var existing = document.querySelector('.kanban-move-menu');
+    if (existing) existing.remove();
+
+    var task = state.tasks.find(function (t) { return t.id === taskId; });
+    if (!task) return;
+
+    var menu = document.createElement('div');
+    menu.className = 'kanban-move-menu';
+    var rect = card.getBoundingClientRect();
+    menu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    menu.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 180) + 'px';
+
+    menu.innerHTML = '<div style="font-size:0.68rem;font-weight:600;color:var(--text-muted);padding:0.25rem 0.5rem;text-transform:uppercase;letter-spacing:0.06em">Move to:</div>' +
+      STATUS_COLUMNS.map(function (col) {
+        var isCurrent = col[0] === task.status;
+        return '<div class="kanban-move-item" data-move-status="' + col[0] + '" style="' + (isCurrent ? 'opacity:0.4;pointer-events:none;' : '') + '">' +
+          '<span>' + col[1] + '</span>' +
+          (isCurrent ? '<small>(current)</small>' : '') +
+          '</div>';
+      }).join('');
+
+    document.body.appendChild(menu);
+
+    function onMenuClick(e) {
+      var item = e.target.closest('[data-move-status]');
+      if (!item) return;
+      var newStatus = item.getAttribute('data-move-status');
+      cleanup();
+      moveTaskStatus(taskId, newStatus);
+    }
+
+    function onDocClick(e) {
+      if (!menu.contains(e.target) && e.target !== card) cleanup();
+    }
+
+    function onKey(e) {
+      if (e.key === 'Escape') cleanup();
+    }
+
+    function cleanup() {
+      menu.removeEventListener('click', onMenuClick);
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+      if (menu.parentNode) menu.parentNode.removeChild(menu);
+    }
+
+    menu.addEventListener('click', onMenuClick);
+    setTimeout(function () {
+      document.addEventListener('click', onDocClick);
+      document.addEventListener('keydown', onKey);
+    }, 10);
+  }
+
+  async function moveTaskStatus(taskId, newStatus) {
+    var task = state.tasks.find(function (t) { return t.id === taskId; });
+    if (!task || task.status === newStatus) return;
+
+    var result = await db.from('tasks').update({ status: newStatus }).eq('id', taskId);
+    if (result.error) {
+      fail(result.error.message || 'Could not move task.');
+      return;
+    }
+    task.status = newStatus;
+    renderBoard();
+    renderProjectHeader();
+    toast('Task moved to ' + (STATUS_COLUMNS.find(function (c) { return c[0] === newStatus; }) || [newStatus, newStatus])[1] + '.');
   }
 
   function fillTaskSelectors() {
@@ -1865,6 +2205,7 @@
 
     $('taskEditorCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     $('task-title').focus();
+    loadTaskComments(task ? task.id : null);
   }
 
   async function fillMemberCandidates() {
@@ -2091,6 +2432,65 @@
     renderBoard();
     renderProjectHeader();
   });
+
+  /* ---------------- Phase B: Event bindings ---------------- */
+  if ($('projectSubTabs')) {
+    $('projectSubTabs').addEventListener('click', function (event) {
+      var btn = event.target.closest('.project-tab-btn');
+      if (btn) switchProjectSubTab(btn.getAttribute('data-subtab'));
+    });
+  }
+
+  if ($('boardAssigneeFilter')) {
+    $('boardAssigneeFilter').addEventListener('change', renderBoard);
+  }
+
+  $('kanban').addEventListener('keydown', function (event) {
+    var card = event.target.closest('.kanban-card');
+    if (!card) return;
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar' || event.key === 'm') {
+      event.preventDefault();
+      event.stopPropagation();
+      var id = card.getAttribute('data-task-id');
+      showKanbanMoveMenu(card, id);
+    }
+  });
+
+  if ($('taskCommentSubmit')) {
+    $('taskCommentSubmit').addEventListener('click', postTaskComment);
+  }
+
+  if ($('taskCommentInput')) {
+    $('taskCommentInput').addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey || !event.shiftKey)) {
+        event.preventDefault();
+        postTaskComment();
+      }
+    });
+  }
+
+  if ($('refreshActivity')) {
+    $('refreshActivity').addEventListener('click', loadProjectActivity);
+  }
+
+  if ($('projectSettingsForm')) {
+    $('projectSettingsForm').addEventListener('submit', saveProjectSettings);
+  }
+
+  if ($('projectTasksTable')) {
+    $('projectTasksTable').addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-open-task]');
+      if (btn) {
+        var id = btn.getAttribute('data-open-task');
+        var task = state.tasks.find(function (t) { return t.id === id; });
+        if (task) openTask(task);
+      }
+    });
+  }
+
+  if ($('tasksListNew')) {
+    $('tasksListNew').addEventListener('click', function () { openTask(null); });
+  }
 
   /* ---------------- team ---------------- */
   function randomPassword() {
