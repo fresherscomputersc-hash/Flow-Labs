@@ -51,6 +51,7 @@
           <button type="button" data-tab="dashboard" class="active">Dashboard</button>
           <button type="button" data-tab="projects">Projects</button>
           <button type="button" data-tab="team">Team</button>
+          <button type="button" data-tab="reports">Reports</button>
         </div>
         <div class="admin-nav-group" data-group="content">
           <span class="admin-nav-group-title">Content</span>
@@ -84,7 +85,33 @@
           <h1 id="viewTitle">Dashboard</h1>
           <p id="viewSubtitle">Site health at a glance.</p>
         </div>
-        <a class="admin-btn ghost" href="/" target="_blank" rel="noopener">View public site ↗</a>
+        <div class="admin-topbar-actions">
+          <div class="admin-realtime-badge" id="realtimeBadge" title="Realtime connection active">
+            <span class="realtime-dot"></span>
+            <span class="realtime-text" id="realtimeText">Live</span>
+          </div>
+          <div class="notif-wrapper">
+            <button type="button" class="admin-btn icon-btn notif-bell" id="notifBellBtn" aria-label="Notifications" title="Notifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span class="notif-badge" id="notifBadge" hidden>0</span>
+            </button>
+            <div class="notif-dropdown" id="notifDropdown" hidden>
+              <div class="notif-dropdown-head">
+                <h3>Notifications</h3>
+                <div class="notif-head-actions">
+                  <button type="button" class="notif-action-btn" id="markAllReadBtn">Mark all read</button>
+                </div>
+              </div>
+              <div class="notif-list" id="notifList">
+                <p class="admin-empty">No notifications yet.</p>
+              </div>
+            </div>
+          </div>
+          <a class="admin-btn ghost" href="/" target="_blank" rel="noopener">View public site ↗</a>
+        </div>
       </header>
 
       <div class="workspace">
@@ -923,6 +950,110 @@
           </div>
         </section>
 
+        <!-- Reports (Phase F) -->
+        <section class="admin-view" id="view-reports">
+          <!-- Overview Stats -->
+          <div class="admin-stats" id="reportsStats">
+            <div class="admin-stat"><strong id="repTotalTasks">—</strong><span>Total Tasks</span></div>
+            <div class="admin-stat"><strong id="repCompletedTasks">—</strong><span>Completed (7d)</span></div>
+            <div class="admin-stat"><strong id="repOverdueTasks">—</strong><span>Overdue</span></div>
+            <div class="admin-stat"><strong id="repActiveProjects">—</strong><span>Active Projects</span></div>
+          </div>
+
+          <div class="admin-tabs sub-tabs" id="reportsSubTabs" role="tablist">
+            <button type="button" class="sub-tab-btn active" data-subtab="projectsRollup">Projects Rollup</button>
+            <button type="button" class="sub-tab-btn" data-subtab="membersRollup">Team Workload</button>
+            <button type="button" class="sub-tab-btn" data-subtab="standupReports">Daily Standups</button>
+          </div>
+
+          <!-- Subtab: Projects Rollup -->
+          <div class="reports-subtab-pane active" id="pane-projectsRollup">
+            <div class="admin-card">
+              <div class="admin-card-head">
+                <div>
+                  <h2>Project Progress & Velocity</h2>
+                  <p>Realtime delivery health across all active projects.</p>
+                </div>
+                <button type="button" class="admin-btn ghost" id="refreshReportsBtn">↻ Refresh</button>
+              </div>
+              <div class="admin-table-wrap" id="reportsProjectTable">
+                <p class="admin-empty">Loading projects rollup…</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subtab: Members Rollup -->
+          <div class="reports-subtab-pane" id="pane-membersRollup" hidden>
+            <div class="admin-card">
+              <div class="admin-card-head">
+                <div>
+                  <h2>Member Workload & Output</h2>
+                  <p>Task assignments, active tasks, completed velocity, and overdue counts per member.</p>
+                </div>
+              </div>
+              <div class="admin-table-wrap" id="reportsMemberTable">
+                <p class="admin-empty">Loading team workload…</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subtab: Daily Standups -->
+          <div class="reports-subtab-pane" id="pane-standupReports" hidden>
+            <div class="admin-grid-2">
+              <div class="admin-card">
+                <div class="admin-card-head">
+                  <div>
+                    <h2>Submit Daily Standup</h2>
+                    <p>Log your daily progress, blockers, and hours for the team.</p>
+                  </div>
+                </div>
+                <form class="admin-form" id="dailyReportForm">
+                  <div class="admin-field">
+                    <label for="reportProjectSelect">Project</label>
+                    <select class="admin-select" id="reportProjectSelect" required>
+                      <option value="">Select project…</option>
+                    </select>
+                  </div>
+                  <div class="admin-grid-2">
+                    <div class="admin-field">
+                      <label for="reportDate">Report Date</label>
+                      <input class="admin-input" type="date" id="reportDate" required>
+                    </div>
+                    <div class="admin-field">
+                      <label for="reportHours">Hours Spent</label>
+                      <input class="admin-input" type="number" step="0.25" min="0" max="24" id="reportHours" placeholder="e.g. 7.5">
+                    </div>
+                  </div>
+                  <div class="admin-field">
+                    <label for="reportSummary">What did you accomplish today?</label>
+                    <textarea class="admin-input" id="reportSummary" rows="3" required placeholder="Completed user auth, reviewed PR #12..."></textarea>
+                  </div>
+                  <div class="admin-field">
+                    <label for="reportBlockers">Any blockers / dependencies?</label>
+                    <input class="admin-input" id="reportBlockers" placeholder="None, or waiting for API keys...">
+                  </div>
+                  <div class="admin-actions">
+                    <button type="submit" class="admin-btn primary" id="submitReportBtn">Submit Standup</button>
+                    <span id="reportFeedback" class="admin-field-hint"></span>
+                  </div>
+                </form>
+              </div>
+
+              <div class="admin-card">
+                <div class="admin-card-head">
+                  <div>
+                    <h2>Recent Standup Log</h2>
+                    <p>Recent daily check-ins from the team.</p>
+                  </div>
+                </div>
+                <div class="standup-feed" id="standupFeed">
+                  <p class="admin-empty">Loading standup reports…</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- Settings -->
         <section class="admin-view" id="view-settings">
           <form class="admin-form" id="settingsForm">
@@ -1013,6 +1144,7 @@
   </div>
 
   <div class="admin-toast" id="toast" role="status"></div>
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="/assets/site.config.js"></script>

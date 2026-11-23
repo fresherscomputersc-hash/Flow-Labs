@@ -416,6 +416,71 @@ const handle = async (req, res, segments) => {
     return json(res, 200, { ok: true, events: rows || [] });
   }
 
+  // POST /notify - Send email alert for task / mention / milestone
+  if (route === 'notify' && method === 'POST') {
+    const b = await readBody(req);
+    const to = b.to || process.env.NOTIFY_TO || process.env.SMTP_USER;
+    const subject = b.subject || ('[Flow HQ] ' + (b.title || 'Notification'));
+    const bodyText = b.body || b.text || '';
+    const link = b.link ? ('\n\nView details: ' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://theflowlabs.online') + b.link) : '';
+
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+
+    if (!host || !user || !pass || !to) {
+      return json(res, 200, { ok: true, sent: false, note: 'SMTP not configured or recipient missing' });
+    }
+
+    try {
+      const nodemailer = require('nodemailer');
+      const port = Number(process.env.SMTP_PORT || 465);
+      const transporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: { user, pass }
+      });
+
+      await transporter.sendMail({
+        from: '"Flow HQ" <' + user + '>',
+        to,
+        subject,
+        text: bodyText + link
+      });
+
+      return json(res, 200, { ok: true, sent: true });
+    } catch (err) {
+      console.warn('[notify] SMTP error:', err.message);
+      return json(res, 200, { ok: true, sent: false, error: err.message });
+    }
+  }
+
+  // POST /digest - Generate or email weekly / daily digest
+  if (route === 'digest' && method === 'POST') {
+    const b = await readBody(req);
+    const projectId = b.project_id;
+    const period = b.period || 'weekly';
+
+    let projsQuery = '/rest/v1/projects?select=id,key,name,status';
+    if (projectId) projsQuery += '&id=eq.' + encodeURIComponent(projectId);
+    const projs = await rest(projsQuery, { token });
+
+    const tasks = await rest('/rest/v1/tasks?select=id,project_id,key,title,status,completed_at,due_date', { token });
+    const reports = await rest('/rest/v1/daily_reports?select=id,project_id,report_date,summary,blockers,hours&order=report_date.desc&limit=30', { token });
+
+    const summary = {
+      period,
+      generated_at: new Date().toISOString(),
+      projects_count: (projs || []).length,
+      tasks_total: (tasks || []).length,
+      tasks_done: (tasks || []).filter(t => t.status === 'done').length,
+      reports_count: (reports || []).length
+    };
+
+    return json(res, 200, { ok: true, digest: summary });
+  }
+
   throw http(404, 'Unknown endpoint.');
 };
 

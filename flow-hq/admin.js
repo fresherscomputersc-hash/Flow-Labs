@@ -43,16 +43,17 @@
     projects: ['Projects', 'Your projects, progress and modules.'],
     project: ['Project', 'Modules, tasks and progress.'],
     team: ['Team', 'Create logins, set roles, suspend access.'],
+    reports: ['Reports', 'Team workload, project velocity and standup logs.'],
     settings: ['Settings', 'Brand colour, homepage blocks and search listings.']
   };
 
   // What each role is allowed to open. The server (RLS) is the real
   // gate; this only keeps the interface honest.
   var TAB_ACCESS = {
-    owner: ['dashboard', 'leads', 'visitors', 'content', 'blog', 'projects', 'project', 'team', 'settings'],
-    admin: ['dashboard', 'leads', 'visitors', 'content', 'blog', 'projects', 'project', 'team', 'settings'],
-    manager: ['projects', 'project'],
-    member: ['projects', 'project'],
+    owner: ['dashboard', 'leads', 'visitors', 'content', 'blog', 'projects', 'project', 'team', 'reports', 'settings'],
+    admin: ['dashboard', 'leads', 'visitors', 'content', 'blog', 'projects', 'project', 'team', 'reports', 'settings'],
+    manager: ['projects', 'project', 'reports'],
+    member: ['projects', 'project', 'reports'],
     client: []
   };
 
@@ -183,6 +184,9 @@
 
     applyRole();
 
+    setupRealtime();
+    loadNotifications();
+
     var route = readHash();
     if (route.tab === 'project') {
       if (route.id) state.projectId = route.id;
@@ -295,6 +299,7 @@
     projects: 'Workspace',
     project: 'Workspace',
     team: 'Workspace',
+    reports: 'Workspace',
     content: 'Content',
     blog: 'Content',
     leads: 'Site',
@@ -381,6 +386,7 @@
     if (tab === 'projects') loadProjects();
     if (tab === 'project') loadProjectScreen();
     if (tab === 'team') loadTeam();
+    if (tab === 'reports') loadReports();
     if (tab === 'settings') loadSettings();
 
     return true;
@@ -3550,6 +3556,503 @@
     await loadSettings();
     toast('Settings saved. The live site picks this up within a minute.');
   });
+
+  /* ---------------- Phase F: Realtime, Notifications & Reports ---------------- */
+
+  var realtimeChannel = null;
+  var realtimeDebounceTimers = {};
+
+  function setRealtimeStatus(status) {
+    var badge = $('realtimeBadge');
+    var text = $('realtimeText');
+    if (!badge || !text) return;
+    badge.classList.remove('connecting', 'disconnected');
+    if (status === 'SUBSCRIBED') {
+      text.textContent = 'Live';
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+      badge.classList.add('disconnected');
+      text.textContent = 'Offline';
+    } else {
+      badge.classList.add('connecting');
+      text.textContent = 'Syncing';
+    }
+  }
+
+  function showToastNotification(title, body, link) {
+    var container = $('toastContainer');
+    if (!container) return;
+    var item = document.createElement('div');
+    item.className = 'toast-item';
+    item.innerHTML = '<strong>' + esc(title) + '</strong>' +
+      (body ? '<p style="margin:4px 0 0;font-size:0.72rem;color:var(--text-secondary);">' + esc(body) + '</p>' : '');
+    if (link) {
+      item.style.cursor = 'pointer';
+      item.addEventListener('click', function () {
+        item.remove();
+        handleNotifLink(link);
+      });
+    }
+    container.appendChild(item);
+    setTimeout(function () {
+      item.style.transition = 'opacity 0.3s, transform 0.3s';
+      item.style.opacity = '0';
+      item.style.transform = 'translateY(10px)';
+      setTimeout(function () { item.remove(); }, 320);
+    }, 4500);
+  }
+
+  function debounceReload(key, fn, delay) {
+    clearTimeout(realtimeDebounceTimers[key]);
+    realtimeDebounceTimers[key] = setTimeout(fn, delay || 300);
+  }
+
+  function setupRealtime() {
+    if (!db || !db.channel || !state.profile) return;
+    if (realtimeChannel) {
+      db.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
+
+    setRealtimeStatus('CONNECTING');
+
+    realtimeChannel = db.channel('flow-hq-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, function (payload) {
+        if (state.tab === 'project' && state.projectId) {
+          if (!payload.new || payload.new.project_id === state.projectId || (payload.old && payload.old.project_id === state.projectId)) {
+            debounceReload('tasks', function () { loadProjectScreen(); });
+          }
+        } else if (state.tab === 'projects') {
+          debounceReload('projects', loadProjects);
+        } else if (state.tab === 'dashboard') {
+          debounceReload('dashboard', loadDashboard);
+        } else if (state.tab === 'reports') {
+          debounceReload('reports', loadReports);
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_comments' }, function (payload) {
+        if (state.tab === 'project' && state.projectId) {
+          if (state.currentTaskId && payload.new && payload.new.task_id === state.currentTaskId) {
+            debounceReload('comments', function () { loadTaskComments(state.currentTaskId); });
+          }
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity' }, function (payload) {
+        if (state.tab === 'project' && state.projectId) {
+          debounceReload('activity', function () { loadProjectActivity(state.projectId); });
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, function (payload) {
+        if (payload.new && payload.new.user_id === state.profile.id) {
+          loadNotifications();
+          if (payload.eventType === 'INSERT') {
+            showToastNotification(payload.new.title, payload.new.body, payload.new.link);
+          }
+        }
+      })
+      .subscribe(function (status) {
+        setRealtimeStatus(status);
+      });
+  }
+
+  /* Notifications */
+  var notificationsState = {
+    items: [],
+    unreadCount: 0,
+    isOpen: false
+  };
+
+  async function loadNotifications() {
+    if (!state.profile) return;
+    var res = await db.from('notifications')
+      .select('*')
+      .eq('user_id', state.profile.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (res.error) {
+      console.warn('Could not load notifications:', res.error);
+      return;
+    }
+
+    notificationsState.items = res.data || [];
+    notificationsState.unreadCount = notificationsState.items.filter(function (n) { return !n.read_at; }).length;
+
+    var badge = $('notifBadge');
+    if (badge) {
+      if (notificationsState.unreadCount > 0) {
+        badge.textContent = notificationsState.unreadCount > 99 ? '99+' : notificationsState.unreadCount;
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+      }
+    }
+
+    renderNotificationsList();
+  }
+
+  function handleNotifLink(link) {
+    if (!link) return;
+    try {
+      var url = new URL(link, window.location.origin);
+      var proj = url.searchParams.get('project');
+      var task = url.searchParams.get('task');
+      if (proj) {
+        state.projectId = proj;
+        activateTab('project');
+        if (task) {
+          setTimeout(function () {
+            if (typeof openTaskDrawer === 'function') {
+              openTaskDrawer(task);
+            }
+          }, 400);
+        }
+      }
+    } catch (e) {}
+  }
+
+  function renderNotificationsList() {
+    var list = $('notifList');
+    if (!list) return;
+    if (!notificationsState.items.length) {
+      list.innerHTML = '<p class="admin-empty">No notifications yet.</p>';
+      return;
+    }
+
+    list.innerHTML = notificationsState.items.map(function (n) {
+      var isUnread = !n.read_at;
+      return '<div class="notif-item' + (isUnread ? ' unread' : '') + '" data-id="' + esc(n.id) + '" data-link="' + esc(n.link || '') + '">' +
+        '<div class="notif-title">' + esc(n.title) + '</div>' +
+        (n.body ? '<div class="notif-body">' + esc(n.body) + '</div>' : '') +
+        '<div class="notif-meta">' +
+          '<span>' + fmtDate(n.created_at) + '</span>' +
+          (isUnread ? '<button type="button" class="notif-action-btn mark-read-btn" data-id="' + esc(n.id) + '">Mark read</button>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(list.querySelectorAll('.notif-item'), function (el) {
+      el.addEventListener('click', async function (ev) {
+        if (ev.target.classList.contains('mark-read-btn')) return;
+        var id = el.getAttribute('data-id');
+        var link = el.getAttribute('data-link');
+        await markNotificationRead(id);
+        if (link) handleNotifLink(link);
+        toggleNotifDropdown(false);
+      });
+    });
+
+    Array.prototype.forEach.call(list.querySelectorAll('.mark-read-btn'), function (btn) {
+      btn.addEventListener('click', async function (ev) {
+        ev.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        await markNotificationRead(id);
+      });
+    });
+  }
+
+  async function markNotificationRead(id) {
+    await db.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id);
+    var item = notificationsState.items.find(function (n) { return n.id === id; });
+    if (item && !item.read_at) {
+      item.read_at = new Date().toISOString();
+      notificationsState.unreadCount = Math.max(0, notificationsState.unreadCount - 1);
+      var badge = $('notifBadge');
+      if (badge) {
+        if (notificationsState.unreadCount > 0) {
+          badge.textContent = notificationsState.unreadCount;
+          badge.hidden = false;
+        } else {
+          badge.hidden = true;
+        }
+      }
+      renderNotificationsList();
+    }
+  }
+
+  async function markAllNotificationsRead() {
+    var rpc = await db.rpc('mark_all_notifications_read');
+    if (rpc.error) {
+      await db.from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('user_id', state.profile.id)
+        .is('read_at', null);
+    }
+    notificationsState.items.forEach(function (n) { n.read_at = n.read_at || new Date().toISOString(); });
+    notificationsState.unreadCount = 0;
+    if ($('notifBadge')) $('notifBadge').hidden = true;
+    renderNotificationsList();
+    toast('All notifications marked as read.');
+  }
+
+  function toggleNotifDropdown(forceState) {
+    var dd = $('notifDropdown');
+    if (!dd) return;
+    var show = typeof forceState === 'boolean' ? forceState : dd.hidden;
+    dd.hidden = !show;
+    notificationsState.isOpen = show;
+  }
+
+  if ($('notifBellBtn')) {
+    $('notifBellBtn').addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      toggleNotifDropdown();
+    });
+  }
+
+  if ($('markAllReadBtn')) {
+    $('markAllReadBtn').addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      markAllNotificationsRead();
+    });
+  }
+
+  document.addEventListener('click', function (ev) {
+    var dd = $('notifDropdown');
+    var bell = $('notifBellBtn');
+    if (dd && !dd.hidden && !dd.contains(ev.target) && !bell.contains(ev.target)) {
+      toggleNotifDropdown(false);
+    }
+  });
+
+  /* Reports View */
+  var reportsState = {
+    subtab: 'projectsRollup',
+    projects: [],
+    members: [],
+    standups: []
+  };
+
+  async function loadReports() {
+    var tableWrap = $('reportsProjectTable');
+    if (tableWrap) tableWrap.innerHTML = '<p class="admin-empty">Loading reports data…</p>';
+
+    var projRes = await db.from('projects').select('*').order('name');
+    var tasksRes = await db.from('tasks').select('*');
+    var profilesRes = await db.from('profiles').select('*').order('full_name');
+    var standupsRes = await db.from('daily_reports').select('*, profiles(full_name, email), projects(name, key)').order('report_date', { ascending: false }).limit(40);
+
+    var projects = projRes.data || [];
+    var tasks = tasksRes.data || [];
+    var profiles = profilesRes.data || [];
+    var standups = standupsRes.data || [];
+
+    reportsState.projects = projects;
+    reportsState.members = profiles;
+    reportsState.standups = standups;
+
+    var totalTasks = tasks.length;
+    var sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    var completed7d = tasks.filter(function (t) {
+      return t.status === 'done' && t.completed_at && new Date(t.completed_at) >= sevenDaysAgo;
+    }).length;
+    var nowStr = new Date().toISOString().split('T')[0];
+    var overdue = tasks.filter(function (t) {
+      return t.status !== 'done' && t.due_date && t.due_date < nowStr;
+    }).length;
+    var activeProjs = projects.filter(function (p) { return p.status === 'active' || p.status === 'planning'; }).length;
+
+    if ($('repTotalTasks')) $('repTotalTasks').textContent = totalTasks;
+    if ($('repCompletedTasks')) $('repCompletedTasks').textContent = completed7d;
+    if ($('repOverdueTasks')) $('repOverdueTasks').textContent = overdue;
+    if ($('repActiveProjects')) $('repActiveProjects').textContent = activeProjs;
+
+    renderProjectsRollup(projects, tasks);
+    renderMembersRollup(profiles, tasks, standups);
+    renderStandupFeed(standups);
+    populateStandupProjectSelect(projects);
+  }
+
+  function renderProjectsRollup(projects, tasks) {
+    var wrap = $('reportsProjectTable');
+    if (!wrap) return;
+    if (!projects.length) {
+      wrap.innerHTML = '<p class="admin-empty">No projects found.</p>';
+      return;
+    }
+
+    var html = '<table class="admin-table"><thead><tr>' +
+      '<th>Project</th>' +
+      '<th>Status</th>' +
+      '<th>Total Tasks</th>' +
+      '<th>Done</th>' +
+      '<th>Progress</th>' +
+      '<th>Overdue</th>' +
+      '<th>Velocity (7d)</th>' +
+      '</tr></thead><tbody>';
+
+    var sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    var nowStr = new Date().toISOString().split('T')[0];
+
+    projects.forEach(function (p) {
+      var pTasks = tasks.filter(function (t) { return t.project_id === p.id; });
+      var total = pTasks.length;
+      var done = pTasks.filter(function (t) { return t.status === 'done'; }).length;
+      var percent = total ? Math.round((done / total) * 100) : 0;
+      var overdue = pTasks.filter(function (t) { return t.status !== 'done' && t.due_date && t.due_date < nowStr; }).length;
+      var vel = pTasks.filter(function (t) {
+        return t.status === 'done' && t.completed_at && new Date(t.completed_at) >= sevenDaysAgo;
+      }).length;
+
+      html += '<tr>' +
+        '<td><strong><a href="#project/' + esc(p.id) + '">' + esc(p.name) + '</a></strong> <span class="badge">' + esc(p.key) + '</span></td>' +
+        '<td><span class="badge ' + esc(p.status) + '">' + esc(p.status) + '</span></td>' +
+        '<td>' + total + '</td>' +
+        '<td>' + done + '</td>' +
+        '<td>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<div class="reports-progress-wrap" style="flex:1;"><div class="reports-progress-bar" style="width:' + percent + '%;"></div></div>' +
+            '<span style="font-size:0.75rem;font-weight:600;min-width:32px;">' + percent + '%</span>' +
+          '</div>' +
+        '</td>' +
+        '<td>' + (overdue > 0 ? '<span style="color:#ef4444;font-weight:600;">' + overdue + '</span>' : '0') + '</td>' +
+        '<td><strong>+' + vel + '</strong></td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function renderMembersRollup(profiles, tasks, standups) {
+    var wrap = $('reportsMemberTable');
+    if (!wrap) return;
+    var teamProfiles = profiles.filter(function (pr) { return pr.role !== 'client'; });
+    if (!teamProfiles.length) {
+      wrap.innerHTML = '<p class="admin-empty">No team members found.</p>';
+      return;
+    }
+
+    var html = '<table class="admin-table"><thead><tr>' +
+      '<th>Member</th>' +
+      '<th>Role</th>' +
+      '<th>Assigned</th>' +
+      '<th>In Progress</th>' +
+      '<th>Completed</th>' +
+      '<th>Overdue</th>' +
+      '<th>Hours Logged</th>' +
+      '</tr></thead><tbody>';
+
+    var nowStr = new Date().toISOString().split('T')[0];
+
+    teamProfiles.forEach(function (m) {
+      var mTasks = tasks.filter(function (t) { return t.assignee_id === m.id; });
+      var total = mTasks.length;
+      var inProg = mTasks.filter(function (t) { return t.status === 'in_progress'; }).length;
+      var done = mTasks.filter(function (t) { return t.status === 'done'; }).length;
+      var overdue = mTasks.filter(function (t) { return t.status !== 'done' && t.due_date && t.due_date < nowStr; }).length;
+      var hours = standups.filter(function (s) { return s.author_id === m.id; })
+        .reduce(function (sum, s) { return sum + (Number(s.hours) || 0); }, 0);
+
+      html += '<tr>' +
+        '<td><strong>' + esc(m.full_name || m.email) + '</strong></td>' +
+        '<td><span class="badge">' + esc(m.role) + '</span></td>' +
+        '<td>' + total + '</td>' +
+        '<td><span style="color:#3b82f6;font-weight:600;">' + inProg + '</span></td>' +
+        '<td><span style="color:#10b981;font-weight:600;">' + done + '</span></td>' +
+        '<td>' + (overdue > 0 ? '<span style="color:#ef4444;font-weight:600;">' + overdue + '</span>' : '0') + '</td>' +
+        '<td>' + (hours > 0 ? hours.toFixed(1) + ' hrs' : '—') + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function renderStandupFeed(standups) {
+    var feed = $('standupFeed');
+    if (!feed) return;
+    if (!standups.length) {
+      feed.innerHTML = '<p class="admin-empty">No standups submitted yet. Use the form to submit today\'s check-in.</p>';
+      return;
+    }
+
+    feed.innerHTML = standups.map(function (s) {
+      var authorName = (s.profiles && s.profiles.full_name) || (s.profiles && s.profiles.email) || 'Team Member';
+      var projName = (s.projects && s.projects.name) || 'Project';
+      return '<div class="standup-card">' +
+        '<div class="standup-head">' +
+          '<strong>' + esc(authorName) + ' · ' + esc(projName) + '</strong>' +
+          '<span>' + esc(s.report_date) + (s.hours ? ' · ' + esc(s.hours) + ' hrs' : '') + '</span>' +
+        '</div>' +
+        '<div class="standup-summary">' + esc(s.summary) + '</div>' +
+        (s.blockers ? '<div class="standup-blocker"><strong>Blocker:</strong> ' + esc(s.blockers) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  function populateStandupProjectSelect(projects) {
+    var sel = $('reportProjectSelect');
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">Select project…</option>' +
+      projects.map(function (p) {
+        return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' (' + esc(p.key) + ')</option>';
+      }).join('');
+    if (current) sel.value = current;
+    if ($('reportDate') && !$('reportDate').value) {
+      $('reportDate').value = new Date().toISOString().split('T')[0];
+    }
+  }
+
+  if ($('reportsSubTabs')) {
+    Array.prototype.forEach.call($('reportsSubTabs').querySelectorAll('[data-subtab]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var subtab = btn.getAttribute('data-subtab');
+        reportsState.subtab = subtab;
+        Array.prototype.forEach.call($('reportsSubTabs').querySelectorAll('[data-subtab]'), function (b) {
+          b.classList.toggle('active', b === btn);
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('.reports-subtab-pane'), function (pane) {
+          pane.hidden = pane.id !== 'pane-' + subtab;
+        });
+      });
+    });
+  }
+
+  if ($('refreshReportsBtn')) {
+    $('refreshReportsBtn').addEventListener('click', function () {
+      loadReports();
+    });
+  }
+
+  if ($('dailyReportForm')) {
+    $('dailyReportForm').addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      var btn = $('submitReportBtn');
+      var fb = $('reportFeedback');
+      btn.disabled = true;
+      if (fb) fb.textContent = 'Saving standup…';
+
+      var projId = $('reportProjectSelect').value;
+      var rDate = $('reportDate').value;
+      var rHours = parseFloat($('reportHours').value) || null;
+      var rSummary = $('reportSummary').value.trim();
+      var rBlockers = $('reportBlockers').value.trim() || null;
+
+      var res = await db.from('daily_reports').upsert({
+        project_id: projId,
+        author_id: state.profile.id,
+        report_date: rDate,
+        summary: rSummary,
+        blockers: rBlockers,
+        hours: rHours
+      }, { onConflict: 'project_id,author_id,report_date' });
+
+      btn.disabled = false;
+      if (res.error) {
+        if (fb) fb.textContent = 'Error: ' + res.error.message;
+        fail('Could not submit standup: ' + res.error.message);
+      } else {
+        if (fb) fb.textContent = 'Standup saved!';
+        toast('Daily standup report submitted.');
+        $('reportSummary').value = '';
+        $('reportBlockers').value = '';
+        loadReports();
+      }
+    });
+  }
 
   /* ---------------- start ---------------- */
 

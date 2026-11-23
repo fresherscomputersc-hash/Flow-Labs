@@ -26,54 +26,37 @@
 | `296bee1` | Project workspace shipped (detail header/progress, modules + create, people panel, 6-col Kanban, task editor, DnD status, module filter, deep links, role gating, focusable cards Enter/Space). |
 | `ce6532f` | Catch-all routing fix. |
 | `83a817e` | Content + Settings rebuild shipped + deployed + live. |
+| `84aa378` | Phase A shipped (Grouped nav, breadcrumbs, workspace container, Needs attention strip). |
+| `04d643a` | Phase B shipped (Subtabs Board/Modules/Tasks/Activity/Files/Settings, task comments, activity feed). |
+| `81301eb` | Phase C shipped (21-page CMS schema, live iframe preview Desktop/Mobile/Hide, postMessage bridge). |
+| `9b5c271` | Phase D shipped (Standalone Client Portal `/client/`, project updates, client deliverable visibility). |
+| `5c9e9aa` | Phase E shipped (Supabase Storage buckets, live blog feed <1s, unlisted draft preview). |
+| `c54e547` | Migration 0005 fix (`public.is_member()` helper function). |
 
 ## What is shipped (done)
 
-1. **SEO**: `/bhubaneswar/`, sitemap, schema, service-page location blocks.
-2. **DB migrations applied + verified from outside**: `0001_identity.sql`, `0002_work.sql`,
-   `0003_collab.sql`. Collab tables (`task_comments`, `activity`, `notifications`,
-   `daily_reports`, `attachments`, `client_updates`) return HTTP 200 `[]` for anon.
-   `project_member_directory` → `42501 permission denied` for anon (intended).
-3. **Platform API**: `api/platform/[...path].js` (JWT auth, `/me`, `/team` CRUD, `/audit`,
-   guards, client→`project_clients` assignment). Catch-all routing fix in `ce6532f`.
-4. **Flow HQ shell**: role-aware nav, Projects tab, Team tab (invite, role change, suspend/
-   restore, delete, project assignment). Admins: create projects, list team, add members.
-   Managers can create modules/tasks and change statuses.
-5. **Project workspace** (`flow-hq/`): detail header/progress, modules + create, people
-   panel, 6-column Kanban, task editor, drag-and-drop status, module filter, deep links,
-   role gating; cards focusable with Enter/Space; keyboard handler verified in browser.
-6. **Content + Settings rebuild** (`83a817e`): page rail with edit counts, hero preview,
-   grouped fields, per-field "Use default", save bar with dirty tracking, unsaved-change
-   guards; Settings split into accent/swatch, section switches, availability, search
-   appearance with counters + SERP preview; grid-overflow fix
-   (`.admin-form > *`, `.admin-view > *`, `.split > *`, `.admin-grid-2 > * { min-width: 0 }`,
-   `minmax(min(320px, 100%), 1fr)`).
-7. **Copy directive applied**: removed "Fixed quote before we start. Three founders on the
-   build. The repository is yours at handover." and "Based in Bhubaneswar, Odisha — building
-   for teams across India and abroad."; Bhubaneswar kept only at the bottom.
+1. **Phase A — Flow HQ Layout & Navigation**: Grouped nav (Workspace, Content, Site, System), breadcrumb bar, bounded `.workspace` container, and "Needs attention" strip.
+2. **Phase B — Project Collab & Workspace Finish**: 6 project subtabs (Board, Modules, Tasks, Activity, Files, Settings), task drawer comments + activity audit timeline, keyboard move menu.
+3. **Phase C — Full 21-Page CMS & Live Preview**: 21 public pages editable with live 3-mode iframe preview (Desktop, Mobile 375px, Hide) and instant postMessage bridge.
+4. **Phase D — Client Portal**: Dedicated `/client/` portal, client role routing, published milestones / updates tab, client-visible deliverable file toggles.
+5. **Phase E — Supabase Media & Publishing**: Storage buckets (`media`, `attachments`), live blog index feed (<1s), draft preview mode (`/blog/?preview=<slug>`), markdown image upload.
+6. **Phase F — Notifications, Realtime & Reports**: Supabase realtime subscriptions (`tasks`, `task_comments`, `activity`, `notifications`), topbar realtime badge, notification bell + unread badge + popover dropdown, live toast notifications, reports view (projects rollup, team workload, daily standup submissions & log), automated notification DB triggers (`0006_notifications_triggers.sql`), and email notification + digest endpoints (`POST /api/platform/notify`, `POST /api/platform/digest`).
 
 ## Not yet done (plan-driven)
 
-- **UI changes you specified that were NOT delivered** — all in `ADMIN-REDESIGN-PLAN.md`.
-- **Admin panel structural change** — user: "looks so much confusing and absurd".
-- **Task comments + project activity feed UI** — DB tables live (0003), UI missing.
-- Client portal `/client/` — DB ready (`client`, `project_clients`, `client_updates`),
-  surface not built; `enter()` still blocks client logins.
-- Blog/CMS Phase C — `assets/site-cms.js` `PAGE_MAP` only covers 4 pages.
-- Publishing Phase E — needs private Supabase storage bucket (user to create).
-- GitHub Phase G — needs user to install GitHub App.
-- Notifications/realtime Phase F, hardening Phase H.
+- **Phase G — GitHub App**: Webhook integration for repo commits, PRs, issue linking (`FLW-\d+`).
+- **Phase H — Hardening**: Security review, CSP, rate limits, Playwright e2e, backup/restore drill.
 
 ## Agreed phase order
 
-1. Database — **done**
-2. Workspace finish (task comments + activity feed) — **next** — **Phase B testing not started**: DB tables (0003) are live but UI implementation incomplete; task drawer, activity feed, sub-tabs, keyboard "Move to…" need verification
-3. Every page editable
-4. Client portal
-5. Publishing
-6. Notifications / realtime
-7. GitHub
-8. Hardening
+1. Phase A — Flow HQ Layout & Navigation — **done** (`84aa378`)
+2. Phase B — Workspace Collab Finish — **done** (`04d643a`)
+3. Phase C — Every Page Editable — **done** (`81301eb`)
+4. Phase D — Client Portal — **done** (`9b5c271`)
+5. Phase E — Publishing & Media — **done** (`5c9e9aa`)
+6. Phase F — Notifications, Realtime & Reports — **done**
+7. Phase G — GitHub Integration — **next**
+8. Phase H — Hardening & Production Cutover
 
 ## Pending operational tasks (user to do)
 
