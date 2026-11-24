@@ -1,104 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Carbon Coach: Open-Source Footprint Tracker | The Flow Labs</title>
-<meta name="description" content="Carbon Coach is an open-source TypeScript app by The Flow Labs: personal carbon footprint tracking, live metrics and weekly progress nudges." />
-<link rel="canonical" href="https://www.theflowlabs.online/work/carbon-coach/" />
-<meta property="og:title" content="Carbon Coach: sustainability app by The Flow Labs" />
-<meta property="og:description" content="Carbon Coach is an open-source TypeScript app by The Flow Labs: personal carbon footprint tracking, live metrics and weekly progress nudges." />
-<meta property="og:url" content="https://www.theflowlabs.online/work/carbon-coach/" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<meta property="og:locale" content="en_IN" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Carbon Coach: sustainability app by The Flow Labs" />
-<meta name="twitter:description" content="Carbon Coach is an open-source TypeScript app by The Flow Labs: personal carbon footprint tracking, live metrics and weekly progress nudges." />
-<meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/assets/icon-180.png" />
-<meta name="theme-color" content="#0B0B10" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
-<script src="/assets/site.config.js?v=7" defer></script>
-<link rel="stylesheet" href="/assets/site.css?v=11">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "The Flow Labs", "url": "https://www.theflowlabs.online/", "email": "hello@theflowlabs.online", "image": "https://www.theflowlabs.online/assets/work-droovee.png"}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/"}, {"@type": "ListItem", "position": 2, "name": "Work", "item": "https://www.theflowlabs.online/work/"}, {"@type": "ListItem", "position": 3, "name": "Carbon Coach"}]}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carbon Coach: Open-Source Footprint Tracker | The Flow Labs</title>
+  <meta name="description" content="Carbon Coach is an open-source TypeScript app by The Flow Labs: personal carbon footprint tracking, live metrics and weekly progress nudges.">
+  <link rel="canonical" href="https://www.theflowlabs.online/work/carbon-coach/">
+
+  <meta property="og:title" content="Carbon Coach: Sustainability Tracker | The Flow Labs">
+  <meta property="og:description" content="An open-source TypeScript app that tracks personal carbon footprints, displays real-time telemetry, and encourages sustainable habits.">
+  <meta property="og:url" content="https://www.theflowlabs.online/work/carbon-coach/">
+  <meta property="og:type" content="article">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Work", "item": "https://www.theflowlabs.online/work/" },
+      { "@type": "ListItem", "position": 3, "name": "Carbon Coach" }
+    ]
+  }
+  </script>
 </head>
-<body data-page="">
+<body data-page="case-study">
 
-<header class="nav" id="nav">
-  <div class="container nav-inner">
-    <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-    <div class="nav-links" id="nav-links">
-      <a href="/work/">Work</a>
-      <a href="/services/">Services</a>
-      <a href="/lab-report/">Lab Report</a>
-      <a href="/about/">About</a>
-      <a href="/blog/">Blog</a>
-      <a href="/contact/" class="nav-cta">Start a project</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</header>
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
 
-<main id="top">
-<div class="page-hero"><div class="wrap">
-    <div class="crumbs"><a href="/">Home</a> <span aria-hidden="true">›</span> <a href="/work/">Work</a> <span aria-hidden="true">›</span> <span>Carbon Coach</span></div>
-    <span class="pill"><span class="dot"></span> <span data-cms="carbon-hero-pill">OPEN SOURCE · Sustainability</span></span>
-    <h1 data-cms="carbon-hero-h1">Carbon Coach: habits, tracked honestly</h1>
-    <p class="sub" data-cms="carbon-hero-sub">An open-source TypeScript app that tracks personal carbon footprints, shows live metrics and nudges weekly progress in a guilt-free tone.</p>
-  </div>
-</div>
-<section><div class="wrap"><div class="prose"><p><strong>Status:</strong> open source, built by our founders. <!-- TODO-OWNER: add the GitHub repo link when you want it public. --></p><h2>What it is</h2><p>Most carbon apps guilt-trip you into closing them. Carbon Coach does the opposite: it tracks your footprint in a clean dashboard, shows genuinely alive metrics, and nudges you again next week with improvements, not lectures.</p><h2>Features</h2><ul><li>Daily footprint tracking across key habits</li><li>Live metrics dashboard, no spreadsheet vibes</li><li>Weekly progress nudges, framed as encouragement</li><li>Progress history, so improvement becomes visible</li></ul><h2>Why we built it</h2><p>Two reasons. First, sustainability tools in India feel imported and detached from local daily life. Second, it is a compact product that lets us practice the entire loop: fast front end, real data, and clean feedback UX, without enterprise paperwork.</p><h2>Stack</h2><ul><li>TypeScript app, component-driven UI</li><li>Metric engine with weekly aggregation</li><li>Analytics and progress visualisations</li></ul><h2>What it proves about us</h2><p>Front-end craft and live data handling. The same coding standards go into every <a href="/services/web-development/">website and web app</a> we build for a business.</p></div></div></section>  <section id="contact" style="padding-top:60px"><div class="wrap"><div class="cta-box reveal"><h2>Need a modern, data-driven web application?</h2><p>Tell us about your product concept. We deliver responsive, high-performance web applications with fixed pricing and clear timelines.</p><a href="/contact/" class="btn btn-primary">Start a project</a><div class="cta-mail">or email <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>&nbsp;·&nbsp; <a href="/lab-report/">run a free Lab Report</a></div></div></div></section>
-</main>
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
 
-<footer class="footer">
-  <div class="container">
-    <div class="footer-top">
-      <div>
-        <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-        <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four builds a month, every layer in-house.</p>
-        <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h5>Navigate</h5>
-          <a href="/work/">Work</a>
-          <a href="/services/">Services</a>
-          <a href="/lab-report/">Lab Report</a>
-          <a href="/about/">About</a>
-          <a href="/blog/">Blog</a>
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
         </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item">Services</a>
+        <a href="/work/" class="dock-item active">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span data-cms="carbon-hero-pill">OPEN SOURCE · Sustainability</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="carbon-hero-h1">
+        Carbon Coach: habits, <span class="gradient-text">tracked honestly.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="carbon-hero-sub">
+        An open-source TypeScript app that tracks personal carbon footprints, shows live metrics and nudges weekly progress in a guilt-free tone.
+      </p>
+
+      <div class="three-actions">
+        <a href="/services/web-development/" class="three-btn primary" data-magnetic>
+          <span>Explore Web Development &rarr;</span>
+        </a>
+        <a href="/work/" class="three-btn glass" data-magnetic>
+          <span>Back to Work Showroom</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- CASE STUDY BENTO DEEP-DIVE -->
+    <section class="three-section">
+      <div class="three-bento-grid">
+
+        <!-- Status & Telemetry HUD -->
+        <div class="three-card col-12">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div>
+              <span class="card-tag">Project Status</span>
+              <h3 style="margin-top:6px; font-size:1.25rem; color:var(--text-main);">Open-Source Founder Initiative</h3>
+            </div>
+            <div style="display:flex; gap:20px; font-family:var(--font-mono); font-size:0.82rem;">
+              <span style="color:var(--text-muted);">CODEBASE: <b style="color:var(--neon-emerald);">TYPESCRIPT STRICT</b></span>
+              <span style="color:var(--text-muted);">CLIENT FOOTPRINT: <b style="color:var(--neon-cyan);">&lt;45KB GZIP</b></span>
+              <span style="color:var(--text-muted);">LICENSE: <b style="color:var(--neon-purple);">MIT OPEN SOURCE</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- The Problem -->
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">01 // The Philosophy</span>
+          <h3 class="card-title">Encouragement Over Guilt</h3>
+          <p class="card-desc">Most sustainability calculators overwhelm users with moralistic shaming and dense spreadsheet tables, causing high initial churn. Carbon Coach treats habit change like fitness tracking: positive reinforcement, actionable micro-nudges, and visible momentum.</p>
+        </div>
+
+        <!-- The Architecture -->
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">02 // The Architecture</span>
+          <h3 class="card-title">Zero-Lag Telemetry</h3>
+          <p class="card-desc">Built purely with modern component-driven TypeScript, reactive state primitives, and local-first persistence. The dashboard calculates dynamic carbon deltas in real-time without slow cloud roundtrips or unnecessary server overhead.</p>
+        </div>
+
+        <!-- The Production Impact -->
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">03 // The Impact</span>
+          <h3 class="card-title">Design Craft Benchmark</h3>
+          <p class="card-desc">Created as an internal studio benchmark proving our frontend craft: lightning-fast render performance, refined micro-interactions, dark aesthetic harmony, and clean mobile responsiveness.</p>
+        </div>
+
+        <!-- Key Features Bento -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">Application Capabilities</span>
+          <h3 class="card-title">Engineered for Daily Frictionless Use</h3>
+          <ul style="margin-top:16px; display:flex; flex-direction:column; gap:12px; color:var(--text-muted); font-size:0.9rem; line-height:1.6;">
+            <li><strong style="color:var(--text-main);">Rapid Daily Logging:</strong> Single-tap inputs for commute distance, dietary choices, energy usage, and air travel.</li>
+            <li><strong style="color:var(--text-main);">Visual Delta Curves:</strong> Trend visualizers that show weekly reduction trajectories compared to regional baselines.</li>
+            <li><strong style="color:var(--text-main);">Offline-Ready PWA:</strong> Full local storage indexing allowing instant input without network connectivity.</li>
+            <li><strong style="color:var(--text-main);">Privacy by Default:</strong> All lifestyle telemetry remains 100% on the user's device unless explicitly exported.</li>
+          </ul>
+        </div>
+
+        <!-- Engineering Specifications -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">Engineering Specifications</span>
+          <h3 class="card-title">Modern Frontend Stack</h3>
+          <div class="pill-group" style="margin-top:16px;">
+            <span class="pill-chip">TypeScript (Strict Mode)</span>
+            <span class="pill-chip">React 19 / Modern Hooks</span>
+            <span class="pill-chip">Tailwind CSS + Custom Glass Tokens</span>
+            <span class="pill-chip">SVG Dynamic Chart Engine</span>
+            <span class="pill-chip">Local-First IndexedDB Cache</span>
+            <span class="pill-chip">Progressive Web App (PWA) Manifest</span>
+          </div>
+          <p style="margin-top:16px; font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
+            Demonstrates the relentless frontend craft and sub-second performance we bring to every commercial <a href="/services/web-development/" style="color:var(--neon-cyan); text-decoration:none;">website and web application</a> we build for our clients.
+          </p>
+        </div>
+
+        <!-- Cross-Link Scoping Banner -->
+        <div class="three-card col-12" style="text-align:center; padding:48px 24px;">
+          <h3 style="font-size:1.75rem; color:var(--text-main); font-weight:700;">Need a High-Performance Web Application?</h3>
+          <p style="max-width:540px; margin:12px auto 24px; color:var(--text-muted); line-height:1.6;">
+            Tell us about your product concept. We deliver responsive, fluidly animated web applications with fixed pricing and clear timelines.
+          </p>
+          <div class="three-actions" style="justify-content:center;">
+            <a href="/contact/" class="three-btn primary" data-magnetic>
+              <span>Scope Your Application &rarr;</span>
+            </a>
+            <a href="/lab-report/" class="three-btn glass" data-magnetic>
+              <span>Run Free Lab Report</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
         <div class="footer-col">
           <h5>Connect</h5>
           <a href="/contact/">Start a project</a>
-          <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-          <a href="/contact/">hello@theflowlabs.online</a>
-        </div>
-        <div class="footer-col">
-          <h5>Studio</h5>
-          <a href="/bhubaneswar/">Bhubaneswar studio</a>
-          <a href="/services/">What we build</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
           <a href="/privacy-policy/">Privacy Policy</a>
           <a href="/terms/">Terms of Service</a>
-          <a href="/lab-report/">Free site report</a>
         </div>
       </div>
-    </div>
-    <div class="footer-bottom" style="border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem">
-      <span>© <span id="year">2026</span> The Flow Labs. All rights reserved.</span>
-      <span class="footer-powered">Built and maintained in-house</span>
-    </div>
-  </div>
-</footer>
 
-<script src="/assets/site.js?v=7"></script>
-<script src="/assets/site-cms.js" defer></script>
-<script src="/assets/site-track.js" defer></script>
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>

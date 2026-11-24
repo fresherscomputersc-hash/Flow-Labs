@@ -1,104 +1,319 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Work — Live, In-House and Open Source | The Flow Labs</title>
-<meta name="description" content="Live products and in-house systems built by The Flow Labs: a chauffeur booking platform, fleet operations AI, support triage, land intelligence and open-source apps." />
-<link rel="canonical" href="https://www.theflowlabs.online/work/" />
-<meta property="og:title" content="Work by The Flow Labs: interfaces, systems, intelligence" />
-<meta property="og:description" content="Live products and in-house systems built by The Flow Labs: a chauffeur booking platform, fleet operations AI, support triage, land intelligence and open-source apps." />
-<meta property="og:url" content="https://www.theflowlabs.online/work/" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<meta property="og:locale" content="en_IN" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Work by The Flow Labs: interfaces, systems, intelligence" />
-<meta name="twitter:description" content="Live products and in-house systems built by The Flow Labs: a chauffeur booking platform, fleet operations AI, support triage, land intelligence and open-source apps." />
-<meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/assets/icon-180.png" />
-<meta name="theme-color" content="#0B0B10" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
-<script src="/assets/site.config.js?v=7" defer></script>
-<link rel="stylesheet" href="/assets/site.css?v=11">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "The Flow Labs", "url": "https://www.theflowlabs.online/", "email": "hello@theflowlabs.online", "image": "https://www.theflowlabs.online/assets/work-droovee.png"}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/"}, {"@type": "ListItem", "position": 2, "name": "Work"}]}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work — Live, In-House and Open Source | The Flow Labs</title>
+  <meta name="description" content="Production applications, operations consoles and open-source tools engineered by The Flow Labs. Every project is running live, in-house, or on GitHub.">
+  <link rel="canonical" href="https://www.theflowlabs.online/work/">
+
+  <meta property="og:title" content="Work — Live, In-House and Open Source | The Flow Labs">
+  <meta property="og:description" content="Production software built in-house. Droovee, Drishti, FlowOps, BHOOMI, and more.">
+  <meta property="og:url" content="https://www.theflowlabs.online/work/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+  <meta property="og:locale" content="en_IN">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Work — Live, In-House and Open Source | The Flow Labs">
+  <meta name="twitter:description" content="Production software built in-house. Droovee, Drishti, FlowOps, BHOOMI, and more.">
+  <meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN for WebGL procedural wave field -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Work" }
+    ]
+  }
+  </script>
 </head>
-<body data-page="">
+<body data-page="work">
 
-<header class="nav" id="nav">
-  <div class="container nav-inner">
-    <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-    <div class="nav-links" id="nav-links">
-      <a href="/work/">Work</a>
-      <a href="/services/">Services</a>
-      <a href="/lab-report/">Lab Report</a>
-      <a href="/about/">About</a>
-      <a href="/blog/">Blog</a>
-      <a href="/contact/" class="nav-cta">Start a project</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</header>
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
 
-<main id="top">
-<div class="page-hero"><div class="wrap">
-    <div class="crumbs"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>Work</span></div>
-    <span class="pill"><span class="dot"></span> <span data-cms="work-hero-label">Selected Work & Systems</span></span>
-    <h1 data-cms="work-hero-title">Built in the lab. <span class="grad">Running in production.</span></h1>
-    <p class="sub" data-cms="work-hero-subtitle">Every project below is either live, running in-house, or open source. No invented metrics — the label on each card is one we can prove.</p>
-  </div>
-</div>
-<section><div class="wrap"><div class="work-filter" data-work-filter role="group" aria-label="Filter work"><button type="button" data-filter="all" aria-pressed="true">All</button><button type="button" data-filter="web" aria-pressed="false">Interfaces</button><button type="button" data-filter="software" aria-pressed="false">Systems</button><button type="button" data-filter="ai" aria-pressed="false">Intelligence</button><button type="button" data-filter="oss" aria-pressed="false">Open source</button></div><div class="work-grid" style="margin-top:24px"><a class="work reveal" href="/work/droovee/" data-cat="web software"><div class="thumb"><img src="/assets/work-droovee.png" alt="Droovee project by The Flow Labs" width="1440" height="900" loading="lazy" decoding="async"></div><div class="wbody"><div class="wtop"><h3>Droovee</h3><span class="meta">LIVE</span></div><p>An on-demand chauffeur booking platform: verified drivers, transparent fares, instant trip requests and a live operations view behind it.</p><div class="wlink">Case study <span aria-hidden="true">→</span></div></div></a><a class="work reveal" href="/work/qr-platform/" data-cat="web software"><div class="thumb"><img src="/assets/work-qrplatform.svg" alt="QR Business Platform project by The Flow Labs" loading="lazy" decoding="async"></div><div class="wbody"><div class="wtop"><h3>QR Business Platform</h3><span class="meta">LIVE</span></div><p>One stable QR code per business resolves to a fast, always-current mobile page. Centrally managed, tracked per scan. Passcode demo on this site.</p><div class="wlink">Case study <span aria-hidden="true">→</span></div></div></a><a class="work reveal" href="/work/drishti/" data-cat="software ai"><div class="thumb"><img src="/assets/work-drishti.png" alt="Drishti project by The Flow Labs" width="1440" height="900" loading="lazy" decoding="async"></div><div class="wbody"><div class="wtop"><h3>Drishti</h3><span class="meta">IN-HOUSE</span></div><p>Fleet operations console: live telemetry, demand forecasting and risk scoring for a state transport network.</p><div class="wlink">Case study <span aria-hidden="true">→</span></div></div></a><a class="work reveal" href="/work/flowops/" data-cat="ai software"><div class="thumb"><img src="/assets/work-flowops.png" alt="FlowOps project by The Flow Labs" width="1440" height="900" loading="lazy" decoding="async"></div><div class="wbody"><div class="wtop"><h3>FlowOps</h3><span class="meta">IN-HOUSE</span></div><p>An AI triage layer for support teams: classifies every ticket, drafts the reply, escalates what needs a human.</p><div class="wlink">Case study <span aria-hidden="true">→</span></div></div></a><a class="work reveal" href="/work/interview-copilot/" data-cat="ai oss"><div class="thumb"><img src="/assets/work-interviewcopilot.svg" alt="Interview Copilot project by The Flow Labs" loading="lazy" decoding="async"></div><div class="wbody"><div class="wtop"><h3>Interview Copilot</h3><span class="meta">OPEN SOURCE</span></div><p>An AI interview companion: prepare, rehearse and improve with real-time coaching and structured feedback.</p><div class="wlink">Case study <span aria-hidden="true">→</span></div></div></a><a class="work reveal" href="/work/bhuverify/" data-cat="software oss"><div class="thumb"><img src="/assets/work-bhoomi.svg" alt="BHOOMI project by The Flow Labs" loading="lazy" decoding="async"></div><div class="wbody"><div class="wtop"><h3>BHOOMI</h3><span class="meta">IN-HOUSE</span></div><p>BhumiStack, BHOOMI and Bhuverify: a land-intelligence stack for maps, verification and property workflows.</p><div class="wlink">Case study <span aria-hidden="true">→</span></div></div></a><a class="work reveal" href="/work/carbon-coach/" data-cat="web oss"><div class="thumb"><img src="/assets/work-carboncoach.svg" alt="Carbon Coach project by The Flow Labs" loading="lazy" decoding="async"></div><div class="wbody"><div class="wtop"><h3>Carbon Coach</h3><span class="meta">OPEN SOURCE</span></div><p>An open-source TypeScript app that tracks and coaches personal carbon footprints.</p><div class="wlink">Case study <span aria-hidden="true">→</span></div></div></a></div><p class="work-note reveal">Every project on this page links to a case study we can point at. If it is not live, running in-house, or open source, it does not belong here.</p></div></section>
-</main>
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
 
-<footer class="footer">
-  <div class="container">
-    <div class="footer-top">
-      <div>
-        <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-        <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four builds a month, every layer in-house.</p>
-        <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h5>Navigate</h5>
-          <a href="/work/">Work</a>
-          <a href="/services/">Services</a>
-          <a href="/lab-report/">Lab Report</a>
-          <a href="/about/">About</a>
-          <a href="/blog/">Blog</a>
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
         </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item">Services</a>
+        <a href="/work/" class="dock-item active">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span data-cms="work-hero-label">Selected Work &amp; Production Systems</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="work-hero-title">
+        Built in the lab. <span class="gradient-text">Running in production.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="work-hero-subtitle">
+        Every project below is either live, running in-house, or open source. No vanity case studies — the label on each card is verified with code.
+      </p>
+
+      <div class="three-actions">
+        <a href="/contact/" class="three-btn primary" data-magnetic>
+          <span>Commission a Project</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="m12 5 7 7-7 7"></path>
+          </svg>
+        </a>
+        <a href="#projects" class="three-btn glass" data-magnetic>
+          <span>Browse 7 Case Studies</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- WORK PORTFOLIO BENTO GRID -->
+    <section class="three-section" id="projects">
+      <div class="section-eyebrow">Production Portfolio</div>
+      <h2 class="section-heading">Verified engineering deployments.</h2>
+      <p class="section-subtext">Click any case study for architecture diagrams, technical decisions, and live links.</p>
+
+      <div class="three-bento-grid">
+
+        <!-- 1. Droovee -->
+        <div class="three-card col-8" data-three-tilt>
+          <div class="project-cover-viewport">
+            <img src="/assets/work-droovee.png" alt="Droovee Chauffeur Platform" loading="lazy">
+            <div class="status-tag live">
+              <span class="dot"></span>
+              <span>LIVE IN PRODUCTION</span>
+            </div>
+          </div>
+          <span class="card-tag">Mobility Platform // Web &amp; Realtime</span>
+          <h3 class="card-title">Droovee — On-Demand Chauffeur Booking Platform</h3>
+          <p class="card-desc">End-to-end multi-role web platform powering chauffeur bookings across India. Features real-time distance calculations, dynamic pricing algorithms, customer self-service portal, and operational fleet dispatch.</p>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+            <div class="pill-group">
+              <span class="pill-chip">React</span>
+              <span class="pill-chip">Supabase Realtime</span>
+              <span class="pill-chip">PostgreSQL</span>
+            </div>
+            <a href="/work/droovee/" style="color:#FFFFFF; text-decoration:none; font-weight:600; font-size:0.85rem;">Inspect Architecture &rarr;</a>
+          </div>
+        </div>
+
+        <!-- 2. Drishti AI -->
+        <div class="three-card col-4" data-three-tilt>
+          <div class="project-cover-viewport">
+            <img src="/assets/work-drishti.png" alt="Drishti Vision AI" loading="lazy">
+            <div class="status-tag">
+              <span style="width:6px; height:6px; border-radius:50%; background:var(--neon-cyan); box-shadow:0 0 8px var(--neon-cyan);"></span>
+              <span>IN-HOUSE LAB</span>
+            </div>
+          </div>
+          <span class="card-tag">Computer Vision // Intelligence</span>
+          <h3 class="card-title">Drishti AI</h3>
+          <p class="card-desc">Multi-stream computer vision telemetry console for physical inspection and real-time anomaly detection.</p>
+          <div style="margin-top:auto; padding-top:16px; display:flex; justify-content:space-between; align-items:center;">
+            <span class="pill-chip">YOLOv8</span>
+            <a href="/work/drishti/" style="color:#FFFFFF; text-decoration:none; font-weight:600; font-size:0.85rem;">Deep Dive &rarr;</a>
+          </div>
+        </div>
+
+        <!-- 3. FlowOps -->
+        <div class="three-card col-4" data-three-tilt>
+          <div class="project-cover-viewport">
+            <img src="/assets/work-flowops.png" alt="FlowOps Orchestrator" loading="lazy">
+            <div class="status-tag">
+              <span style="width:6px; height:6px; border-radius:50%; background:var(--neon-purple); box-shadow:0 0 8px var(--neon-purple);"></span>
+              <span>IN-HOUSE</span>
+            </div>
+          </div>
+          <span class="card-tag">Automation // Support AI</span>
+          <h3 class="card-title">FlowOps Orchestrator</h3>
+          <p class="card-desc">AI support ticket triage console that classifies incoming issues, drafts structured responses, and routes high-priority cases.</p>
+          <div style="margin-top:auto; padding-top:16px; display:flex; justify-content:space-between; align-items:center;">
+            <span class="pill-chip">FastAPI</span>
+            <a href="/work/flowops/" style="color:#FFFFFF; text-decoration:none; font-weight:600; font-size:0.85rem;">Deep Dive &rarr;</a>
+          </div>
+        </div>
+
+        <!-- 4. BHOOMI (BhuVerify) -->
+        <div class="three-card col-4" data-three-tilt>
+          <div class="project-cover-viewport">
+            <img src="/assets/work-bhoomi.svg" alt="BHOOMI Land Intelligence" loading="lazy" style="background:#0F172A; padding:20px; object-fit:contain;">
+            <div class="status-tag">
+              <span style="width:6px; height:6px; border-radius:50%; background:var(--neon-emerald); box-shadow:0 0 8px var(--neon-emerald);"></span>
+              <span>IN-HOUSE</span>
+            </div>
+          </div>
+          <span class="card-tag">Geo + Data // Systems</span>
+          <h3 class="card-title">BHOOMI &amp; BhuVerify</h3>
+          <p class="card-desc">Comprehensive land-intelligence stack: geospatial mapping, registry verification, and property-data workflows in one system.</p>
+          <div style="margin-top:auto; padding-top:16px; display:flex; justify-content:space-between; align-items:center;">
+            <span class="pill-chip">GIS / Spatial</span>
+            <a href="/work/bhuverify/" style="color:#FFFFFF; text-decoration:none; font-weight:600; font-size:0.85rem;">Deep Dive &rarr;</a>
+          </div>
+        </div>
+
+        <!-- 5. QR Business Platform -->
+        <div class="three-card col-4" data-three-tilt>
+          <div class="project-cover-viewport">
+            <img src="/assets/work-droovee.png" alt="QR Platform" loading="lazy">
+            <div class="status-tag live">
+              <span class="dot"></span>
+              <span>LIVE PRODUCT</span>
+            </div>
+          </div>
+          <span class="card-tag">Managed Pages // QR</span>
+          <h3 class="card-title">QR Business Platform</h3>
+          <p class="card-desc">Centralized multi-business QR platform: stable QR codes and fast, mobile-friendly landing pages maintained end-to-end.</p>
+          <div style="margin-top:auto; padding-top:16px; display:flex; justify-content:space-between; align-items:center;">
+            <span class="pill-chip">Dynamic Routing</span>
+            <a href="/work/qr-platform/" style="color:#FFFFFF; text-decoration:none; font-weight:600; font-size:0.85rem;">Deep Dive &rarr;</a>
+          </div>
+        </div>
+
+        <!-- 6. Carbon Coach -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">Open Source // Sustainability</span>
+          <h3 class="card-title">Carbon Coach</h3>
+          <p class="card-desc">An open-source TypeScript app that tracks personal carbon footprints, displays live metric gauges, and nudges weekly progress in a guilt-free tone.</p>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+            <div class="pill-group">
+              <span class="pill-chip">TypeScript</span>
+              <span class="pill-chip">React</span>
+              <span class="pill-chip">Open Source</span>
+            </div>
+            <a href="/work/carbon-coach/" style="color:#FFFFFF; text-decoration:none; font-weight:600; font-size:0.85rem;">Read Case Study &rarr;</a>
+          </div>
+        </div>
+
+        <!-- 7. Interview Copilot -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">Open Source // AI Copilot</span>
+          <h3 class="card-title">INTERVIEW-COPILOT</h3>
+          <p class="card-desc">An open-source AI companion that helps software candidates prepare, rehearse, and improve with real-time coaching and structured feedback.</p>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+            <div class="pill-group">
+              <span class="pill-chip">Python</span>
+              <span class="pill-chip">LLM Chains</span>
+              <span class="pill-chip">GitHub</span>
+            </div>
+            <a href="/work/interview-copilot/" style="color:#FFFFFF; text-decoration:none; font-weight:600; font-size:0.85rem;">Read Case Study &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CALLOUT SECTION -->
+    <section class="three-section">
+      <div class="three-card col-12" style="background:rgba(18, 24, 38, 0.7); padding:48px 40px; text-align:center;">
+        <span class="card-tag">Launch Your Platform</span>
+        <h3 class="card-title" style="font-size:2.2rem;">Have a project requiring similar craft?</h3>
+        <p class="card-desc" style="max-width:600px; margin:0 auto 24px;">We cap our capacity at four builds a month to maintain this level of execution across every line of code.</p>
+        <a href="/contact/" class="three-btn primary" data-magnetic>
+          <span>Schedule Scoping Session</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
         <div class="footer-col">
           <h5>Connect</h5>
           <a href="/contact/">Start a project</a>
-          <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-          <a href="/contact/">hello@theflowlabs.online</a>
-        </div>
-        <div class="footer-col">
-          <h5>Studio</h5>
-          <a href="/bhubaneswar/">Bhubaneswar studio</a>
-          <a href="/services/">What we build</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
           <a href="/privacy-policy/">Privacy Policy</a>
           <a href="/terms/">Terms of Service</a>
-          <a href="/lab-report/">Free site report</a>
         </div>
       </div>
-    </div>
-    <div class="footer-bottom" style="border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem">
-      <span>© <span id="year">2026</span> The Flow Labs. All rights reserved.</span>
-      <span class="footer-powered">Built and maintained in-house</span>
-    </div>
-  </div>
-</footer>
 
-<script src="/assets/site.js?v=7"></script>
-<script src="/assets/site-cms.js" defer></script>
-<script src="/assets/site-track.js" defer></script>
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
