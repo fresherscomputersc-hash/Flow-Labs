@@ -1,104 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Privacy Policy | The Flow Labs</title>
-<meta name="description" content="What The Flow Labs collects when you submit an enquiry, why, where it is stored, how long it is kept and how to have it deleted." />
-<link rel="canonical" href="https://www.theflowlabs.online/privacy-policy/" />
-<meta property="og:title" content="Privacy policy | The Flow Labs" />
-<meta property="og:description" content="What The Flow Labs collects when you submit an enquiry, why, where it is stored, how long it is kept and how to have it deleted." />
-<meta property="og:url" content="https://www.theflowlabs.online/privacy-policy/" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<meta property="og:locale" content="en_IN" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Privacy policy | The Flow Labs" />
-<meta name="twitter:description" content="What The Flow Labs collects when you submit an enquiry, why, where it is stored, how long it is kept and how to have it deleted." />
-<meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/assets/icon-180.png" />
-<meta name="theme-color" content="#0B0B10" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
-<script src="/assets/site.config.js?v=7" defer></script>
-<link rel="stylesheet" href="/assets/site.css?v=11">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "The Flow Labs", "url": "https://www.theflowlabs.online/", "email": "hello@theflowlabs.online", "image": "https://www.theflowlabs.online/assets/work-droovee.png"}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/"}, {"@type": "ListItem", "position": 2, "name": "Privacy Policy"}]}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy | The Flow Labs</title>
+  <meta name="description" content="What The Flow Labs collects when you submit an enquiry, why, where it is stored, how long it is kept and how to have it deleted.">
+  <link rel="canonical" href="https://www.theflowlabs.online/privacy-policy/">
+
+  <meta property="og:title" content="Privacy Policy | The Flow Labs">
+  <meta property="og:description" content="Written in plain human English: what data we store, zero advertising trackers, and our data deletion commitments.">
+  <meta property="og:url" content="https://www.theflowlabs.online/privacy-policy/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Privacy Policy" }
+    ]
+  }
+  </script>
+
+  <style>
+    .legal-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .legal-body h2 {
+      font-size: 1.35rem;
+      color: var(--text-main);
+      margin: 32px 0 14px;
+      font-weight: 700;
+    }
+    .legal-body p {
+      font-size: 0.98rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+    .legal-body ul {
+      margin: 12px 0 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .legal-body li strong {
+      color: var(--text-main);
+    }
+  </style>
 </head>
-<body data-page="">
+<body data-page="privacy">
 
-<header class="nav" id="nav">
-  <div class="container nav-inner">
-    <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-    <div class="nav-links" id="nav-links">
-      <a href="/work/">Work</a>
-      <a href="/services/">Services</a>
-      <a href="/lab-report/">Lab Report</a>
-      <a href="/about/">About</a>
-      <a href="/blog/">Blog</a>
-      <a href="/contact/" class="nav-cta">Start a project</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</header>
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
 
-<main id="top">
-<div class="page-hero"><div class="wrap">
-    <div class="crumbs"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>Privacy Policy</span></div>
-    <span class="pill"><span class="dot"></span> <span>Written in human, not legalese</span></span>
-    <h1 data-cms="privacy-hero-title">Privacy policy</h1>
-    <p class="sub" data-cms="privacy-hero-subtitle">What we collect when you enquire, why, how long we keep it and how to make us forget you.</p>
-  </div>
-</div>
-<section><div class="wrap"><div class="prose"><p>Last updated: 2026-11-05. This applies to www.theflowlabs.online and every enquiry or Lab Report you send us from it.</p><h2>What we collect</h2><ul><li><strong>What you type into our forms:</strong> your name, email or phone, project type, project description and budget range.</li><li><strong>Technical metadata, automatically:</strong> your browser’s user-agent string and the page source tag (for understanding where enquirers came from).</li><li><strong>Anonymous page views:</strong> we count visits to understand which pages are useful. This is cookie-less: no cookies, no localStorage, no fingerprinting, no IP address stored, and no personal data attached.</li></ul><p>We do not run advertising trackers, third-party analytics, or analytics cookies.</p><h2>The Lab Report</h2><p>The Lab Report is a free public-URL scanner. It fetches the page you paste and scores it with Google PageSpeed Insights, then shows you the result. We store the URL you scanned and the returned scores for 24 hours so repeat scans are fast and so we do not hammer the free API. We do not store your IP address beyond the five-minute rate limit check, and we never attach a scan to an enquiry unless you send one. Nothing about your site is published.</p><h2>Analytics in plain language</h2><p>Each page view creates one anonymous row: the path, the referring site’s domain, a coarse device category (mobile, tablet, desktop) and a timestamp. We cannot identify you from it, and it is never linked to an enquiry you submit. If your browser sends Do Not Track, we skip the count entirely.</p><h2>Why we collect it</h2><ul><li>To reply to your enquiry with scope, timeline and pricing.</li><li>To understand which of our services attract interest, in aggregate.</li></ul><h2>Where it lives and who sees it</h2><p>Submissions are stored in a Supabase database controlled by us, and a copy of each new enquiry reaches our own inbox by email. It is read by The Flow Labs founders only. We do not sell your data, share it with marketers, or subscribe you to anything.</p><h2>How long we keep it</h2><p>Active enquiries are kept while the project conversation is alive. If you tell us (or a reasonable period passes without contact), we delete the enquiry record.</p><h2>Your choices</h2><ul><li>Ask us anything about your data: <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>.</li><li>Ask us to delete your enquiry and we will do it, no interrogation.</li><li>Send enquiries without the form: just email or DM us directly.</li></ul><h2>Changes</h2><p>If this policy changes, the updated date at the top changes. That is all the ceremony you get, because that is all the ceremony exists.</p></div></div></section>
-</main>
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
 
-<footer class="footer">
-  <div class="container">
-    <div class="footer-top">
-      <div>
-        <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-        <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four builds a month, every layer in-house.</p>
-        <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h5>Navigate</h5>
-          <a href="/work/">Work</a>
-          <a href="/services/">Services</a>
-          <a href="/lab-report/">Lab Report</a>
-          <a href="/about/">About</a>
-          <a href="/blog/">Blog</a>
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
         </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span>Written in human, not legalese</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="privacy-hero-title">
+        Privacy <span class="gradient-text">policy.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="privacy-hero-subtitle">
+        What we collect when you enquire, why, how long we keep it and how to make us forget you.
+      </p>
+
+      <div style="margin-top:16px; font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">
+        Effective Date: November 2026 · The Flow Labs
+      </div>
+    </section>
+
+    <!-- LEGAL DOCUMENT BENTO -->
+    <section class="three-section">
+      <div class="legal-wrap">
+        <div class="three-card col-12 legal-body">
+
+          <p>
+            This privacy policy applies to <strong>www.theflowlabs.online</strong> and every project enquiry or Lab Report you submit through our platform.
+          </p>
+
+          <h2>What we collect</h2>
+          <ul>
+            <li><strong>Information you provide directly:</strong> Your name, email or phone number, project category, project requirements description, and estimated budget range.</li>
+            <li><strong>Automated technical metadata:</strong> Coarse user-agent string and referring URL parameters to understand which channels introduce new prospective clients.</li>
+            <li><strong>Anonymous page views:</strong> We record aggregate visitor counts. This system is completely cookieless: zero cookies, zero localStorage tracking, zero device fingerprinting, and zero personal identifiers.</li>
+          </ul>
+
+          <p>
+            We do not operate third-party ad networks, tracking pixels, or surveillance scripts.
+          </p>
+
+          <h2>The Lab Report Diagnostics</h2>
+          <p>
+            The Lab Report is a free diagnostic scanner. It fetches public URLs and measures them against Google PageSpeed Insights APIs. We store the scanned URL and benchmark score for 24 hours in a temporary cache to prevent API rate-limiting. We never store personal IP addresses beyond short rate-limit checks, and scan outcomes are never attached to client records unless you explicitly submit an inquiry.
+          </p>
+
+          <h2>Why we collect this information</h2>
+          <ul>
+            <li>To review your requirements and reply within 48 hours with scope, timeline, and pricing proposals.</li>
+            <li>To analyze in aggregate which service offerings generate market demand.</li>
+          </ul>
+
+          <h2>Data storage and security</h2>
+          <p>
+            Submissions are transmitted securely over TLS and persisted in a Supabase PostgreSQL instance protected by Row Level Security. Notifications route directly to the founders (Smruti, Biswash, and Arpita). We will never sell, rent, or distribute your information to third-party marketers.
+          </p>
+
+          <h2>Retention and deletion</h2>
+          <p>
+            Active project leads are retained during scoping discussions. If a project does not move forward or reasonable time passes without response, records are purged. You can request immediate erasure at any point by emailing <a href="mailto:hello@theflowlabs.online" style="color:var(--neon-cyan);">hello@theflowlabs.online</a>.
+          </p>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
         <div class="footer-col">
           <h5>Connect</h5>
           <a href="/contact/">Start a project</a>
-          <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-          <a href="/contact/">hello@theflowlabs.online</a>
-        </div>
-        <div class="footer-col">
-          <h5>Studio</h5>
-          <a href="/bhubaneswar/">Bhubaneswar studio</a>
-          <a href="/services/">What we build</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
           <a href="/privacy-policy/">Privacy Policy</a>
           <a href="/terms/">Terms of Service</a>
-          <a href="/lab-report/">Free site report</a>
         </div>
       </div>
-    </div>
-    <div class="footer-bottom" style="border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem">
-      <span>© <span id="year">2026</span> The Flow Labs. All rights reserved.</span>
-      <span class="footer-powered">Built and maintained in-house</span>
-    </div>
-  </div>
-</footer>
 
-<script src="/assets/site.js?v=7"></script>
-<script src="/assets/site-cms.js" defer></script>
-<script src="/assets/site-track.js" defer></script>
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
