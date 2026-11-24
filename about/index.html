@@ -1,104 +1,329 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>About — A Three-Person Engineering Studio | The Flow Labs</title>
-<meta name="description" content="Meet The Flow Labs: Smruti Ranjan (Founder), Biswash and Arpita (Co-Founders). A three-person studio building interfaces, systems and AI in-house." />
-<link rel="canonical" href="https://www.theflowlabs.online/about/" />
-<meta property="og:title" content="About The Flow Labs: founder-led engineering" />
-<meta property="og:description" content="Meet The Flow Labs: Smruti Ranjan (Founder), Biswash and Arpita (Co-Founders). A three-person studio building interfaces, systems and AI in-house." />
-<meta property="og:url" content="https://www.theflowlabs.online/about/" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<meta property="og:locale" content="en_IN" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="About The Flow Labs: founder-led engineering" />
-<meta name="twitter:description" content="Meet The Flow Labs: Smruti Ranjan (Founder), Biswash and Arpita (Co-Founders). A three-person studio building interfaces, systems and AI in-house." />
-<meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/assets/icon-180.png" />
-<meta name="theme-color" content="#0B0B10" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
-<script src="/assets/site.config.js?v=7" defer></script>
-<link rel="stylesheet" href="/assets/site.css?v=11">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "The Flow Labs", "url": "https://www.theflowlabs.online/", "email": "hello@theflowlabs.online", "image": "https://www.theflowlabs.online/assets/work-droovee.png"}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/"}, {"@type": "ListItem", "position": 2, "name": "About"}]}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — A Three-Person Engineering Studio | The Flow Labs</title>
+  <meta name="description" content="Meet The Flow Labs: Smruti Ranjan (Founder), Biswash and Arpita (Co-Founders). A three-person studio building interfaces, systems and AI in-house.">
+  <link rel="canonical" href="https://www.theflowlabs.online/about/">
+
+  <meta property="og:title" content="About The Flow Labs: Founder-Led Engineering Studio">
+  <meta property="og:description" content="Direct access to the engineers writing your code. Smruti Ranjan, Biswash and Arpita. Capped at 4 builds a month.">
+  <meta property="og:url" content="https://www.theflowlabs.online/about/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "The Flow Labs",
+    "url": "https://www.theflowlabs.online/",
+    "email": "hello@theflowlabs.online",
+    "image": "https://www.theflowlabs.online/assets/work-droovee.png"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "About" }
+    ]
+  }
+  </script>
 </head>
 <body data-page="about">
 
-<header class="nav" id="nav">
-  <div class="container nav-inner">
-    <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-    <div class="nav-links" id="nav-links">
-      <a href="/work/">Work</a>
-      <a href="/services/">Services</a>
-      <a href="/lab-report/">Lab Report</a>
-      <a href="/about/">About</a>
-      <a href="/blog/">Blog</a>
-      <a href="/contact/" class="nav-cta">Start a project</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</header>
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
 
-<main id="top">
-<div class="page-hero"><div class="wrap">
-    <div class="crumbs"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>About</span></div>
-    <span class="pill"><span class="dot"></span> <span data-cms="about-hero-label">Founder-led · In-house</span></span>
-    <h1 data-cms="about-hero-title">Founder-led engineering. <span class="grad">Built in-house.</span></h1>
-    <p class="sub" data-cms="about-hero-subtitle">The Flow Labs is a three-person engineering studio. We design, build and ship interfaces, systems and applied intelligence — and you work with the people writing the code.</p>
-  </div>
-</div>
-<section><div class="wrap"><div class="prose"><p data-cms="about-body-1">The Flow Labs was founded on a straightforward principle: businesses deserve direct access to the engineers building their software. Instead of working through sales representatives and outsourced development teams, our clients collaborate directly with the founders who design and write the code. Droovee, our live chauffeur booking platform, is a product of this hands-on engineering approach.</p><h2>Who you actually work with</h2><ul><li><strong>Smruti Ranjan — Founder.</strong> Architects the systems and AI infrastructure behind every project, and leads scoping on every build.</li><li><strong>Biswash — Co-Founder.</strong> Builds the platforms, APIs and backend infrastructure that have to hold up under real load.</li><li><strong>Arpita — Co-Founder.</strong> Shapes the interfaces, user experience and visual identity across every product we ship.</li></ul><p>Three people, no account layer. Every project is handled by the same three, which is exactly why we cap the month at four builds.</p><h2>How we work</h2><ul><li><strong>You talk to the people building it.</strong> No account managers, no handoffs, no “our developer will get back to you”.</li><li><strong>Fixed price before code.</strong> Scope, timeline and price agreed first. No surprise invoices mid-project.</li><li><strong>Weekly demos.</strong> You watch the product grow in real, clickable versions, not slide decks.</li><li><strong>We ship in-house.</strong> Interfaces, systems and AI are built by us. If a task does not fit our skills, we say so instead of subcontracting quietly.</li></ul><h2>Where we are</h2><p data-cms="about-body-2">We work remotely with teams across India and abroad, and meet in person when a project genuinely calls for it. Our studio address is on the <a href="/contact/">contact page</a>.</p><h2>What we will NOT do</h2><ul><li>Promise rankings and overnight SEO miracles. We set honest expectations instead.</li><li>Take a project we are not the right team for. You will get a straight answer in the first call, possibly with a referral.</li><li>Inflate our history. What you see in <a href="/work/">our lab</a> is our actual work, labelled honestly by status (live, in-house, open source).</li></ul><h2>Our approach</h2><p data-cms="about-body-3">We believe in transparency, rapid execution and technical craft. We agree on fixed pricing before code starts, demonstrate progress through weekly interactive builds, and deliver maintainable software that solves real operational problems.</p></div></div></section><section class="page-faq"><div class="wrap"><div class="section-head reveal"><div class="eyebrow">FAQ</div><h2>Frequently asked questions</h2></div><div class="faq reveal" style="margin-top:24px"><details><summary>Who are the founders?</summary><p>Smruti Ranjan (Founder), Biswash (Co-Founder) and Arpita (Co-Founder). Three people, no account layer — you work with the same three from first call to handover.</p></details><details><summary>Is The Flow Labs an agency?</summary><p>We are a studio, not an agency: the founders do the work personally, with fixed-price projects and no outsourced middle layer.</p></details><details><summary>How many projects do you take on?</summary><p>Four a month, and no more. That is the honest ceiling for a team that does not subcontract. Current availability is on the contact page.</p></details></div></div></section>  <section id="contact" style="padding-top:60px"><div class="wrap"><div class="cta-box reveal"><h2>Speak directly with the engineering team</h2><p>The most effective way to start is a scoping conversation. Bring your requirements, and we will provide an honest assessment of scope, timeline, and pricing.</p><a href="/contact/" class="btn btn-primary">Start a project</a><div class="cta-mail">or email <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>&nbsp;·&nbsp; <a href="/lab-report/">run a free Lab Report</a></div></div></div></section>
-</main>
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
 
-<footer class="footer">
-  <div class="container">
-    <div class="footer-top">
-      <div>
-        <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-        <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four builds a month, every layer in-house.</p>
-        <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h5>Navigate</h5>
-          <a href="/work/">Work</a>
-          <a href="/services/">Services</a>
-          <a href="/lab-report/">Lab Report</a>
-          <a href="/about/">About</a>
-          <a href="/blog/">Blog</a>
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
         </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item active">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span data-cms="about-hero-label">Founder-led · In-house</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="about-hero-title">
+        Founder-led engineering. <span class="gradient-text">Built in-house.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="about-hero-subtitle">
+        The Flow Labs is a three-person engineering studio. We design, build and ship interfaces, systems and applied intelligence — and you work directly with the people writing the code.
+      </p>
+
+      <div class="three-actions">
+        <a href="/contact/" class="three-btn primary" data-magnetic>
+          <span>Speak With Founders &rarr;</span>
+        </a>
+        <a href="/work/" class="three-btn glass" data-magnetic>
+          <span>Explore Work Showroom</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- STUDIO PRINCIPLE & TELEMETRY -->
+    <section class="three-section">
+      <div class="three-bento-grid">
+
+        <!-- Principle Manifest Bento -->
+        <div class="three-card col-12">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:16px;">
+            <span class="card-tag">Studio Philosophy</span>
+            <div style="display:flex; gap:16px; font-family:var(--font-mono); font-size:0.8rem;">
+              <span style="color:var(--text-muted);">TEAM: <b style="color:var(--neon-cyan);">3 FOUNDERS</b></span>
+              <span style="color:var(--text-muted);">SUBCONTRACTING: <b style="color:var(--neon-emerald);">0%</b></span>
+              <span style="color:var(--text-muted);">MONTHLY CAP: <b style="color:var(--neon-purple);">4 BUILDS</b></span>
+            </div>
+          </div>
+          <p class="card-desc" style="font-size:1.05rem; line-height:1.7; color:var(--text-main);" data-cms="about-body-1">
+            The Flow Labs was founded on a straightforward principle: businesses deserve direct access to the engineers building their software. Instead of working through sales representatives and outsourced development teams, our clients collaborate directly with the founders who design and write the code. Droovee, our live chauffeur booking platform, is a product of this hands-on engineering approach.
+          </p>
+        </div>
+
+        <!-- 3 FOUNDER COCKPIT CARDS -->
+        <div class="three-card col-4" data-three-tilt>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <div style="width:42px; height:42px; border-radius:10px; background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.4); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:var(--neon-cyan);">
+              SR
+            </div>
+            <div>
+              <h3 style="font-size:1.15rem; color:var(--text-main); font-weight:700;">Smruti Ranjan</h3>
+              <span style="font-size:0.8rem; font-family:var(--font-mono); color:var(--neon-cyan);">FOUNDER · SYSTEMS &amp; AI</span>
+            </div>
+          </div>
+          <p class="card-desc">Architects the high-throughput systems, AI orchestration pipelines, and data topology behind every project. Leads client scoping sessions and technical diligence on every build.</p>
+        </div>
+
+        <div class="three-card col-4" data-three-tilt>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <div style="width:42px; height:42px; border-radius:10px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:var(--neon-emerald);">
+              BS
+            </div>
+            <div>
+              <h3 style="font-size:1.15rem; color:var(--text-main); font-weight:700;">Biswash</h3>
+              <span style="font-size:0.8rem; font-family:var(--font-mono); color:var(--neon-emerald);">CO-FOUNDER · PLATFORM ARCHITECT</span>
+            </div>
+          </div>
+          <p class="card-desc">Builds resilient backend platforms, database schemas, and microservice APIs designed to hold up under real operational load. Ensures zero-downtime database migrations and tight serverless performance.</p>
+        </div>
+
+        <div class="three-card col-4" data-three-tilt>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <div style="width:42px; height:42px; border-radius:10px; background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.4); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:var(--neon-purple);">
+              AR
+            </div>
+            <div>
+              <h3 style="font-size:1.15rem; color:var(--text-main); font-weight:700;">Arpita</h3>
+              <span style="font-size:0.8rem; font-family:var(--font-mono); color:var(--neon-purple);">CO-FOUNDER · INTERFACE LEAD</span>
+            </div>
+          </div>
+          <p class="card-desc">Shapes product visual identity, spatial design systems, fluid micro-interactions, and responsive layouts across every product we ship. Obsessed with sub-second perceived performance and typography harmony.</p>
+        </div>
+
+        <!-- THE ANTI-AGENCY MANIFESTO (SIDE-BY-SIDE BENTO) -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag" style="color:#EF4444; border-color:rgba(239,68,68,0.3);">Traditional Agencies</span>
+          <h3 class="card-title" style="color:var(--text-main);">The Layers You Pay For</h3>
+          <ul style="margin-top:16px; display:flex; flex-direction:column; gap:12px; color:var(--text-muted); font-size:0.88rem; line-height:1.6;">
+            <li>❌ <strong>Account Manager Bottlenecks:</strong> Non-technical middle managers relaying telephone-tag messages to distant junior devs.</li>
+            <li>❌ <strong>Opaque Offshore Subcontracting:</strong> White-labeling your project to the lowest freelance bidder with zero code accountability.</li>
+            <li>❌ <strong>Hourly Billing Traps:</strong> Open-ended hourly billing that rewards slow delivery and ballooning surprise invoices.</li>
+            <li>❌ <strong>Slide Deck Milestones:</strong> Paying for 40-slide PowerPoint presentations instead of deployed, clickable software.</li>
+          </ul>
+        </div>
+
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag" style="color:var(--neon-emerald); border-color:rgba(16,185,129,0.3);">The Flow Labs Standard</span>
+          <h3 class="card-title" style="color:var(--text-main);">Direct Founder Engineering</h3>
+          <ul style="margin-top:16px; display:flex; flex-direction:column; gap:12px; color:var(--text-muted); font-size:0.88rem; line-height:1.6;">
+            <li>✓ <strong>Direct Founder Pairing:</strong> Smruti, Biswash, and Arpita personally write your code, architect your DB, and craft your UI.</li>
+            <li>✓ <strong>100% In-House Codebase:</strong> We never subcontract. If a build does not fit our core capabilities, we say no upfront.</li>
+            <li>✓ <strong>Fixed Price Upfront:</strong> Scope, timeline, and exact investment agreed before code starts. Never a surprise fee.</li>
+            <li>✓ <strong>Weekly Working Builds:</strong> You interact with staging URLs every 7 days, inspecting live code rather than mockups.</li>
+          </ul>
+        </div>
+
+        <!-- STUDIO LOCATION & REMOTE RADAR -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">Presence &amp; Reach</span>
+          <h3 class="card-title">Where We Work</h3>
+          <p class="card-desc" style="margin-top:12px;" data-cms="about-body-2">
+            We work remotely with teams across India and abroad, and meet in person when a project genuinely calls for it. Our studio address is on the <a href="/contact/" style="color:var(--neon-cyan); text-decoration:none;">contact page</a>.
+          </p>
+          <div style="margin-top:20px; padding:14px; background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:10px; font-family:var(--font-mono); font-size:0.82rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+              <span style="color:var(--text-muted);">HQ COORDINATES:</span>
+              <span style="color:var(--neon-cyan);">20.2961° N, 85.8245° E (Bhubaneswar)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span style="color:var(--text-muted);">ACTIVE TIMEFRAME:</span>
+              <span style="color:var(--neon-emerald);">09:00 - 19:00 IST (UTC+5:30)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- OUR APPROACH & RIGOR -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">Technical Craft</span>
+          <h3 class="card-title">Engineering Discipline</h3>
+          <p class="card-desc" style="margin-top:12px;" data-cms="about-body-3">
+            We believe in transparency, rapid execution and technical craft. We agree on fixed pricing before code starts, demonstrate progress through weekly interactive builds, and deliver maintainable software that solves real operational problems.
+          </p>
+          <div class="pill-group" style="margin-top:20px;">
+            <span class="pill-chip">TypeScript Strict</span>
+            <span class="pill-chip">Next.js 15 App Router</span>
+            <span class="pill-chip">Python 3.11 &amp; FastAPI</span>
+            <span class="pill-chip">PostgreSQL &amp; PostGIS</span>
+            <span class="pill-chip">Three.js / WebGL Shaders</span>
+            <span class="pill-chip">Supabase Realtime</span>
+          </div>
+        </div>
+
+        <!-- FREQUENTLY ASKED QUESTIONS -->
+        <div class="three-card col-12">
+          <span class="card-tag">Studio Transparency</span>
+          <h3 class="card-title" style="margin-bottom:24px;">Frequently Asked Questions</h3>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); padding:20px; border-radius:12px;">
+              <h4 style="color:var(--text-main); font-size:1rem; margin-bottom:8px;">Who are the founders?</h4>
+              <p style="color:var(--text-muted); font-size:0.88rem; line-height:1.6;">Smruti Ranjan (Founder), Biswash (Co-Founder) and Arpita (Co-Founder). Three people, zero middle layers — you work with the exact same three from first technical scoping call to final production handover.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); padding:20px; border-radius:12px;">
+              <h4 style="color:var(--text-main); font-size:1rem; margin-bottom:8px;">Is The Flow Labs an agency?</h4>
+              <p style="color:var(--text-muted); font-size:0.88rem; line-height:1.6;">We are an independent engineering studio, not an agency: the founders personally architect and write all code, with fixed-price commitments and zero subcontracting.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); padding:20px; border-radius:12px;">
+              <h4 style="color:var(--text-main); font-size:1rem; margin-bottom:8px;">How many projects do you take on?</h4>
+              <p style="color:var(--text-muted); font-size:0.88rem; line-height:1.6;">Four per month, and no more. That is our mathematical limit for maintaining world-class code quality without diluting focus or passing work to external contractors.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cross-Link Scoping Banner -->
+        <div class="three-card col-12" style="text-align:center; padding:48px 24px;">
+          <h3 style="font-size:1.75rem; color:var(--text-main); font-weight:700;">Speak Directly With the Engineering Team</h3>
+          <p style="max-width:540px; margin:12px auto 24px; color:var(--text-muted); line-height:1.6;">
+            The most effective way to start is a scoping conversation. Bring your requirements, and we will provide an honest assessment of scope, timeline, and pricing.
+          </p>
+          <div class="three-actions" style="justify-content:center;">
+            <a href="/contact/" class="three-btn primary" data-magnetic>
+              <span>Schedule Scoping Session &rarr;</span>
+            </a>
+            <a href="/lab-report/" class="three-btn glass" data-magnetic>
+              <span>Run Free Lab Report</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
         <div class="footer-col">
           <h5>Connect</h5>
           <a href="/contact/">Start a project</a>
-          <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-          <a href="/contact/">hello@theflowlabs.online</a>
-        </div>
-        <div class="footer-col">
-          <h5>Studio</h5>
-          <a href="/bhubaneswar/">Bhubaneswar studio</a>
-          <a href="/services/">What we build</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
           <a href="/privacy-policy/">Privacy Policy</a>
           <a href="/terms/">Terms of Service</a>
-          <a href="/lab-report/">Free site report</a>
         </div>
       </div>
-    </div>
-    <div class="footer-bottom" style="border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem">
-      <span>© <span id="year">2026</span> The Flow Labs. All rights reserved.</span>
-      <span class="footer-powered">Built and maintained in-house</span>
-    </div>
-  </div>
-</footer>
 
-<script src="/assets/site.js?v=7"></script>
-<script src="/assets/site-cms.js" defer></script>
-<script src="/assets/site-track.js" defer></script>
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
