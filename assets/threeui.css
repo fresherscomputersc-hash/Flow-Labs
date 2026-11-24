@@ -1,0 +1,945 @@
+/* ============================================================
+   THREEUI PRODUCTION DESIGN SYSTEM & SPATIAL COMPONENT LIBRARY
+   Core styles for The Flow Labs Flagship ThreeUI Architecture
+   ============================================================ */
+
+:root {
+  /* Color Palette - Deep Spatial Dark with Luminous Neon Accents */
+  --bg-deep: #07090E;
+  --bg-surface: rgba(15, 20, 32, 0.65);
+  --bg-card: rgba(18, 24, 38, 0.55);
+  --bg-card-hover: rgba(26, 35, 54, 0.75);
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --bg-glass-active: rgba(255, 255, 255, 0.08);
+
+  /* Refractive Borders & Accents */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-specular: rgba(255, 255, 255, 0.16);
+  --border-glow: rgba(59, 130, 246, 0.35);
+
+  /* Primary Neon & Energy Colors */
+  --neon-blue: #3B82F6;
+  --neon-cyan: #06B6D4;
+  --neon-indigo: #6366F1;
+  --neon-emerald: #10B981;
+  --neon-purple: #8B5CF6;
+  --neon-amber: #F59E0B;
+
+  /* Typography */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-accent: #60A5FA;
+
+  --font-display: 'Space Grotesk', -apple-system, sans-serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  /* Geometry & Shadows */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 9999px;
+
+  --shadow-bento: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-glow: 0 0 35px -5px rgba(59, 130, 246, 0.25);
+  --shadow-dock: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Base Reset & Smoothness */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: radial-gradient(circle at 50% 0%, #0d1527 0%, #07090E 70%);
+  position: relative;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #FFFFFF;
+}
+
+/* Background 3D WebGL Canvas Layer */
+#threeuiCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Ambient Radial Glow Gradients */
+.ambient-glow {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(140px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.25;
+}
+
+.ambient-glow.top-left {
+  top: -200px;
+  left: -200px;
+  background: radial-gradient(circle, var(--neon-blue), transparent 70%);
+}
+
+.ambient-glow.bottom-right {
+  bottom: -200px;
+  right: -200px;
+  background: radial-gradient(circle, var(--neon-purple), transparent 70%);
+}
+
+/* Master Layout Container */
+.three-wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ============================================================
+   1. THREEUI SPATIAL DOCK NAVIGATION
+   ============================================================ */
+.three-dock-container {
+  position: fixed;
+  top: 24px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.three-dock {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: rgba(13, 17, 28, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-specular);
+  border-radius: var(--radius-pill);
+  padding: 8px 12px 8px 20px;
+  box-shadow: var(--shadow-dock);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.three-dock:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.dock-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.dock-logo-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.5);
+}
+
+.dock-links {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dock-item {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  transition: all 180ms ease;
+  position: relative;
+}
+
+.dock-item:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dock-item.active {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dock-cta {
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  color: #FFFFFF !important;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 200ms ease;
+}
+
+.dock-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+/* ============================================================
+   2. THREEUI HERO SECTION & SPATIAL HUD
+   ============================================================ */
+.three-hero {
+  padding-top: 180px;
+  padding-bottom: 90px;
+  text-align: center;
+  position: relative;
+}
+
+.three-pill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-specular);
+  border-radius: var(--radius-pill);
+  padding: 6px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--neon-cyan);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+}
+
+.three-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--neon-emerald);
+  box-shadow: 0 0 10px var(--neon-emerald);
+  animation: radarPulse 2s infinite ease-in-out;
+}
+
+@keyframes radarPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.three-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: #FFFFFF;
+  margin-bottom: 24px;
+  max-width: 980px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.three-hero-title .gradient-text {
+  background: linear-gradient(135deg, #FFFFFF 20%, var(--neon-cyan) 60%, var(--neon-blue) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.three-hero-desc {
+  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 640px;
+  margin: 0 auto 36px;
+}
+
+/* Magnetic Button Suite */
+.three-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 50px;
+}
+
+.three-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.three-btn.primary {
+  background: #FFFFFF;
+  color: #07090E;
+  border: 1px solid #FFFFFF;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+}
+
+.three-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+}
+
+.three-btn.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  color: #FFFFFF;
+  border: 1px solid var(--border-specular);
+}
+
+.three-btn.glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Hero HUD Stat Strip */
+.three-hud {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem 3rem;
+  background: rgba(15, 20, 32, 0.5);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 18px 32px;
+  box-shadow: var(--shadow-bento);
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hud-num {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.02em;
+}
+
+.hud-num span {
+  color: var(--neon-cyan);
+}
+
+.hud-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   3. THREEUI SPATIAL BENTO GRID SYSTEM
+   ============================================================ */
+.three-section {
+  padding: 80px 0;
+  position: relative;
+}
+
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--neon-blue);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 2px;
+  background: var(--neon-blue);
+}
+
+.section-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.section-subtext {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 620px;
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+/* Bento Grid Core */
+.three-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+}
+
+/* Spatial Bento Card with 3D Tilt & Specular Light Tracking */
+.three-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-bento);
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 300ms ease,
+              box-shadow 300ms ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.three-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.25), transparent 40%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.three-card:hover::before {
+  opacity: 1;
+}
+
+.three-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 30px rgba(59, 130, 246, 0.15);
+}
+
+/* Bento Grid Spans */
+.col-4 { grid-column: span 4; }
+.col-6 { grid-column: span 6; }
+.col-8 { grid-column: span 8; }
+.col-12 { grid-column: span 12; }
+
+/* Bento Card Elements */
+.card-tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--neon-cyan);
+  margin-bottom: 16px;
+  display: inline-block;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.card-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+/* Interactive Gizmos inside Bento Cards */
+.card-gizmo {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Node Topology Visualizer for Systems */
+.node-topology {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+}
+
+.node-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.node-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid var(--neon-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #FFFFFF;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+.node-pipe {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
+  position: relative;
+  overflow: hidden;
+}
+
+.node-pipe::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 40%; height: 100%;
+  background: #FFFFFF;
+  animation: pipePacket 1.8s infinite linear;
+}
+
+@keyframes pipePacket {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+/* Live Token Stream Terminal for Intelligence */
+.token-stream {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: #38BDF8;
+  background: #030712;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  line-height: 1.5;
+}
+
+.token-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 13px;
+  background: #38BDF8;
+  margin-left: 4px;
+  animation: blink 1s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Tech Pills & Chips */
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #E2E8F0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* Project Showroom Cover Aspect */
+.project-cover-viewport {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 20px;
+  background: #0B0F19;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.project-cover-viewport img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.three-card:hover .project-cover-viewport img {
+  transform: scale(1.05);
+}
+
+/* Radar Live Status Tag */
+.status-tag {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(13, 17, 28, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.status-tag.live .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22C55E;
+  box-shadow: 0 0 8px #22C55E;
+}
+
+/* ============================================================
+   4. INTERACTIVE THREEUI SCOPING TERMINAL
+   ============================================================ */
+.scoping-terminal {
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-specular);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-bento), var(--shadow-glow);
+  position: relative;
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.terminal-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: #FFFFFF;
+}
+
+.terminal-status {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--neon-emerald);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminal-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 28px;
+}
+
+.control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-label {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.control-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.chip-btn:hover {
+  color: #FFFFFF;
+  border-color: var(--neon-blue);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.chip-btn.active {
+  background: var(--neon-blue);
+  border-color: var(--neon-blue);
+  color: #FFFFFF;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+/* Slider Track */
+.range-slider {
+  width: 100%;
+  accent-color: var(--neon-blue);
+  cursor: pointer;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Dynamic Live Scoping Output Box */
+.scoping-output {
+  margin-top: 36px;
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.output-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.output-val {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.output-val span {
+  color: var(--neon-cyan);
+}
+
+.output-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+/* Inquiry Direct Form Inputs */
+.terminal-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.terminal-input {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  color: #FFFFFF;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 180ms ease;
+}
+
+.terminal-input:focus {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.terminal-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   5. THREEUI TELEMETRY FOOTER
+   ============================================================ */
+.three-footer {
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(7, 9, 14, 0.85);
+  backdrop-filter: blur(20px);
+  padding: 80px 0 40px;
+  position: relative;
+  z-index: 10;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 60px;
+}
+
+.footer-brand h4 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: #FFFFFF;
+  margin-bottom: 12px;
+}
+
+.footer-brand p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 360px;
+  margin-bottom: 20px;
+}
+
+.footer-clock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+}
+
+.footer-clock-pill b {
+  color: #FFFFFF;
+}
+
+.footer-col h5 {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  margin-bottom: 18px;
+}
+
+.footer-col a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  line-height: 2.2;
+  transition: all 180ms ease;
+}
+
+.footer-col a:hover {
+  color: var(--neon-cyan);
+  transform: translateX(3px);
+}
+
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   6. RESPONSIVENESS (375px, 768px, 1200px)
+   ============================================================ */
+@media (max-width: 1024px) {
+  .col-4 { grid-column: span 6; }
+  .col-8 { grid-column: span 12; }
+  .footer-top { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  .three-dock {
+    width: calc(100vw - 32px);
+    justify-content: space-between;
+    padding: 8px 12px 8px 16px;
+  }
+  .dock-links { display: none; }
+  .col-4, .col-6, .col-8, .col-12 { grid-column: span 12; }
+  .three-hero { padding-top: 140px; }
+  .footer-top { grid-template-columns: 1fr; }
+  .terminal-form-row { grid-template-columns: 1fr; }
+}
