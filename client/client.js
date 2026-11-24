@@ -1,8 +1,11 @@
 (function () {
   'use strict';
 
-  var cfg = window.SITE_CONFIG ? window.SITE_CONFIG.supabase : null;
-  if (!cfg || !cfg.url || !cfg.anonKey || !window.supabase) {
+  var conf = window.SITE_CONFIG || {};
+  var supabaseUrl = conf.supabaseUrl || (conf.supabase && conf.supabase.url);
+  var supabaseKey = conf.supabaseAnonKey || (conf.supabase && conf.supabase.anonKey);
+
+  if (!supabaseUrl || !supabaseKey || !window.supabase) {
     var errEl = document.getElementById('cpAuthError');
     if (errEl) {
       errEl.textContent = 'Configuration missing: Supabase credentials not found.';
@@ -11,7 +14,7 @@
     return;
   }
 
-  var db = window.supabase.createClient(cfg.url, cfg.anonKey);
+  var db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
   var state = {
     session: null,
@@ -176,6 +179,19 @@
   async function loadProjects(profile) {
     var projectsRes = await db.from('projects').select('*').order('created_at', { ascending: false });
 
+    // If direct select fails or returns empty for client, check project_members
+    if (projectsRes.error || !projectsRes.data || !projectsRes.data.length) {
+      try {
+        var memberProjRes = await db.from('project_members')
+          .select('projects(*)')
+          .eq('user_id', profile.id);
+        if (memberProjRes.data && memberProjRes.data.length) {
+          var pList = memberProjRes.data.map(function(item) { return item.projects; }).filter(Boolean);
+          if (pList.length) projectsRes = { data: pList };
+        }
+      } catch (_) {}
+    }
+
     if (projectsRes.error) {
       showEmptyPortal('Could not load projects. You may not be assigned to any active projects yet.');
       return;
@@ -231,10 +247,24 @@
 
     // Header info
     $('cpProjectTitle').textContent = project.name;
-    $('cpProjectDesc').textContent = project.description || 'No description provided.';
-    $('cpProjectKey').textContent = project.slug || project.name.slice(0, 4).toUpperCase();
-    $('cpProjectStatus').textContent = project.status || 'Active';
-    $('cpProjectTarget').textContent = fmtDate(project.target_delivery || project.target_date);
+    $('cpProjectDesc').textContent = project.summary || project.description || 'Deliverables and engineering milestones tracked in real time.';
+    $('cpProjectKey').textContent = project.key || project.slug || project.name.slice(0, 4).toUpperCase();
+    $('cpProjectStatus').textContent = project.status ? (project.status.charAt(0).toUpperCase() + project.status.slice(1)) : 'Active';
+    $('cpProjectTarget').textContent = fmtDate(project.due_date || project.target_delivery || project.target_date);
+
+    // Staging Preview Link
+    if ($('cpStagingBtn')) {
+      var stagingUrl = project.staging_url || project.preview_url;
+      if (stagingUrl) {
+        $('cpStagingBtn').href = stagingUrl;
+        $('cpStagingBtn').textContent = 'Open Staging Preview ↗';
+        if ($('cpStagingStatusLabel')) $('cpStagingStatusLabel').textContent = 'Staging Environment Live';
+      } else {
+        $('cpStagingBtn').href = 'https://www.theflowlabs.online/#work';
+        $('cpStagingBtn').textContent = 'View Reference Architecture ↗';
+        if ($('cpStagingStatusLabel')) $('cpStagingStatusLabel').textContent = 'Staging Build Active';
+      }
+    }
 
     // Parallel fetch for modules, published updates, and client files
     await Promise.all([
@@ -339,6 +369,15 @@
 
   /* ---------------- Client Deliverables / Files ---------------- */
 
+  function getFileIcon(filename) {
+    var ext = String(filename || '').split('.').pop().toLowerCase();
+    if (ext === 'pdf') return '📄 PDF';
+    if (ext === 'zip' || ext === 'tar' || ext === 'gz') return '📦 ZIP';
+    if (['js', 'ts', 'tsx', 'py', 'json', 'sql'].indexOf(ext) !== -1) return '💻 CODE';
+    if (['png', 'jpg', 'jpeg', 'svg', 'webp', 'fig'].indexOf(ext) !== -1) return '🎨 ASSET';
+    return '📋 DOC';
+  }
+
   async function loadFiles(projectId) {
     var container = $('cpFilesList');
     container.innerHTML = '<p class="cp-empty">Loading files…</p>';
@@ -364,12 +403,16 @@
 
     container.innerHTML = files.map(function (f) {
       var meta = [fmtBytes(f.size_bytes), fmtDate(f.created_at)].filter(Boolean).join(' · ');
-      return '<div class="cp-file-item">' +
-        '<div>' +
-          '<div class="cp-file-title">' + esc(f.file_name) + '</div>' +
-          '<div class="cp-file-meta mono">' + esc(meta) + '</div>' +
+      var icon = getFileIcon(f.file_name);
+      return '<div class="cp-file-card">' +
+        '<div class="cp-file-info">' +
+          '<span class="cp-file-icon mono">' + icon + '</span>' +
+          '<div>' +
+            '<div class="cp-file-title">' + esc(f.file_name) + '</div>' +
+            '<div class="cp-file-meta mono">' + esc(meta) + '</div>' +
+          '</div>' +
         '</div>' +
-        '<a href="' + esc(f.storage_path) + '" class="cp-btn secondary sm" target="_blank" rel="noopener">Download</a>' +
+        '<a href="' + esc(f.storage_path) + '" class="cp-btn ghost sm" target="_blank" rel="noopener">Download ⬇</a>' +
         '</div>';
     }).join('');
   }

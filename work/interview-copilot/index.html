@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>INTERVIEW-COPILOT: Open-Source AI Interview Assistant | The Flow Labs</title>
-  <meta name="description" content="INTERVIEW-COPILOT is an open-source AI interview companion by The Flow Labs: live mock interviews, real-time coaching and structured feedback.">
+  <meta name="description"
+    content="INTERVIEW-COPILOT is an open-source AI interview companion by The Flow Labs: live mock interviews, real-time coaching and structured feedback.">
   <link rel="canonical" href="https://www.theflowlabs.online/work/interview-copilot/">
 
   <meta property="og:title" content="INTERVIEW-COPILOT: AI Interview Assistant | The Flow Labs">
-  <meta property="og:description" content="An open-source AI companion that runs real-time spoken mock interviews, assesses answer structure, and delivers actionable coaching.">
+  <meta property="og:description"
+    content="An open-source AI companion that runs real-time spoken mock interviews, assesses answer structure, and delivers actionable coaching.">
   <meta property="og:url" content="https://www.theflowlabs.online/work/interview-copilot/">
   <meta property="og:type" content="article">
   <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
@@ -20,7 +23,9 @@
   <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
 
   <!-- Three.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
@@ -45,6 +50,7 @@
   }
   </script>
 </head>
+
 <body data-page="case-study">
 
   <!-- Background 3D WebGL Canvas -->
@@ -58,7 +64,8 @@
     <header class="three-dock">
       <a href="/" class="dock-logo">
         <div class="dock-logo-mark">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round">
             <polyline points="16 18 22 12 16 6"></polyline>
             <polyline points="8 6 2 12 8 18"></polyline>
           </svg>
@@ -75,7 +82,8 @@
 
       <a href="/contact/" class="dock-cta" data-magnetic>
         <span>Start a Build</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
           <line x1="5" y1="12" x2="19" y2="12"></line>
           <polyline points="12 5 19 12 12 19"></polyline>
         </svg>
@@ -97,7 +105,8 @@
       </h1>
 
       <p class="three-hero-desc" data-cms="copilot-hero-sub">
-        An open-source AI interview companion that helps candidates prepare, rehearse and improve with real-time coaching and structured feedback.
+        An open-source AI interview companion that helps candidates prepare, rehearse and improve with real-time
+        coaching and structured feedback.
       </p>
 
       <div class="three-actions">
@@ -122,9 +131,12 @@
               <h3 style="margin-top:6px; font-size:1.25rem; color:var(--text-main);">Open-Source Founder Initiative</h3>
             </div>
             <div style="display:flex; gap:20px; font-family:var(--font-mono); font-size:0.82rem;">
-              <span style="color:var(--text-muted);">LATENCY AUDIO LOOP: <b style="color:var(--neon-emerald);">&lt;320ms</b></span>
-              <span style="color:var(--text-muted);">RUBRIC METRICS: <b style="color:var(--neon-cyan);">STAR METHOD</b></span>
-              <span style="color:var(--text-muted);">VOICE ENGINE: <b style="color:var(--neon-purple);">WEB SPEECH + TTS</b></span>
+              <span style="color:var(--text-muted);">LATENCY AUDIO LOOP: <b
+                  style="color:var(--neon-emerald);">&lt;320ms</b></span>
+              <span style="color:var(--text-muted);">RUBRIC METRICS: <b style="color:var(--neon-cyan);">STAR
+                  METHOD</b></span>
+              <span style="color:var(--text-muted);">VOICE ENGINE: <b style="color:var(--neon-purple);">WEB SPEECH +
+                  TTS</b></span>
             </div>
           </div>
         </div>
@@ -133,32 +145,43 @@
         <div class="three-card col-4" data-three-tilt>
           <span class="card-tag">01 // The Problem</span>
           <h3 class="card-title">Static Memorization Fails</h3>
-          <p class="card-desc">Most job seekers prepare by reading static blogs and memorizing answers. In real interviews, they stumble on spontaneous follow-up questions, rambling structure, and lack of real-time stress inoculation.</p>
+          <p class="card-desc">Most job seekers prepare by reading static blogs and memorizing answers. In real
+            interviews, they stumble on spontaneous follow-up questions, rambling structure, and lack of real-time
+            stress inoculation.</p>
         </div>
 
         <!-- The Architecture -->
         <div class="three-card col-4" data-three-tilt>
           <span class="card-tag">02 // The Architecture</span>
           <h3 class="card-title">Adaptive Conversational AI</h3>
-          <p class="card-desc">Engineered with low-latency speech synthesis, dynamic prompt trees, and role-based personas (Staff Engineer, Product Lead, System Architect) that ask challenging follow-ups based on the candidate's actual verbal answers.</p>
+          <p class="card-desc">Engineered with low-latency speech synthesis, dynamic prompt trees, and role-based
+            personas (Staff Engineer, Product Lead, System Architect) that ask challenging follow-ups based on the
+            candidate's actual verbal answers.</p>
         </div>
 
         <!-- The Production Impact -->
         <div class="three-card col-4" data-three-tilt>
           <span class="card-tag">03 // The Impact</span>
           <h3 class="card-title">Objective Rubric Feedback</h3>
-          <p class="card-desc">Provides instant post-session breakdowns: speech clarity, STAR framework adherence, filler word density, and concrete technical depth scores that friends and family cannot objectively give.</p>
+          <p class="card-desc">Provides instant post-session breakdowns: speech clarity, STAR framework adherence,
+            filler word density, and concrete technical depth scores that friends and family cannot objectively give.
+          </p>
         </div>
 
         <!-- System Capabilities Bento -->
         <div class="three-card col-6" data-three-tilt>
           <span class="card-tag">Intelligent Capabilities</span>
           <h3 class="card-title">Simulating Real High-Stakes Pressure</h3>
-          <ul style="margin-top:16px; display:flex; flex-direction:column; gap:12px; color:var(--text-muted); font-size:0.9rem; line-height:1.6;">
-            <li><strong style="color:var(--text-main);">Role-Targeted Question Trees:</strong> Technical system design, behavioral leadership, and coding architecture scenarios.</li>
-            <li><strong style="color:var(--text-main);">Real-Time Spoken Interaction:</strong> Seamless push-to-talk and voice activation mirroring a genuine Zoom/Meet call.</li>
-            <li><strong style="color:var(--text-main);">Live Critique Generation:</strong> Instant analysis of structural gaps, vague assertions, and conciseness flags.</li>
-            <li><strong style="color:var(--text-main);">Session Progress Vault:</strong> Tracks confidence and response cadence trajectories across repeated practice cycles.</li>
+          <ul
+            style="margin-top:16px; display:flex; flex-direction:column; gap:12px; color:var(--text-muted); font-size:0.9rem; line-height:1.6;">
+            <li><strong style="color:var(--text-main);">Role-Targeted Question Trees:</strong> Technical system design,
+              behavioral leadership, and coding architecture scenarios.</li>
+            <li><strong style="color:var(--text-main);">Real-Time Spoken Interaction:</strong> Seamless push-to-talk and
+              voice activation mirroring a genuine Zoom/Meet call.</li>
+            <li><strong style="color:var(--text-main);">Live Critique Generation:</strong> Instant analysis of
+              structural gaps, vague assertions, and conciseness flags.</li>
+            <li><strong style="color:var(--text-main);">Session Progress Vault:</strong> Tracks confidence and response
+              cadence trajectories across repeated practice cycles.</li>
           </ul>
         </div>
 
@@ -175,15 +198,19 @@
             <span class="pill-chip">STAR Evaluation Rubric Engine</span>
           </div>
           <p style="margin-top:16px; font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
-            Demonstrates how our studio builds advanced voice copilots and conversational agents that go far beyond primitive FAQ bots. See our <a href="/services/ai-chatbot-development/" style="color:var(--neon-cyan); text-decoration:none;">AI Chatbot Development</a> service.
+            Demonstrates how our studio builds advanced voice copilots and conversational agents that go far beyond
+            primitive FAQ bots. See our <a href="/services/ai-chatbot-development/"
+              style="color:var(--neon-cyan); text-decoration:none;">AI Chatbot Development</a> service.
           </p>
         </div>
 
         <!-- Cross-Link Scoping Banner -->
         <div class="three-card col-12" style="text-align:center; padding:48px 24px;">
-          <h3 style="font-size:1.75rem; color:var(--text-main); font-weight:700;">Building an AI Assistant or Copilot?</h3>
+          <h3 style="font-size:1.75rem; color:var(--text-main); font-weight:700;">Building an AI Assistant or Copilot?
+          </h3>
           <p style="max-width:540px; margin:12px auto 24px; color:var(--text-muted); line-height:1.6;">
-            Tell us what your copilot needs to accomplish. We build conversational and voice-enabled AI systems grounded in verified business workflows.
+            Tell us what your copilot needs to accomplish. We build conversational and voice-enabled AI systems grounded
+            in verified business workflows.
           </p>
           <div class="three-actions" style="justify-content:center;">
             <a href="/contact/" class="three-btn primary" data-magnetic>
@@ -206,7 +233,8 @@
       <div class="footer-top">
         <div class="footer-brand">
           <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
-          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month,
+            100% in-house.</p>
           <div class="footer-clock-pill">
             <span>Studio Time:</span>
             <b data-clock>--:--:--</b>
@@ -242,10 +270,13 @@
 
       <div class="footer-bottom">
         <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
-        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span
+            style="color:var(--neon-emerald)">16ms</span> · Status: <span
+            style="color:var(--neon-emerald)">OPERATIONAL</span></div>
       </div>
     </div>
   </footer>
 
 </body>
+
 </html>

@@ -1011,27 +1011,258 @@ h3 { font-size: 0.95rem; }
   color: var(--text-muted);
 }
 .kanban-col-head b { color: var(--text-secondary); font-weight: 500; }
-.kanban-cards { display: grid; gap: 0.4rem; align-content: start; }
-.kanban-card {
-  display: grid;
-  gap: 0.3rem;
-  padding: 0.6rem;
+/* ---------- Modern Spatial Kanban & Collaborative Board ---------- */
+.board-head-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.board-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0 1.25rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.segment-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 500;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.segment-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.segment-btn.active {
+  background: var(--accent, #06b6d4);
+  color: #030712;
+  font-weight: 600;
+  box-shadow: 0 1px 6px rgba(6, 182, 212, 0.4);
+}
+
+.board-select-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.kanban-cards {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.kanban-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-accent);
   border-radius: 8px;
   background: var(--bg-elevated);
-  cursor: pointer;
+  cursor: grab;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.kanban-card:hover { border-color: var(--border-strong); }
-.kanban-card.dragging { opacity: 0.45; }
-.kanban-card strong { font-size: 0.76rem; font-weight: 500; color: var(--text); line-height: 1.4; }
-.kanban-card small { font-size: 0.65rem; color: var(--text-muted); }
-.kanban-key { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); }
-.kanban-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
-.prio { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-.prio.low { background: #64748B; }
-.prio.medium { background: #3B82F6; }
-.prio.high { background: #F59E0B; }
-.prio.urgent { background: #EF4444; }
+
+.kanban-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.kanban-card.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+
+.kanban-card.prio-urgent { border-left-color: #ef4444; }
+.kanban-card.prio-high { border-left-color: #f59e0b; }
+.kanban-card.prio-medium { border-left-color: #06b6d4; }
+.kanban-card.prio-low { border-left-color: #64748b; }
+
+.kanban-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.kanban-key {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.kanban-mod-pill {
+  font-size: 0.62rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prio-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.prio-tag.urgent { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+.prio-tag.high { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+.prio-tag.medium { background: rgba(6, 182, 212, 0.18); color: #22d3ee; }
+.prio-tag.low { background: rgba(100, 116, 139, 0.18); color: #94a3b8; }
+
+.kanban-card-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.35;
+  word-break: break-word;
+  margin: 0.15rem 0 0.35rem;
+}
+
+.kanban-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.kanban-avatars {
+  display: flex;
+  align-items: center;
+}
+
+.avatar-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 1.5px var(--bg-elevated);
+  cursor: default;
+  user-select: none;
+}
+
+.avatar-chip.sm {
+  width: 19px;
+  height: 19px;
+  font-size: 0.55rem;
+  margin-left: -5px;
+}
+
+.shared-tag {
+  font-size: 0.65rem;
+  color: var(--accent);
+  background: rgba(6, 182, 212, 0.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-left: 0.35rem;
+}
+
+.kanban-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.kanban-due {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* Collaborator Chip Picker in Task Editor */
+.collab-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 42px;
+}
+
+.collab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.collab-chip:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.collab-chip.selected {
+  border-color: var(--accent);
+  background: rgba(6, 182, 212, 0.16);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.25);
+}
+
+.collab-chip input {
+  display: none;
+}
 
 /* ---------- Phase B: project subtabs ---------- */
 .project-tabs {

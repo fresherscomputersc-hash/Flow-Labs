@@ -232,20 +232,45 @@
     }
     if (!session || !session.access_token) throw new Error('Sign in required.');
 
-    var response = await fetch('/api/platform' + path, {
+    var fetchOpts = {
       method: options.method || 'GET',
       headers: Object.assign({
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + session.access_token
       }, options.headers || {}),
       body: options.body ? JSON.stringify(options.body) : undefined
-    });
+    };
+
+    var response = null;
+    try {
+      response = await fetch('/api/platform' + path, fetchOpts);
+    } catch (_) {
+      response = null;
+    }
+
+    var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if ((!response || response.status === 404) && isLocal) {
+      try {
+        var remoteRes = await fetch('https://www.theflowlabs.online/api/platform' + path, fetchOpts);
+        if (remoteRes && remoteRes.ok) {
+          var remoteData = null;
+          try { remoteData = await remoteRes.json(); } catch (_) { remoteData = null; }
+          return remoteData || {};
+        }
+      } catch (_) {
+        // Fall back to original response handling
+      }
+    }
+
+    if (!response) {
+      throw new Error('Could not connect to the platform API.');
+    }
 
     var data = null;
     try { data = await response.json(); } catch (error) { data = null; }
 
     if (response.status === 404) {
-      throw new Error('The platform API is only available on the deployed site.');
+      throw new Error('The platform API endpoint (' + path + ') returned 404. Ensure vercel.json rewrites are deployed.');
     }
     if (!response.ok) {
       var error = new Error((data && data.error) || ('Request failed (' + response.status + ')'));
@@ -2058,9 +2083,52 @@
     else if (state.projectSubTab === 'settings') loadProjectSettings();
   }
 
+  /* ---------------- Collaborator & Avatar Helpers ---------------- */
+  var AVATAR_PALETTE = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#0ea5e9'];
+  function getInitials(name) {
+    if (!name) return '?';
+    var parts = String(name).trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  function getAvatarColor(name) {
+    if (!name) return AVATAR_PALETTE[0];
+    var hash = 0;
+    for (var i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
+    return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+  }
+
+  function parseCollaborators(desc) {
+    if (!desc) return [];
+    var match = desc.match(/<!--\s*collab:\s*(\[[^\]]*\])\s*-->/);
+    if (!match) return [];
+    try {
+      var arr = JSON.parse(match[1]);
+      return Array.isArray(arr) ? arr : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function cleanDescription(desc) {
+    if (!desc) return '';
+    return desc.replace(/\s*<!--\s*collab:\s*\[[^\]]*\]\s*-->\s*$/, '').trim();
+  }
+
+  function packDescription(text, collabIds) {
+    var clean = String(text || '').replace(/\s*<!--\s*collab:\s*\[[^\]]*\]\s*-->\s*$/, '').trim();
+    if (!collabIds || !collabIds.length) return clean;
+    return clean + '\n\n<!-- collab: ' + JSON.stringify(collabIds) + ' -->';
+  }
+
   function renderBoard() {
     var modFilter = $('boardModuleFilter').value || '';
     var assFilter = $('boardAssigneeFilter') ? $('boardAssigneeFilter').value : '';
+    var scope = state.boardScope || 'all';
+    var currentUserId = state.profile ? state.profile.id : null;
 
     $('boardModuleFilter').innerHTML = '<option value="">All modules</option>' +
       state.modules.map(function (module) {
@@ -2079,11 +2147,28 @@
 
     var byId = {};
     state.people.forEach(function (person) { byId[person.user_id] = person; });
+    var moduleMap = {};
+    state.modules.forEach(function (m) { moduleMap[m.id] = m.name; });
 
     var tasks = state.tasks.filter(function (task) {
       var modMatch = !modFilter || task.module_id === modFilter;
       var assMatch = !assFilter || (assFilter === 'unassigned' ? !task.assignee_id : task.assignee_id === assFilter);
-      return modMatch && assMatch;
+
+      var isAssignedToMe = currentUserId && task.assignee_id === currentUserId;
+      var collabs = parseCollaborators(task.description);
+      var isSharedWithMe = currentUserId && collabs.indexOf(currentUserId) !== -1;
+      var isSharedTask = collabs.length > 0;
+
+      var scopeMatch = true;
+      if (scope === 'mine') {
+        scopeMatch = isAssignedToMe;
+      } else if (scope === 'shared') {
+        scopeMatch = isSharedWithMe || (isAssignedToMe && isSharedTask) || isSharedTask;
+      } else if (scope === 'unassigned') {
+        scopeMatch = !task.assignee_id;
+      }
+
+      return modMatch && assMatch && scopeMatch;
     });
 
     $('kanban').innerHTML = STATUS_COLUMNS.map(function (column) {
@@ -2092,15 +2177,38 @@
       var cards = items.length ? items.map(function (task) {
         var person = byId[task.assignee_id];
         var who = person ? (person.full_name || person.email) : 'Unassigned';
-        return '<div class="kanban-card" draggable="true" tabindex="0" data-task-id="' + esc(task.id) + '" aria-label="' + esc(task.title) + '">' +
-          '<div class="kanban-foot">' +
-            '<span class="kanban-key">' + esc(task.key || '') + '</span>' +
-            '<span class="prio ' + esc(task.priority) + '" title="' + esc(task.priority) + '"></span>' +
+        var initials = getInitials(who);
+        var avatarColor = getAvatarColor(who);
+        var modName = moduleMap[task.module_id] || '';
+        var prio = task.priority || 'medium';
+
+        var collabs = parseCollaborators(task.description);
+        var collabAvatars = collabs.slice(0, 3).map(function (cid) {
+          var cp = byId[cid];
+          if (!cp) return '';
+          var cName = cp.full_name || cp.email;
+          return '<span class="avatar-chip sm" title="Collaborator: ' + esc(cName) + '" style="background:' + getAvatarColor(cName) + '">' +
+            esc(getInitials(cName)) + '</span>';
+        }).join('');
+
+        return '<div class="kanban-card prio-' + esc(prio) + '" draggable="true" tabindex="0" data-task-id="' + esc(task.id) + '" aria-label="' + esc(task.title) + '">' +
+          '<div class="kanban-card-top">' +
+            '<span class="kanban-key mono">' + esc(task.key || '') + '</span>' +
+            (modName ? '<span class="kanban-mod-pill" title="' + esc(modName) + '">' + esc(modName) + '</span>' : '') +
+            '<span class="prio-tag ' + esc(prio) + '">' + esc(prio) + '</span>' +
           '</div>' +
-          '<strong>' + esc(task.title) + '</strong>' +
-          '<div class="kanban-foot">' +
-            '<small>' + esc(task.due_date || '—') + '</small>' +
-            '<small>' + esc(who) + '</small>' +
+          '<div class="kanban-card-title">' + esc(task.title) + '</div>' +
+          '<div class="kanban-card-bottom">' +
+            '<div class="kanban-avatars">' +
+              (task.assignee_id
+                ? '<span class="avatar-chip" title="Lead: ' + esc(who) + '" style="background:' + avatarColor + '">' + esc(initials) + '</span>'
+                : '<span class="avatar-chip" title="Unassigned" style="background:#475569;font-size:0.55rem;">—</span>') +
+              collabAvatars +
+              (collabs.length ? '<span class="shared-tag" title="Shared with ' + collabs.length + ' teammates">👥 ' + collabs.length + '</span>' : '') +
+            '</div>' +
+            '<div class="kanban-meta-right">' +
+              (task.due_date ? '<span class="kanban-due mono">📅 ' + esc(task.due_date) + '</span>' : '') +
+            '</div>' +
           '</div>' +
           '</div>';
       }).join('') : '<p class="admin-empty" style="font-size:0.7rem">Empty</p>';
@@ -2571,7 +2679,7 @@
     $('taskId').value = task ? task.id : '';
     $('taskEditorKey').textContent = task ? (task.key || 'Task') : 'New task';
     $('task-title').value = task ? task.title : '';
-    $('task-desc').value = task && task.description ? task.description : '';
+    $('task-desc').value = task && task.description ? cleanDescription(task.description) : '';
     $('task-module').value = task && task.module_id ? task.module_id : '';
     $('task-assignee').value = task && task.assignee_id ? task.assignee_id : '';
     $('task-status').value = task ? task.status : 'todo';
@@ -2580,9 +2688,56 @@
     $('task-estimate').value = task && task.estimate_hours ? task.estimate_hours : '';
     $('taskDelete').hidden = !(task && canManageProject());
 
+    if ($('taskHandoffBtn')) {
+      $('taskHandoffBtn').hidden = !task;
+    }
+
+    renderCollaboratorsPicker(task);
+
     $('taskEditorCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     $('task-title').focus();
     loadTaskComments(task ? task.id : null);
+  }
+
+  function renderCollaboratorsPicker(task) {
+    var container = $('taskCollaboratorsPicker');
+    if (!container) return;
+
+    var activeCollabs = task && task.description ? parseCollaborators(task.description) : [];
+    var members = state.people.filter(function (p) {
+      return p.project_role !== 'client';
+    });
+
+    if (!members.length) {
+      container.innerHTML = '<span class="admin-empty" style="font-size:0.75rem;padding:0.2rem">No teammates on this project yet.</span>';
+      return;
+    }
+
+    container.innerHTML = members.map(function (m) {
+      var name = m.full_name || m.email;
+      var isSelected = activeCollabs.indexOf(m.user_id) !== -1;
+      var color = getAvatarColor(name);
+      var initials = getInitials(name);
+      return '<label class="collab-chip ' + (isSelected ? 'selected' : '') + '">' +
+        '<input type="checkbox" value="' + esc(m.user_id) + '" ' + (isSelected ? 'checked' : '') + '>' +
+        '<span class="avatar-chip sm" style="background:' + color + ';margin:0">' + esc(initials) + '</span>' +
+        '<span>' + esc(name) + '</span>' +
+        '</label>';
+    }).join('');
+
+    container.querySelectorAll('.collab-chip').forEach(function (chip) {
+      chip.addEventListener('change', function () {
+        var input = chip.querySelector('input');
+        chip.classList.toggle('selected', input.checked);
+      });
+    });
+  }
+
+  function getSelectedCollaborators() {
+    var container = $('taskCollaboratorsPicker');
+    if (!container) return [];
+    var checked = container.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.prototype.map.call(checked, function (inp) { return inp.value; });
   }
 
   async function fillMemberCandidates() {
@@ -2704,10 +2859,13 @@
 
     var id = $('taskId').value;
     var estimate = $('task-estimate').value;
+    var selectedCollabs = getSelectedCollaborators();
+    var cleanDesc = $('task-desc').value.trim();
+    var finalDesc = packDescription(cleanDesc, selectedCollabs);
 
     var payload = {
       title: $('task-title').value.trim(),
-      description: $('task-desc').value.trim() || null,
+      description: finalDesc || null,
       module_id: $('task-module').value || null,
       assignee_id: $('task-assignee').value || null,
       status: $('task-status').value,
@@ -2736,6 +2894,65 @@
     loadProjectScreen();
   });
 
+  if ($('taskHandoffBtn')) {
+    $('taskHandoffBtn').addEventListener('click', async function () {
+      var taskId = $('taskId').value;
+      if (!taskId) return;
+      var task = state.tasks.find(function (t) { return t.id === taskId; });
+      if (!task) return;
+
+      var members = state.people.filter(function (p) { return p.project_role !== 'client'; });
+      if (!members.length) {
+        fail('No teammates available to hand off to.');
+        return;
+      }
+
+      var promptMsg = 'Select teammate to hand off this task to:\n' +
+        members.map(function (m, idx) { return (idx + 1) + '. ' + (m.full_name || m.email); }).join('\n') +
+        '\n\nEnter number (1-' + members.length + '):';
+      var choice = window.prompt(promptMsg);
+      if (!choice) return;
+      var num = parseInt(choice, 10);
+      if (isNaN(num) || num < 1 || num > members.length) {
+        fail('Invalid selection.');
+        return;
+      }
+
+      var targetMember = members[num - 1];
+      var targetName = targetMember.full_name || targetMember.email;
+      var prevAssignee = state.people.find(function (p) { return p.user_id === task.assignee_id; });
+      var prevName = prevAssignee ? (prevAssignee.full_name || prevAssignee.email) : 'Unassigned';
+
+      var res = await db.from('tasks').update({ assignee_id: targetMember.user_id }).eq('id', taskId);
+      if (res.error) {
+        fail(res.error.message);
+        return;
+      }
+
+      var handoffNote = '⇄ Task handed off from ' + prevName + ' to ' + targetName;
+      await db.from('task_comments').insert({
+        task_id: taskId,
+        author_id: state.profile.id,
+        body: handoffNote
+      });
+
+      await db.from('activity').insert({
+        project_id: state.projectId,
+        actor_id: state.profile.id,
+        entity_id: taskId,
+        kind: 'task.status',
+        summary: 'Handed off ' + (task.key || 'task') + ' to ' + targetName
+      });
+
+      task.assignee_id = targetMember.user_id;
+      $('task-assignee').value = targetMember.user_id;
+      toast('Task handed off to ' + targetName);
+      loadTaskComments(taskId);
+      renderBoard();
+      renderProjectTasksTable();
+    });
+  }
+
   $('taskDelete').addEventListener('click', async function () {
     var id = $('taskId').value;
     if (!id || !window.confirm('Delete this task and its comments?')) return;
@@ -2751,7 +2968,25 @@
     loadProjectScreen();
   });
 
+  // Board Filter Events
+  var scopeContainer = $('boardScopeFilter');
+  if (scopeContainer) {
+    scopeContainer.addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-scope]');
+      if (!btn) return;
+      var scope = btn.getAttribute('data-scope');
+      state.boardScope = scope;
+      Array.prototype.forEach.call(scopeContainer.querySelectorAll('[data-scope]'), function (b) {
+        b.classList.toggle('active', b === btn);
+      });
+      renderBoard();
+    });
+  }
+
   $('boardModuleFilter').addEventListener('change', renderBoard);
+  if ($('boardAssigneeFilter')) {
+    $('boardAssigneeFilter').addEventListener('change', renderBoard);
+  }
 
   $('kanban').addEventListener('click', function (event) {
     var card = event.target.closest('[data-task-id]');
@@ -3101,11 +3336,22 @@
     try {
       data = await api('/team');
     } catch (error) {
-      wrap.innerHTML = '<div class="invite-result"><strong>Could not load accounts</strong>' +
-        '<p class="admin-empty" style="text-align:left;margin:0">' + esc(error.message) + '</p>' +
-        (error.status === 503 ? '<p class="admin-empty" style="text-align:left;margin:0">Set <code>SUPABASE_SERVICE_KEY</code> in Vercel, then redeploy.</p>' : '') +
-        '</div>';
-      return;
+      try {
+        var profRes = await db.from('profiles')
+          .select('id,email,full_name,role,status,github_username,created_at')
+          .order('created_at', { ascending: true });
+        if (profRes.data && profRes.data.length) {
+          data = { members: profRes.data };
+        } else {
+          throw error;
+        }
+      } catch (_) {
+        wrap.innerHTML = '<div class="invite-result"><strong>Could not load accounts</strong>' +
+          '<p class="admin-empty" style="text-align:left;margin:0">' + esc(error.message) + '</p>' +
+          (error.status === 503 ? '<p class="admin-empty" style="text-align:left;margin:0">Set <code>SUPABASE_SERVICE_KEY</code> in Vercel, then redeploy.</p>' : '') +
+          '</div>';
+        return;
+      }
     }
 
     var members = data.members || [];
@@ -3226,7 +3472,63 @@
       loadTeam();
       loadProjects();
     } catch (error) {
-      fail(error.message);
+      var emailVal = $('tm-email').value.trim();
+      var nameVal = $('tm-name').value.trim();
+      var createdFallback = false;
+
+      if (password && password.length >= 8) {
+        try {
+          var signUpRes = await db.auth.signUp({
+            email: emailVal,
+            password: password,
+            options: { data: { full_name: nameVal } }
+          });
+          if (signUpRes.data && signUpRes.data.user) {
+            var newUid = signUpRes.data.user.id;
+            await db.from('profiles').upsert({
+              id: newUid,
+              email: emailVal,
+              full_name: nameVal,
+              role: role,
+              status: 'active'
+            });
+            if (projectIds && projectIds.length) {
+              var pInserts = projectIds.map(function (pid) {
+                return { project_id: pid, user_id: newUid, role: role === 'client' ? 'client' : 'contributor' };
+              });
+              await db.from('project_members').insert(pInserts);
+            }
+            createdFallback = true;
+            $('teamResult').innerHTML = '<div class="invite-result">' +
+              '<strong>Account registered — ' + esc(emailVal) + ' (' + esc(ROLE_LABELS[role] || role) + ')</strong>' +
+              '<p class="admin-empty" style="text-align:left;margin:0">Credentials saved. Share this temporary password:</p>' +
+              '<code>' + esc(password) + '</code>' +
+              '</div>';
+            $('teamForm').reset();
+            $('tm-role').value = 'member';
+            $('tm-mode').value = 'password';
+            syncTeamMode();
+            toast('Account created.');
+            loadTeam();
+            loadProjects();
+          }
+        } catch (_) {
+          createdFallback = false;
+        }
+      }
+
+      if (!createdFallback) {
+        $('teamResult').innerHTML = '<div class="invite-result" style="border-left:3px solid var(--amber, #f59e0b);">' +
+          '<strong>Platform API: ' + esc(error.message) + '</strong>' +
+          '<p class="admin-empty" style="text-align:left;margin:0.5rem 0;">To create this account directly via Supabase Auth:</p>' +
+          '<ol style="font-size:0.8rem;color:var(--text-muted);margin:0;padding-left:1.2rem;line-height:1.6;">' +
+            '<li>Open <a href="https://supabase.com/dashboard/project/jolcqqwvzrvqydzxpwij/auth/users" target="_blank" rel="noopener" style="color:var(--accent,#06b6d4);">Supabase Auth Users ↗</a></li>' +
+            '<li>Click <strong>Add user &rarr; Create user</strong> (Email: <code>' + esc(emailVal) + '</code>, Password: <code>' + esc(password || '••••••••') + '</code>, Auto Confirm: ON).</li>' +
+            '<li>Refresh this page to assign project roles.</li>' +
+          '</ol>' +
+          '</div>';
+        fail(error.message);
+      }
     }
 
     button.disabled = false;
@@ -3243,7 +3545,9 @@
       await api('/team/' + id, { method: 'PATCH', body: { role: select.value } });
       toast('Role updated.');
     } catch (error) {
-      fail(error.message);
+      var up = await db.from('profiles').update({ role: select.value }).eq('id', id);
+      if (up.error) fail(up.error.message || error.message);
+      else toast('Role updated.');
     }
 
     loadTeam();
@@ -3262,7 +3566,9 @@
         });
         toast('Account updated.');
       } catch (error) {
-        fail(error.message);
+        var up = await db.from('profiles').update({ status: statusButton.getAttribute('data-next') }).eq('id', statusButton.getAttribute('data-status-for'));
+        if (up.error) fail(up.error.message || error.message);
+        else toast('Account updated.');
       }
       loadTeam();
       return;

@@ -495,7 +495,8 @@
                 <p class="project-key" id="projectKey">—</p>
                 <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
                   <h2 id="projectName" style="margin:0;">Project</h2>
-                  <a id="projectGithubBadge" class="badge github-badge" target="_blank" rel="noopener" hidden>GitHub ↗</a>
+                  <a id="projectGithubBadge" class="badge github-badge" target="_blank" rel="noopener" hidden>GitHub
+                    ↗</a>
                 </div>
                 <p id="projectSummary">—</p>
               </div>
@@ -522,21 +523,34 @@
           <!-- Panel: Board -->
           <div class="project-subpanel active" id="subpanel-board">
             <div class="admin-card">
-              <div class="admin-card-head">
+              <div class="admin-card-head board-head-split">
                 <div>
-                  <h2>Board</h2>
-                  <p>Drag a card to move it, or press Enter for keyboard move.</p>
+                  <h2>Task Board</h2>
+                  <p>Drag a card to update status, click to view collaboration notes &amp; handoffs.</p>
                 </div>
                 <div class="admin-actions">
+                  <button type="button" class="admin-btn primary" id="taskNew">+ New task</button>
+                </div>
+              </div>
+
+              <!-- Board Segmented Scope & Filter Toolbar -->
+              <div class="board-toolbar">
+                <div class="segmented-control" id="boardScopeFilter">
+                  <button type="button" class="segment-btn active" data-scope="all">All Tasks</button>
+                  <button type="button" class="segment-btn" data-scope="mine">My Tasks</button>
+                  <button type="button" class="segment-btn" data-scope="shared">Shared &amp; Collab</button>
+                  <button type="button" class="segment-btn" data-scope="unassigned">Unassigned</button>
+                </div>
+                <div class="board-select-group">
                   <select class="admin-select" id="boardModuleFilter">
                     <option value="">All modules</option>
                   </select>
                   <select class="admin-select" id="boardAssigneeFilter">
                     <option value="">All assignees</option>
                   </select>
-                  <button type="button" class="admin-btn primary" id="taskNew">New task</button>
                 </div>
               </div>
+
               <div class="kanban" id="kanban">
                 <p class="admin-empty">Loading…</p>
               </div>
@@ -790,8 +804,10 @@
                 </div>
                 <div class="admin-field">
                   <label for="ps-repo">Linked GitHub repository</label>
-                  <input class="admin-input" id="ps-repo" placeholder="owner/repo, e.g. fresherscomputersc-hash/Flow-Labs">
-                  <small>Pushes and PRs with task keys (e.g. FLW-12) will automatically link commits and PRs to tasks.</small>
+                  <input class="admin-input" id="ps-repo"
+                    placeholder="owner/repo, e.g. fresherscomputersc-hash/Flow-Labs">
+                  <small>Pushes and PRs with task keys (e.g. FLW-12) will automatically link commits and PRs to
+                    tasks.</small>
                 </div>
                 <div class="admin-actions">
                   <button type="submit" class="admin-btn primary" id="psSaveBtn">Save project settings</button>
@@ -803,10 +819,13 @@
           <div class="admin-card" id="taskEditorCard" hidden>
             <div class="admin-card-head">
               <div>
-                <h2>Task</h2>
+                <h2>Task Details</h2>
                 <p id="taskEditorKey">New task</p>
               </div>
-              <button type="button" class="admin-btn ghost" id="taskEditorClose">Close</button>
+              <div class="admin-actions">
+                <button type="button" class="admin-btn ghost sm" id="taskHandoffBtn" hidden title="Quickly reassign or hand off to teammate">⇄ Hand off</button>
+                <button type="button" class="admin-btn ghost" id="taskEditorClose">Close</button>
+              </div>
             </div>
             <form class="admin-form" id="taskForm">
               <input type="hidden" id="taskId">
@@ -816,7 +835,7 @@
               </div>
               <div class="admin-field">
                 <label for="task-desc">Description</label>
-                <textarea class="admin-textarea" id="task-desc" rows="3"></textarea>
+                <textarea class="admin-textarea" id="task-desc" rows="3" placeholder="Task requirements, technical notes, or specs…"></textarea>
               </div>
               <div class="admin-grid-2">
                 <div class="admin-field">
@@ -824,8 +843,16 @@
                   <select class="admin-select" id="task-module"></select>
                 </div>
                 <div class="admin-field">
-                  <label for="task-assignee">Assignee</label>
+                  <label for="task-assignee">Lead Assignee</label>
                   <select class="admin-select" id="task-assignee"></select>
+                </div>
+              </div>
+
+              <!-- Multi-Member Sharing & Collaborators -->
+              <div class="admin-field">
+                <label>Team Collaborators &amp; Watchers <small style="color:var(--text-muted);font-weight:normal">(Teammates sharing this task)</small></label>
+                <div class="collab-picker" id="taskCollaboratorsPicker">
+                  <span class="admin-empty" style="font-size:0.75rem">Loading team…</span>
                 </div>
               </div>
               <div class="admin-grid-2">

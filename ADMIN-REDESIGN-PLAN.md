@@ -299,7 +299,10 @@ Flow Labs is a software/product studio (three founders, 3 tiers: Design ₹25k, 
 | Team (alt) | **RenderLab** — typographic marquees with scroll-responsive motion | No portraits needed. |
 | Testimonials | **Arca** — bendable cards, oversized editorial lettering, brushstroke | Premium feel. |
 | Testimonials (alt) | **Aniwall** — three glass cards + iridescent helix | Light/bright fits. |
-| FAQ | **Aniwall** — editorial accordion with iridescent helix | Light/bright friendly. |
+| FAQ | **Aniwall** — editorial accordion with iridescent helix | Light/bright friendly. 
+
+
+|
 | CTA / Contact | **OBLO** — interactive project invitation, budget selector, draggable sculptural form | Perfect for "project scoping" flow. |
 | CTA (alt) | **Turun** — live 3D postcard / reserve a morning. | |
 | Footer | **Kage** / **Cadence** — compact studio footers. | |
