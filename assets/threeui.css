@@ -74,16 +74,96 @@ body {
   color: #FFFFFF;
 }
 
-/* Background 3D WebGL Canvas Layer */
+/* Background 3D WebGL Canvas Layer (Disabled in favor of focused Hero 3D Engine) */
 #threeuiCanvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
+  display: none !important;
+}
+
+/* ============================================================
+   HERO 3D FLOW ENGINE (HERO ONLY)
+   Defining The Flow Labs: Interactive 3D Spatial Geometry
+   ============================================================ */
+.hero-three-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  height: 320px;
+  margin: 16px auto 36px;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.1) 0%, rgba(59, 130, 246, 0.04) 50%, rgba(7, 9, 14, 0.4) 80%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(6, 182, 212, 0.12), inset 0 0 40px rgba(6, 182, 212, 0.04);
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (max-width: 768px) {
+  .hero-three-wrapper {
+    height: 250px;
+    margin: 12px auto 28px;
+    max-width: 95%;
+  }
+}
+
+#heroCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+
+#heroCanvas:active {
+  cursor: grabbing;
+}
+
+.hero-canvas-badge {
+  position: absolute;
+  bottom: 12px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(10, 15, 26, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #94A3B8;
   pointer-events: none;
-  opacity: 1;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hero-canvas-badge .pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  animation: radarPulse 1.8s infinite ease-in-out;
+}
+
+.hero-canvas-hint {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Ambient Radial Glow Gradients */

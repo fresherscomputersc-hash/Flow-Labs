@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Flow Labs — Interfaces, Scaled Systems & Applied Intelligence</title>
+  <title>The Flow Labs — Interfaces, Scaled Systems &amp; Applied Intelligence</title>
   <meta name="description" content="A founder-led digital engineering studio in Bhubaneswar. We design, build and ship interfaces, scaled systems and applied intelligence in-house. Four builds a month.">
   <link rel="canonical" href="https://www.theflowlabs.online/">
 
-  <meta property="og:title" content="The Flow Labs — Interfaces, Scaled Systems & Applied Intelligence">
+  <meta property="og:title" content="The Flow Labs — Interfaces, Scaled Systems &amp; Applied Intelligence">
   <meta property="og:description" content="A founder-led digital engineering studio. Four builds a month, 100% in-house.">
   <meta property="og:url" content="https://www.theflowlabs.online/">
   <meta property="og:type" content="website">
@@ -15,7 +15,7 @@
   <meta property="og:locale" content="en_IN">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="The Flow Labs — Interfaces, Scaled Systems & Applied Intelligence">
+  <meta name="twitter:title" content="The Flow Labs — Interfaces, Scaled Systems &amp; Applied Intelligence">
   <meta name="twitter:description" content="A founder-led digital engineering studio. Four builds a month, 100% in-house.">
   <meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
 
@@ -28,13 +28,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Three.js CDN for WebGL procedural wave field -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
-
-  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <!-- Local Three.js and ThreeUI Assets -->
+  <script src="/assets/three.min.js" defer></script>
   <script src="/assets/site.config.js?v=7" defer></script>
-  <link rel="stylesheet" href="/assets/threeui.css?v=1">
-  <script src="/assets/threeui.js?v=1" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=2">
+  <script src="/assets/threeui.js?v=2" defer></script>
   <script src="/assets/site-cms.js" defer></script>
   <script src="/assets/site-track.js" defer></script>
 
@@ -63,9 +61,6 @@
 </head>
 <body data-page="home">
 
-  <!-- Background 3D WebGL Canvas -->
-  <canvas id="threeuiCanvas"></canvas>
-
   <!-- Ambient Glow Blobs -->
   <div class="ambient-glow top-left" aria-hidden="true"></div>
   <div class="ambient-glow bottom-right" aria-hidden="true"></div>
@@ -84,13 +79,14 @@
       </a>
 
       <nav class="dock-links">
-        <a href="#services" class="dock-item">Services</a>
-        <a href="#work" class="dock-item">Work</a>
-        <a href="#founders" class="dock-item">About</a>
-        <a href="#estimator" class="dock-item">Scoping</a>
+        <a href="/services/" class="dock-item">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/scoping/" class="dock-item">Scoping</a>
+        <a href="/blog/" class="dock-item">Blog</a>
       </nav>
 
-      <a href="#estimator" class="dock-cta" data-magnetic>
+      <a href="/scoping/" class="dock-cta" data-magnetic>
         <span>Start a Build</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -117,15 +113,27 @@
         A three-person engineering studio building digital products for ambitious teams. Zero account layers, fixed pricing, and direct collaboration with the founders writing your code.
       </p>
 
+      <!-- 3D HERO SPATIAL FLOW ENGINE (HERO ONLY) -->
+      <div class="hero-three-wrapper">
+        <canvas id="heroCanvas"></canvas>
+        <div class="hero-canvas-hint">
+          <span>✦</span> Touch &amp; Drag in 3D Space
+        </div>
+        <div class="hero-canvas-badge">
+          <span class="pulse-dot"></span>
+          <span>Spatial Flow Engine · 60fps</span>
+        </div>
+      </div>
+
       <div class="three-actions">
-        <a href="#estimator" class="three-btn primary" data-magnetic>
-          <span>Reserve a Build Slot</span>
+        <a href="/scoping/" class="three-btn primary" data-magnetic>
+          <span>Launch Scoping Cockpit</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14"></path>
             <path d="m12 5 7 7-7 7"></path>
           </svg>
         </a>
-        <a href="#work" class="three-btn glass" data-magnetic>
+        <a href="/work/" class="three-btn glass" data-magnetic>
           <span>Inspect Case Studies</span>
         </a>
       </div>
@@ -151,14 +159,20 @@
       </div>
     </section>
 
-    <!-- 3. THREEUI CAPABILITIES BENTO (SERVICES) -->
-    <section class="three-section" id="services">
-      <div class="section-eyebrow">Studio Architecture</div>
-      <h2 class="section-heading" data-cms="services-title">Three core layers. Built under one roof.</h2>
-      <p class="section-subtext" data-cms="services-subtitle">Every product we engineer spans three interconnected layers, designed from first principles with zero subcontracting.</p>
+    <!-- 3. SERVICES HIGHLIGHT (DEDICATED TEASER) -->
+    <section class="three-section">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div class="section-eyebrow">Studio Architecture</div>
+          <h2 class="section-heading" data-cms="services-title">Three engineering layers. One team.</h2>
+          <p class="section-subtext" data-cms="services-subtitle">Every product we engineer spans three interconnected layers, designed from first principles with zero subcontracting.</p>
+        </div>
+        <a href="/services/" class="three-btn glass" style="margin-bottom: 0.5rem;">
+          <span>Explore All Services &rarr;</span>
+        </a>
+      </div>
 
       <div class="three-bento-grid">
-
         <!-- Layer 01: Interfaces -->
         <div class="three-card col-4" data-three-tilt>
           <span class="card-tag">Layer 01 // Frontend</span>
@@ -169,7 +183,6 @@
             <span class="pill-chip">Next.js 15</span>
             <span class="pill-chip">Tailwind CSS</span>
             <span class="pill-chip">Three.js</span>
-            <span class="pill-chip">Framer Motion</span>
           </div>
         </div>
 
@@ -178,31 +191,11 @@
           <span class="card-tag">Layer 02 // Backend</span>
           <h3 class="card-title">Scaled Cloud &amp; Systems</h3>
           <p class="card-desc">Robust backend APIs, relational database schemas, real-time message brokers, and infrastructure designed for enterprise load.</p>
-          <!-- Interactive Node Topology Visualizer -->
-          <div class="card-gizmo" style="margin-bottom: 20px;">
-            <div class="node-topology">
-              <div class="node-item">
-                <div class="node-circle">API</div>
-                <span style="font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted);">FastAPI</span>
-              </div>
-              <div class="node-pipe"></div>
-              <div class="node-item">
-                <div class="node-circle" style="border-color:var(--neon-cyan);">DB</div>
-                <span style="font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted);">PostgreSQL</span>
-              </div>
-              <div class="node-pipe"></div>
-              <div class="node-item">
-                <div class="node-circle" style="border-color:var(--neon-emerald);">RT</div>
-                <span style="font-family:var(--font-mono); font-size:0.65rem; color:var(--text-muted);">Supabase</span>
-              </div>
-            </div>
-          </div>
-          <div class="pill-group">
+          <div class="pill-group" style="margin-top:auto;">
             <span class="pill-chip">PostgreSQL</span>
             <span class="pill-chip">FastAPI</span>
             <span class="pill-chip">Supabase</span>
             <span class="pill-chip">Docker</span>
-            <span class="pill-chip">Redis</span>
           </div>
         </div>
 
@@ -210,34 +203,31 @@
         <div class="three-card col-4" data-three-tilt>
           <span class="card-tag">Layer 03 // Intelligence</span>
           <h3 class="card-title">Applied AI &amp; Automation</h3>
-          <p class="card-desc">Autonomous LLM agent workflows, vector search embeddings, custom fine-tuned tools, and self-healing automation pipelines.</p>
-          <!-- Interactive Token Stream Terminal -->
-          <div class="card-gizmo" style="margin-bottom: 20px;">
-            <div class="token-stream">
-              <span style="color:var(--text-muted);">&gt; agent.orchestrate(task)</span><br>
-              <span style="color:var(--neon-emerald);">✔ Embeddings generated (1536d)</span><br>
-              <span style="color:var(--neon-cyan);">&gt; Claude 3.5: streaming response</span><span class="token-cursor"></span>
-            </div>
-          </div>
-          <div class="pill-group">
-            <span class="pill-chip">Claude 3.5 Sonnet</span>
-            <span class="pill-chip">OpenAI API</span>
+          <p class="card-desc">Autonomous LLM workflows, vector search embeddings, custom fine-tuned tools, and self-healing automation pipelines.</p>
+          <div class="pill-group" style="margin-top:auto;">
+            <span class="pill-chip">Claude 3.5</span>
+            <span class="pill-chip">OpenAI</span>
             <span class="pill-chip">pgvector</span>
-            <span class="pill-chip">LangChain</span>
+            <span class="pill-chip">WhatsApp Bot</span>
           </div>
         </div>
-
       </div>
     </section>
 
-    <!-- 4. THREEUI FEATURED WORK SHOWROOM -->
-    <section class="three-section" id="work">
-      <div class="section-eyebrow">Production Portfolio</div>
-      <h2 class="section-heading" data-cms="work-title">Built in the lab. Running live in production.</h2>
-      <p class="section-subtext" data-cms="work-subtitle">Real platforms handling actual users, high transaction volume, and operational complexity.</p>
+    <!-- 4. FEATURED WORK SHOWROOM (DEDICATED TEASER) -->
+    <section class="three-section">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div class="section-eyebrow">Production Portfolio</div>
+          <h2 class="section-heading" data-cms="work-title">Shipped software. Operating live.</h2>
+          <p class="section-subtext" data-cms="work-subtitle">Real platforms handling actual users, high transaction volume, and operational complexity.</p>
+        </div>
+        <a href="/work/" class="three-btn glass" style="margin-bottom: 0.5rem;">
+          <span>View All Work &rarr;</span>
+        </a>
+      </div>
 
       <div class="three-bento-grid">
-
         <!-- Droovee Showcase Card -->
         <div class="three-card col-8" data-three-tilt>
           <div class="project-cover-viewport">
@@ -254,7 +244,6 @@
             <span class="pill-chip">Full-Stack Interface</span>
             <span class="pill-chip">Supabase Realtime</span>
             <span class="pill-chip">Automated Invoicing</span>
-            <span class="pill-chip">PostgreSQL</span>
           </div>
         </div>
 
@@ -276,213 +265,193 @@
             <span class="pill-chip">WebRTC</span>
           </div>
         </div>
-
-        <!-- FlowOps Open-Source Card -->
-        <div class="three-card col-6" data-three-tilt>
-          <div class="project-cover-viewport">
-            <img src="/assets/work-flowops.png" alt="FlowOps Preview" loading="lazy">
-            <div class="status-tag">
-              <span style="width:6px; height:6px; border-radius:50%; background:var(--neon-purple); box-shadow:0 0 8px var(--neon-purple);"></span>
-              <span>OPEN SOURCE</span>
-            </div>
-          </div>
-          <span class="card-tag">Developer Tooling // Devops</span>
-          <h3 class="card-title">FlowOps Orchestrator</h3>
-          <p class="card-desc">Lightweight multi-agent deployment supervisor and webhook receiver for zero-downtime microservice orchestration.</p>
-          <div class="pill-group">
-            <span class="pill-chip">Go / Python</span>
-            <span class="pill-chip">Docker API</span>
-            <span class="pill-chip">GitHub Webhooks</span>
-          </div>
-        </div>
-
-        <!-- Founder Team Cockpit Card -->
-        <div class="three-card col-6" id="founders" data-three-tilt>
-          <span class="card-tag">The Engineers // Founders</span>
-          <h3 class="card-title" data-cms="team-title">Three Founders. Zero Account Layers.</h3>
-          <p class="card-desc" data-cms="team-subtitle">When you partner with The Flow Labs, you collaborate directly with the three partners designing the architecture and shipping the code.</p>
-
-          <div style="display:flex; flex-direction:column; gap:14px; margin-top:20px;">
-            <div style="display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:10px 16px; border-radius:var(--radius-md);">
-              <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #1E40AF, #3B82F6); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:#fff;">SR</div>
-              <div>
-                <div style="font-weight:600; color:#FFFFFF; font-size:0.95rem;" data-cms="team-1-name">Smruti Ranjan</div>
-                <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-cyan);">Founder · Systems &amp; AI Architecture</div>
-              </div>
-            </div>
-
-            <div style="display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:10px 16px; border-radius:var(--radius-md);">
-              <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #065F46, #10B981); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:#fff;">BW</div>
-              <div>
-                <div style="font-weight:600; color:#FFFFFF; font-size:0.95rem;" data-cms="team-2-name">Biswash</div>
-                <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-emerald);">Co-Founder · Scaled Backend &amp; Cloud</div>
-              </div>
-            </div>
-
-            <div style="display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:10px 16px; border-radius:var(--radius-md);">
-              <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #5B21B6, #8B5CF6); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:#fff;">AP</div>
-              <div>
-                <div style="font-weight:600; color:#FFFFFF; font-size:0.95rem;" data-cms="team-3-name">Arpita</div>
-                <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-purple);">Co-Founder · Interfaces &amp; Design Systems</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </section>
 
-    <!-- 5. INTERACTIVE THREEUI SCOPING TERMINAL -->
-    <section class="three-section" id="estimator">
-      <div class="scoping-terminal">
-        <div class="terminal-header">
-          <div>
-            <span class="card-tag" style="margin-bottom:6px;">Interactive Estimator // Scoping</span>
-            <h3 class="terminal-title" data-cms="cta-title">Project Scoping Cockpit</h3>
+    <!-- 5. FOUNDERS & MANIFESTO (DEDICATED TEASER) -->
+    <section class="three-section">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div class="section-eyebrow">Studio Leadership</div>
+          <h2 class="section-heading" data-cms="team-title">Three Founders. Zero Account Layers.</h2>
+          <p class="section-subtext" data-cms="team-subtitle">Direct access to the engineers writing your code. Capped at 4 builds a month.</p>
+        </div>
+        <a href="/about/" class="three-btn glass" style="margin-bottom: 0.5rem;">
+          <span>Read Our Story &rarr;</span>
+        </a>
+      </div>
+
+      <div class="three-bento-grid">
+        <div class="three-card col-4" data-three-tilt>
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom: 16px;">
+            <div style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, #1E40AF, #3B82F6); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:#fff;">SR</div>
+            <div>
+              <div style="font-weight:600; color:#FFFFFF; font-size:1.05rem;" data-cms="team-1-name">Smruti Ranjan</div>
+              <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-cyan);">Founder · Systems &amp; AI Architecture</div>
+            </div>
           </div>
-          <div class="terminal-status" id="slotBadge">
-            <span class="three-pill-dot"></span>
-            <span>2 of 4 December Seats Reserved</span>
-          </div>
+          <p class="card-desc">Architects high-throughput backends, distributed PostgreSQL schemas, and custom AI inference pipelines.</p>
         </div>
 
-        <form id="inquiryForm">
-          <div class="terminal-controls">
-            <!-- Step 1: Select Type -->
-            <div class="control-field">
-              <label class="control-label">01. Select Project Domain</label>
-              <div class="control-chips">
-                <button class="chip-btn active" type="button" data-scope-type="web">Web Application</button>
-                <button class="chip-btn" type="button" data-scope-type="software">Custom Platform</button>
-                <button class="chip-btn" type="button" data-scope-type="ai">AI / Automation</button>
-                <button class="chip-btn" type="button" data-scope-type="audit">Architecture Audit</button>
-              </div>
-            </div>
-
-            <!-- Step 2: Feature Add-on Modules -->
-            <div class="control-field">
-              <label class="control-label">02. Optional Architectural Modules</label>
-              <div class="feature-switches-grid">
-                <label class="feature-switch-chip">
-                  <input type="checkbox" data-feature="whatsapp" data-price="25000">
-                  <span class="switch-indicator">+</span>
-                  <span class="switch-title">WhatsApp Automation</span>
-                  <span class="switch-cost">+₹25k</span>
-                </label>
-                <label class="feature-switch-chip">
-                  <input type="checkbox" data-feature="database" data-price="30000">
-                  <span class="switch-indicator">+</span>
-                  <span class="switch-title">Realtime PostgreSQL</span>
-                  <span class="switch-cost">+₹30k</span>
-                </label>
-                <label class="feature-switch-chip">
-                  <input type="checkbox" data-feature="ai_rag" data-price="45000">
-                  <span class="switch-indicator">+</span>
-                  <span class="switch-title">Custom AI RAG Pipeline</span>
-                  <span class="switch-cost">+₹45k</span>
-                </label>
-                <label class="feature-switch-chip">
-                  <input type="checkbox" data-feature="admin" data-price="35000">
-                  <span class="switch-indicator">+</span>
-                  <span class="switch-title">Multi-Role Admin Console</span>
-                  <span class="switch-cost">+₹35k</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Step 3: Delivery Speed / Duration -->
-            <div class="control-field">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <label class="control-label">03. Target Delivery Duration</label>
-                <span id="weeksDisplay" style="font-family:var(--font-mono); font-size:0.85rem; color:var(--neon-cyan); font-weight:600;">3 Weeks</span>
-              </div>
-              <input type="range" class="range-slider" id="scopeWeeks" min="1" max="8" value="3">
-              <div style="display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:0.7rem; color:var(--text-muted); margin-top:4px;">
-                <span>1 Wk (Sprint)</span>
-                <span>4 Wks (Platform)</span>
-                <span>8 Wks (Full Suite)</span>
-              </div>
+        <div class="three-card col-4" data-three-tilt>
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom: 16px;">
+            <div style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, #065F46, #10B981); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:#fff;">BW</div>
+            <div>
+              <div style="font-weight:600; color:#FFFFFF; font-size:1.05rem;" data-cms="team-2-name">Biswash</div>
+              <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-emerald);">Co-Founder · Scaled Backend &amp; Cloud</div>
             </div>
           </div>
+          <p class="card-desc">Oversees cloud infrastructure, continuous deployment reliability, and enterprise platform security.</p>
+        </div>
 
-          <!-- Direct Inquiry Form Fields -->
-          <div class="terminal-form-row">
-            <input type="text" id="inqName" class="terminal-input" placeholder="Your Name or Company" required>
-            <input type="text" id="inqContact" class="terminal-input" placeholder="Email or Phone (+91...)" required>
-          </div>
-          <div style="margin-top:16px;">
-            <input type="text" id="inqRequirements" class="terminal-input" style="width:100%;" placeholder="Describe key requirements or features needed...">
-          </div>
-
-          <div id="formStatus" style="display:none; margin-top:16px; font-family:var(--font-mono); font-size:0.85rem; padding:10px 16px; border-radius:6px; background:rgba(0,0,0,0.4);"></div>
-
-          <!-- Scoping Output Visualizer & Submit -->
-          <div class="scoping-output">
-            <div class="output-stat">
-              <span class="output-tag">ESTIMATED PRODUCTION COST</span>
-              <div class="output-val" id="costDisplay">₹86,000 <span>fixed</span></div>
+        <div class="three-card col-4" data-three-tilt>
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom: 16px;">
+            <div style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, #5B21B6, #8B5CF6); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:#fff;">AP</div>
+            <div>
+              <div style="font-weight:600; color:#FFFFFF; font-size:1.05rem;" data-cms="team-3-name">Arpita</div>
+              <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-purple);">Co-Founder · Interfaces &amp; Design Systems</div>
             </div>
-            <div class="output-stat">
-              <span class="output-tag">DELIVERY COMMITMENT</span>
-              <div style="font-size:1.1rem; font-weight:600; color:#FFFFFF; font-family:var(--font-display);" data-cms="cta-subtitle">Direct Founder Access · Weekly Clickable Demos</div>
-            </div>
-            <button type="submit" class="three-btn primary" data-magnetic style="margin-left:auto; border:none;">
-              <span>Lock Build Slot</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
           </div>
-        </form>
+          <p class="card-desc">Crafts kinetic user experiences, ThreeUI spatial web applications, and precision design systems.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. SCOPING COCKPIT TEASER -->
+    <section class="three-section">
+      <div class="three-card col-12" style="background: linear-gradient(135deg, rgba(13, 21, 39, 0.8), rgba(7, 9, 14, 0.9)); border: 1px solid var(--border-specular); padding: 48px 36px; text-align: center;">
+        <span class="card-tag" style="margin-bottom: 12px;">Interactive Telemetry</span>
+        <h2 style="font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-family: var(--font-display); color: #FFF; margin-bottom: 16px;">
+          Project Scoping Cockpit.
+        </h2>
+        <p style="max-width: 620px; margin: 0 auto 28px; color: var(--text-secondary); line-height: 1.6;">
+          Configure your product requirements, select domain architecture modules, and synthesize real-time cost and timeline estimates with an upfront fixed-price guarantee.
+        </p>
+        <div class="three-actions" style="justify-content: center; margin-bottom: 0;">
+          <a href="/scoping/" class="three-btn primary" data-magnetic>
+            <span>Open Scoping Cockpit &rarr;</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. ENGINEERING BLOG TEASER -->
+    <section class="three-section">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div class="section-eyebrow">Perspectives &amp; Code</div>
+          <h2 class="section-heading">Engineering Blog.</h2>
+          <p class="section-subtext">Direct perspectives on software architecture, AI automation, and shipping products.</p>
+        </div>
+        <a href="/blog/" class="three-btn glass" style="margin-bottom: 0.5rem;">
+          <span>Read All Articles &rarr;</span>
+        </a>
+      </div>
+
+      <div class="three-bento-grid">
+        <article class="three-card col-4" data-three-tilt>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span class="card-tag">Web Strategy</span>
+            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">6 MIN READ</span>
+          </div>
+          <h3 class="card-title" style="margin-bottom:12px;">
+            <a href="/blog/how-to-plan-a-website-for-a-new-startup/" style="color:var(--text-main); text-decoration:none;">
+              How to Plan a Website for a New Startup
+            </a>
+          </h3>
+          <p class="card-desc" style="margin-bottom:18px;">
+            How to plan a startup website that actually gets you customers: primary jobs, must-have pages, and conversion copy.
+          </p>
+          <a href="/blog/how-to-plan-a-website-for-a-new-startup/" style="color:var(--neon-cyan); font-family:var(--font-mono); font-size:0.85rem; font-weight:600; text-decoration:none;">
+            Read Article &rarr;
+          </a>
+        </article>
+
+        <article class="three-card col-4" data-three-tilt>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span class="card-tag">Systems &amp; Architecture</span>
+            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">8 MIN READ</span>
+          </div>
+          <h3 class="card-title" style="margin-bottom:12px;">
+            <a href="/blog/custom-software-vs-ready-made-software/" style="color:var(--text-main); text-decoration:none;">
+              Custom Software vs Ready-Made Software
+            </a>
+          </h3>
+          <p class="card-desc" style="margin-bottom:18px;">
+            Custom software versus off-the-shelf SaaS compared honestly: long-term cost curves and the five questions that decide it.
+          </p>
+          <a href="/blog/custom-software-vs-ready-made-software/" style="color:var(--neon-cyan); font-family:var(--font-mono); font-size:0.85rem; font-weight:600; text-decoration:none;">
+            Read Article &rarr;
+          </a>
+        </article>
+
+        <article class="three-card col-4" data-three-tilt>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span class="card-tag">Applied AI</span>
+            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">5 MIN READ</span>
+          </div>
+          <h3 class="card-title" style="margin-bottom:12px;">
+            <a href="/blog/ai-automation-for-small-businesses/" style="color:var(--text-main); text-decoration:none;">
+              How Small Businesses Can Use AI Automation
+            </a>
+          </h3>
+          <p class="card-desc" style="margin-bottom:18px;">
+            AI automation explained practically: what to automate first, what to leave to humans, and realistic cost benchmarks.
+          </p>
+          <a href="/blog/ai-automation-for-small-businesses/" style="color:var(--neon-cyan); font-family:var(--font-mono); font-size:0.85rem; font-weight:600; text-decoration:none;">
+            Read Article &rarr;
+          </a>
+        </article>
       </div>
     </section>
 
   </main>
 
-  <!-- 6. THREEUI TELEMETRY FOOTER -->
+  <!-- 8. TELEMETRY FOOTER -->
   <footer class="three-footer">
-    <div class="three-wrap">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
-          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
-          <div class="footer-clock-pill">
-            <span>Studio Time:</span>
-            <b data-clock>--:--:--</b>
-            <span>IST (UTC+5:30)</span>
-          </div>
-        </div>
-
-        <div class="footer-col">
-          <h5>Architecture</h5>
-          <a href="#services">Interfaces (Frontend)</a>
-          <a href="#services">Systems (Cloud &amp; Backend)</a>
-          <a href="#services">Applied Intelligence</a>
-          <a href="#work">Droovee Mobility</a>
-          <a href="#work">Drishti Vision AI</a>
-        </div>
-
-        <div class="footer-col">
-          <h5>Studio</h5>
-          <a href="#founders">Founders &amp; Manifesto</a>
-          <a href="#estimator">Project Scoping Cockpit</a>
-          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
-          <a href="/lab-report/">Free Lab Report</a>
-          <a href="/client/">Client Portal</a>
-        </div>
-
-        <div class="footer-col">
-          <h5>Connect</h5>
-          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
-          <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-          <a href="/privacy-policy/">Privacy Policy</a>
-          <a href="/terms/">Terms of Service</a>
-        </div>
+    <div class="three-wrap footer-inner">
+      <div class="footer-col brand-col">
+        <div class="footer-logo">The Flow Labs<span>.</span></div>
+        <p class="footer-tagline">
+          Interfaces, Scaled Systems &amp; Applied Intelligence.<br>
+          Four production builds a month. Engineered in Bhubaneswar.
+        </p>
       </div>
 
-      <div class="footer-bottom">
-        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
-        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      <div class="footer-col">
+        <h5>Architecture</h5>
+        <a href="/services/">Interfaces (Frontend)</a>
+        <a href="/services/">Systems (Cloud &amp; Backend)</a>
+        <a href="/services/">Applied Intelligence</a>
+        <a href="/work/">Droovee Mobility</a>
+        <a href="/work/">Drishti Vision AI</a>
+      </div>
+
+      <div class="footer-col">
+        <h5>Studio</h5>
+        <a href="/about/">Founders &amp; Manifesto</a>
+        <a href="/scoping/">Project Scoping Cockpit</a>
+        <a href="/blog/">Engineering Blog</a>
+        <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+        <a href="/client/">Client Portal</a>
+      </div>
+
+      <div class="footer-col">
+        <h5>Connect</h5>
+        <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
+        <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
+        <a href="/privacy-policy/">Privacy Policy</a>
+        <a href="/terms/">Terms of Service</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="three-wrap footer-bottom-inner">
+        <div>&copy; 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div class="footer-telemetry">
+          <span>Latency: <strong>16ms</strong></span>
+          <span>Status: <strong style="color:var(--neon-emerald)">OPERATIONAL</strong></span>
+        </div>
       </div>
     </div>
   </footer>

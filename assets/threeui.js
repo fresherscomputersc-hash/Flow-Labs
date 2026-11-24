@@ -7,233 +7,329 @@
   'use strict';
 
   /* -------------------------------------------------------------
-     1. THREE.JS PROCEDURAL 3D WAVE / PARTICLE ENGINE
+     1. THREEUI 3D HERO SPATIAL FLOW ENGINE (HERO ONLY)
+     Defining The Flow Labs: Interactive Spatial Geometry & Nodes
      ------------------------------------------------------------- */
-  function initThreeCanvas() {
-    const canvas = document.getElementById('threeuiCanvas');
+  function initHeroCanvas() {
+    const canvas = document.getElementById('heroCanvas');
     if (!canvas) return;
 
     let glRunning = false;
 
-    if (typeof THREE !== 'undefined') {
-      glRunning = bootThreeGL(canvas);
+    function attemptBoot() {
+      if (typeof THREE !== 'undefined' && !glRunning) {
+        glRunning = bootHeroThreeGL(canvas);
+      }
+      if (!glRunning) {
+        bootHero2DFallback(canvas);
+      }
     }
 
-    if (!glRunning) {
-      const stop2D = bootProcedural2DWave(canvas);
-
-      if (typeof THREE === 'undefined') {
-        let attempts = 0;
-        const checker = setInterval(() => {
-          attempts++;
-          if (typeof THREE !== 'undefined') {
-            clearInterval(checker);
-            if (stop2D) stop2D();
-            bootThreeGL(canvas);
-          } else if (attempts >= 15) {
-            clearInterval(checker);
-          }
-        }, 200);
-      }
+    if (typeof THREE !== 'undefined') {
+      attemptBoot();
+    } else {
+      const stop2D = bootHero2DFallback(canvas);
+      let attempts = 0;
+      const checker = setInterval(() => {
+        attempts++;
+        if (typeof THREE !== 'undefined') {
+          clearInterval(checker);
+          if (stop2D) stop2D();
+          bootHeroThreeGL(canvas);
+        } else if (attempts >= 15) {
+          clearInterval(checker);
+        }
+      }, 150);
     }
   }
 
-  function bootThreeGL(canvas) {
+  function bootHeroThreeGL(canvas) {
     try {
+      const wrapper = canvas.parentElement || canvas;
+      const width = wrapper.clientWidth || 600;
+      const height = wrapper.clientHeight || 300;
+
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 1, 1200);
-      camera.position.z = 440;
-      camera.position.y = 135;
-      camera.lookAt(0, 0, 0);
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      camera.position.z = 160;
 
-      const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: 'high-performance'
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(width, height);
 
-      const SEPARATION = 42, AMOUNTX = 65, AMOUNTY = 45;
-      const numParticles = AMOUNTX * AMOUNTY;
-      const positions = new Float32Array(numParticles * 3);
-      const scales = new Float32Array(numParticles);
+      // Core Flow Geometry: Dynamic Torus Knot
+      const knotGeom = new THREE.TorusKnotGeometry(36, 11, 120, 26, 2, 3);
 
-      let i = 0, j = 0;
-      for (let ix = 0; ix < AMOUNTX; ix++) {
-        for (let iy = 0; iy < AMOUNTY; iy++) {
-          positions[i] = ix * SEPARATION - ((AMOUNTX * SEPARATION) / 2);
-          positions[i + 1] = 0;
-          positions[i + 2] = iy * SEPARATION - ((AMOUNTY * SEPARATION) / 2);
-          scales[j] = 1.0;
-          i += 3;
-          j++;
+      // Outer Cyan Hologram Wireframe
+      const matWire = new THREE.MeshBasicMaterial({
+        color: 0x06B6D4,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending
+      });
+      const knotMesh = new THREE.Mesh(knotGeom, matWire);
+      scene.add(knotMesh);
+
+      // Inner Electric Blue Core
+      const matCore = new THREE.MeshBasicMaterial({
+        color: 0x3B82F6,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35
+      });
+      const coreMesh = new THREE.Mesh(knotGeom, matCore);
+      coreMesh.scale.set(0.92, 0.92, 0.92);
+      scene.add(coreMesh);
+
+      // Particle Stream around Flow Knot
+      const particleCount = 450;
+      const partGeom = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const posAttr = knotGeom.attributes.position;
+      const totalVerts = posAttr.count;
+
+      for (let p = 0; p < particleCount; p++) {
+        const vIdx = Math.floor(Math.random() * totalVerts);
+        positions[p * 3] = posAttr.getX(vIdx) + (Math.random() - 0.5) * 6;
+        positions[p * 3 + 1] = posAttr.getY(vIdx) + (Math.random() - 0.5) * 6;
+        positions[p * 3 + 2] = posAttr.getZ(vIdx) + (Math.random() - 0.5) * 6;
+      }
+      partGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+      const matPoints = new THREE.PointsMaterial({
+        color: 0x67E8F9,
+        size: 2.2,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending
+      });
+      const particles = new THREE.Points(partGeom, matPoints);
+      scene.add(particles);
+
+      // 3 Orbital Satellite Nodes: Interfaces (Cyan), Systems (Blue), Intelligence (Indigo)
+      const satellitesGroup = new THREE.Group();
+      const satDefs = [
+        { radius: 68, speed: 0.015, color: 0x06B6D4, size: 2.4, yOffset: 0 },
+        { radius: 76, speed: -0.012, color: 0x3B82F6, size: 2.6, yOffset: 8 },
+        { radius: 84, speed: 0.018, color: 0x818CF8, size: 2.2, yOffset: -8 }
+      ];
+
+      const satMeshes = satDefs.map(def => {
+        const sGeom = new THREE.SphereGeometry(def.size, 12, 12);
+        const sMat = new THREE.MeshBasicMaterial({ color: def.color });
+        const sMesh = new THREE.Mesh(sGeom, sMat);
+        satellitesGroup.add(sMesh);
+        return { mesh: sMesh, def, angle: Math.random() * Math.PI * 2 };
+      });
+      scene.add(satellitesGroup);
+
+      // Interaction State: Mouse & Touch Physics
+      let rotX = 0, rotY = 0;
+      let targetRotX = 0, targetRotY = 0;
+      let isInteracting = false;
+      let lastTouchX = 0, lastTouchY = 0;
+      let clockAngle = 0;
+      let isVisible = true;
+      let animId = null;
+
+      function onPointerMove(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const x = (clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+        const y = (clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+        targetRotY = x * 1.2;
+        targetRotX = y * 1.2;
+      }
+
+      function onTouchStart(e) {
+        if (e.touches && e.touches[0]) {
+          isInteracting = true;
+          lastTouchX = e.touches[0].clientX;
+          lastTouchY = e.touches[0].clientY;
         }
       }
 
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geometry.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
+      function onTouchMove(e) {
+        if (!e.touches || !e.touches[0]) return;
+        const dx = e.touches[0].clientX - lastTouchX;
+        const dy = e.touches[0].clientY - lastTouchY;
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+        targetRotY += dx * 0.02;
+        targetRotX += dy * 0.02;
+      }
 
-      const material = new THREE.ShaderMaterial({
-        uniforms: {
-          color: { value: new THREE.Color(0x3B82F6) },
-          color2: { value: new THREE.Color(0x06B6D4) },
-        },
-        vertexShader: `
-          attribute float scale;
-          varying vec3 vPosition;
-          void main() {
-            vPosition = position;
-            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = scale * (260.0 / -mvPosition.z);
-            gl_Position = projectionMatrix * mvPosition;
-          }
-        `,
-        fragmentShader: `
-          uniform vec3 color;
-          uniform vec3 color2;
-          varying vec3 vPosition;
-          void main() {
-            float dist = length(gl_PointCoord - vec2(0.5));
-            if (dist > 0.5) discard;
-            float alpha = smoothstep(0.5, 0.08, dist);
-            float mixVal = clamp((vPosition.y + 40.0) / 80.0, 0.0, 1.0);
-            vec3 finalColor = mix(color, color2, mixVal);
-            gl_FragColor = vec4(finalColor, alpha * 0.95);
-          }
-        `,
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
+      canvas.addEventListener('mousemove', onPointerMove, { passive: true });
+      canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+      canvas.addEventListener('touchmove', onTouchMove, { passive: true });
+      canvas.addEventListener('touchend', () => { isInteracting = false; }, { passive: true });
+
+      // Click or tap burst acceleration
+      canvas.addEventListener('click', () => {
+        clockAngle += 0.8;
+        matWire.opacity = 0.95;
+        setTimeout(() => { matWire.opacity = 0.65; }, 400);
       });
 
-      const particles = new THREE.Points(geometry, material);
-      scene.add(particles);
+      // Pause when out of view
+      if ('IntersectionObserver' in window) {
+        const obs = new IntersectionObserver((entries) => {
+          isVisible = entries[0].isIntersecting;
+        }, { threshold: 0.1 });
+        obs.observe(wrapper);
+      }
 
-      let count = 0;
-      let mouseX = 0, mouseY = 0;
-      let targetX = 0, targetY = 0;
-      let scrollY = 0;
+      // Responsive Resize
+      function onResize() {
+        const w = wrapper.clientWidth || 600;
+        const h = wrapper.clientHeight || 300;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+      window.addEventListener('resize', onResize);
 
-      window.addEventListener('mousemove', (e) => {
-        mouseX = (e.clientX - window.innerWidth / 2) * 0.18;
-        mouseY = (e.clientY - window.innerHeight / 2) * 0.18;
-      }, { passive: true });
+      // Render Loop
+      function render() {
+        animId = requestAnimationFrame(render);
+        if (!isVisible) return;
 
-      window.addEventListener('scroll', () => {
-        scrollY = window.pageYOffset || document.documentElement.scrollTop;
-      }, { passive: true });
+        clockAngle += 0.012;
 
-      function animate() {
-        requestAnimationFrame(animate);
+        rotX += (targetRotX - rotX) * 0.08;
+        rotY += (targetRotY - rotY) * 0.08;
 
-        targetX += (mouseX - targetX) * 0.05;
-        targetY += (mouseY - targetY) * 0.05;
+        knotMesh.rotation.x = rotX + clockAngle * 0.5;
+        knotMesh.rotation.y = rotY + clockAngle * 0.7;
+        coreMesh.rotation.x = rotX + clockAngle * 0.5;
+        coreMesh.rotation.y = rotY + clockAngle * 0.7;
 
-        camera.position.x = targetX;
-        camera.position.y = 135 - targetY + (scrollY * 0.05);
-        camera.lookAt(0, 0, 0);
+        particles.rotation.x = knotMesh.rotation.x;
+        particles.rotation.y = knotMesh.rotation.y;
 
-        const positionAttr = particles.geometry.attributes.position;
-        const scaleAttr = particles.geometry.attributes.scale;
+        satMeshes.forEach(sat => {
+          sat.angle += sat.def.speed;
+          sat.mesh.position.x = Math.cos(sat.angle) * sat.def.radius;
+          sat.mesh.position.z = Math.sin(sat.angle) * (sat.def.radius * 0.7);
+          sat.mesh.position.y = Math.sin(sat.angle * 2) * sat.def.yOffset;
+        });
 
-        let idx = 0, sIdx = 0;
-        for (let ix = 0; ix < AMOUNTX; ix++) {
-          for (let iy = 0; iy < AMOUNTY; iy++) {
-            positionAttr.array[idx + 1] = (Math.sin((ix + count) * 0.3) * 45) +
-                                         (Math.sin((iy + count) * 0.5) * 45);
-
-            scaleAttr.array[sIdx] = (Math.sin((ix + count) * 0.3) + 1) * 3.5 +
-                                   (Math.sin((iy + count) * 0.5) + 1) * 3.5;
-            idx += 3;
-            sIdx++;
-          }
-        }
-
-        positionAttr.needsUpdate = true;
-        scaleAttr.needsUpdate = true;
-
-        count += 0.038;
         renderer.render(scene, camera);
       }
 
-      animate();
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-
+      render();
       return true;
     } catch (err) {
-      console.warn('Three.js WebGL boot error:', err);
+      console.warn('Hero Three.js boot failure, falling back to 2D:', err);
       return false;
     }
   }
 
-  function bootProcedural2DWave(canvas) {
+  function bootHero2DFallback(canvas) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
-    let animationId = null;
+    const wrapper = canvas.parentElement || canvas;
     let width = 0, height = 0;
     let count = 0;
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
+    let mouseX = 0, mouseY = 0;
+    let targetX = 0, targetY = 0;
+    let isVisible = true;
+    let animId = null;
 
     function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = canvas.width = wrapper.clientWidth || 600;
+      height = canvas.height = wrapper.clientHeight || 300;
     }
     resize();
     window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    }, { passive: true });
 
-    const COLS = 42;
-    const ROWS = 28;
+    function onPointer(e) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+      targetX = cx - rect.left - width / 2;
+      targetY = cy - rect.top - height / 2;
+    }
+    canvas.addEventListener('mousemove', onPointer, { passive: true });
+    canvas.addEventListener('touchmove', onPointer, { passive: true });
 
-    function render2D() {
-      ctx.clearRect(0, 0, width, height);
-
-      const spacingX = width / (COLS - 1);
-      const startY = height * 0.35;
-      const spacingY = (height * 0.65) / (ROWS - 1);
-
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const baseX = c * spacingX;
-          const baseY = startY + r * spacingY;
-
-          const persX = (baseX - width / 2) * (0.6 + (r / ROWS) * 0.6) + width / 2;
-          const persY = baseY;
-
-          const wave = Math.sin((c + count) * 0.3) * 25 + Math.cos((r + count) * 0.45) * 20;
-          const dist = Math.hypot(persX - mouseX, persY - mouseY);
-          const ripple = Math.max(0, 1 - dist / 220) * Math.sin(count * 3 - dist * 0.04) * 25;
-
-          const finalY = persY + wave + ripple;
-          const size = 1.2 + (r / ROWS) * 3.5;
-
-          const mix = (wave + 25) / 50;
-          ctx.beginPath();
-          ctx.arc(persX, finalY, Math.max(0.8, size), 0, Math.PI * 2);
-          ctx.fillStyle = mix > 0.5 ? 'rgba(6, 182, 212, 0.75)' : 'rgba(59, 130, 246, 0.75)';
-          ctx.fill();
-        }
-      }
-
-      count += 0.035;
-      animationId = requestAnimationFrame(render2D);
+    if ('IntersectionObserver' in window) {
+      const obs = new IntersectionObserver((entries) => {
+        isVisible = entries[0].isIntersecting;
+      }, { threshold: 0.1 });
+      obs.observe(wrapper);
     }
 
-    render2D();
+    function draw2D() {
+      animId = requestAnimationFrame(draw2D);
+      if (!isVisible) return;
+
+      ctx.clearRect(0, 0, width, height);
+
+      mouseX += (targetX - mouseX) * 0.08;
+      mouseY += (targetY - mouseY) * 0.08;
+
+      const centerX = width / 2 + mouseX * 0.15;
+      const centerY = height / 2 + mouseY * 0.15;
+
+      // 3 Harmonic Flow Waves
+      for (let w = 0; w < 3; w++) {
+        ctx.beginPath();
+        const pts = 60;
+        const color = w === 0 ? 'rgba(6, 182, 212, 0.7)' : w === 1 ? 'rgba(59, 130, 246, 0.5)' : 'rgba(99, 102, 241, 0.4)';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.8 - w * 0.3;
+
+        for (let i = 0; i <= pts; i++) {
+          const t = (i / pts) * Math.PI * 2;
+          const r = 50 + w * 18 + Math.sin(t * 3 + count + w) * 12;
+          const x = centerX + Math.cos(t) * r * 1.5;
+          const y = centerY + Math.sin(t) * r * 0.85 + Math.sin(count * 2 + i * 0.2) * 8;
+
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      // Orbital Satellites
+      for (let s = 0; s < 3; s++) {
+        const sAngle = count * (0.8 + s * 0.3) + s * 2.1;
+        const sDist = 65 + s * 22;
+        const sx = centerX + Math.cos(sAngle) * sDist * 1.5;
+        const sy = centerY + Math.sin(sAngle) * sDist * 0.85;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+        ctx.fillStyle = s === 0 ? '#06B6D4' : s === 1 ? '#3B82F6' : '#818CF8';
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      count += 0.025;
+    }
+
+    draw2D();
 
     return function cleanup() {
-      if (animationId) cancelAnimationFrame(animationId);
+      if (animId) cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
-      ctx.clearRect(0, 0, width, height);
     };
+  }
+
+  function initThreeCanvas() {
+    // Disabled full-page background canvas in favor of focused hero spatial engine
   }
 
   /* -------------------------------------------------------------
@@ -531,6 +627,7 @@
      INIT ALL MODULES ON DOM READY
      ------------------------------------------------------------- */
   function bootAll() {
+    initHeroCanvas();
     initThreeCanvas();
     init3DCardTilt();
     initMagneticButtons();
