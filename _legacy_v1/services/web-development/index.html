@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Development for Growing Businesses | The Flow Labs</title>
+  <meta name="description" content="Fast, responsive websites, landing pages and custom web apps. Phone-first, performance-focused, built and maintained in-house with a fixed quote.">
+  <link rel="canonical" href="https://www.theflowlabs.online/services/web-development/">
+
+  <meta property="og:title" content="Web development, built in-house | The Flow Labs">
+  <meta property="og:description" content="Fast, responsive websites, landing pages and custom web apps. Phone-first, performance-focused, built and maintained in-house with a fixed quote.">
+  <meta property="og:url" content="https://www.theflowlabs.online/services/web-development/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+  <meta property="og:locale" content="en_IN">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Web development, built in-house | The Flow Labs">
+  <meta name="twitter:description" content="Fast, responsive websites, landing pages and custom web apps. Phone-first, performance-focused, built and maintained in-house with a fixed quote.">
+  <meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN for procedural wave field -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Services", "item": "https://www.theflowlabs.online/services/" },
+      { "@type": "ListItem", "position": 3, "name": "Web development" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Website & Web Application Development",
+    "description": "Fast, responsive websites, landing pages and custom web apps. Phone-first, performance-focused, built and maintained in-house with a fixed quote.",
+    "provider": {
+      "@type": "Organization",
+      "name": "The Flow Labs",
+      "url": "https://www.theflowlabs.online/",
+      "email": "hello@theflowlabs.online"
+    },
+    "serviceType": "Web development"
+  }
+  </script>
+</head>
+<body data-page="services-web">
+
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
+
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
+
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item active">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span data-cms="webdev-hero-pill">Interfaces · Web Development</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="webdev-hero-h1">
+        Websites and web apps that <span class="gradient-text">earn their keep.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="webdev-hero-sub">
+        Fast, polished, phone-first interfaces that turn visitors into enquiries. Built and maintained in-house with a fixed quote.
+      </p>
+
+      <div class="three-actions">
+        <a href="/contact/" class="three-btn primary" data-magnetic>
+          <span>Scope Your Web Build</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="m12 5 7 7-7 7"></path>
+          </svg>
+        </a>
+        <a href="/work/droovee/" class="three-btn glass" data-magnetic>
+          <span>Inspect Live Build: Droovee</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- WHAT WE BUILD BENTO -->
+    <section class="three-section">
+      <div class="section-eyebrow">Interface Disciplines</div>
+      <h2 class="section-heading">Engineered for conversion &amp; speed.</h2>
+      <p class="section-subtext">Every frontend we ship is built on Next.js 15, TypeScript, and modern CSS for sub-second loading on mobile networks.</p>
+
+      <div class="three-bento-grid">
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">01 // High-Converting Web Platforms</span>
+          <h3 class="card-title">Business Websites &amp; Portals</h3>
+          <p class="card-desc">Credible, mobile-first web platforms with dynamic booking paths, customer authentication, and content management systems you can actually edit.</p>
+          <div class="pill-group">
+            <span class="pill-chip">Next.js 15</span>
+            <span class="pill-chip">Tailwind CSS</span>
+            <span class="pill-chip">Supabase Auth</span>
+            <span class="pill-chip">Dynamic Routing</span>
+          </div>
+        </div>
+
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">02 // Targeted Growth Pages</span>
+          <h3 class="card-title">Startup &amp; High-Velocity Landing Pages</h3>
+          <p class="card-desc">One page, one objective: explain the product with crystal clarity and convert visitors into active leads. Shipped in 7 to 10 days.</p>
+          <div class="pill-group">
+            <span class="pill-chip">Framer Motion</span>
+            <span class="pill-chip">Micro-Interactions</span>
+            <span class="pill-chip">A/B Testing</span>
+            <span class="pill-chip">Sub-0.8s LCP</span>
+          </div>
+        </div>
+
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">03 // Custom Web Applications</span>
+          <h3 class="card-title">Interactive Booking &amp; Client Consoles</h3>
+          <p class="card-desc">Full-featured web applications with real-time state synchronization, payment gateway integrations, and role-based client dashboards.</p>
+          <div class="pill-group">
+            <span class="pill-chip">TypeScript</span>
+            <span class="pill-chip">PostgreSQL</span>
+            <span class="pill-chip">Stripe / Razorpay</span>
+            <span class="pill-chip">WebSockets</span>
+          </div>
+        </div>
+
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">04 // Core Web Vitals Guarantee</span>
+          <h3 class="card-title">Performance &amp; Accessibility Engineering</h3>
+          <p class="card-desc">Zero layout shift, 100/100 Lighthouse performance, WCAG AA compliance, and bulletproof responsive layouts tested across 375px to 4K displays.</p>
+          <div class="pill-group">
+            <span class="pill-chip">Zero CLS</span>
+            <span class="pill-chip">WCAG AA</span>
+            <span class="pill-chip">Semantic HTML5</span>
+            <span class="pill-chip">Asset Optimization</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE PRODUCTION CASE STUDY SPOTLIGHT -->
+    <section class="three-section">
+      <div class="three-card col-12" style="background:rgba(18, 24, 38, 0.7); padding:48px 40px;">
+        <span class="card-tag">Verified Production Proof</span>
+        <h3 class="card-title" style="font-size:2rem;">See our interfaces running in production: Droovee</h3>
+        <p class="card-desc" style="max-width:680px;">Droovee is a live chauffeur network handling daily customer bookings across India. Built entirely in-house by The Flow Labs founders with real-time distance calculators and instant dispatching.</p>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:24px;">
+          <a href="/work/droovee/" class="three-btn primary" data-magnetic>
+            <span>Read Droovee Case Study</span>
+          </a>
+          <a href="/contact/" class="three-btn glass" data-magnetic>
+            <span>Discuss Your Web Project</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Connect</h5>
+          <a href="/contact/">Start a project</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
+          <a href="/privacy-policy/">Privacy Policy</a>
+          <a href="/terms/">Terms of Service</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

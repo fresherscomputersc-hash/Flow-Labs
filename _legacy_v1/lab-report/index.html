@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Website Lab Report — Speed, Accessibility & SEO | The Flow Labs</title>
+  <meta name="description" content="Scan any URL and get a plain-English score for speed, accessibility and search readiness. Free, no signup, no email gate, results cached for 24 hours.">
+  <link rel="canonical" href="https://www.theflowlabs.online/lab-report/">
+
+  <meta property="og:title" content="The Lab Report: Your Site, Scored | The Flow Labs">
+  <meta property="og:description" content="Instant plain-English diagnostic on mobile speed, accessibility, and SEO readiness. 100% free with zero email gating.">
+  <meta property="og:url" content="https://www.theflowlabs.online/lab-report/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site.js?v=7" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "The Flow Labs",
+    "url": "https://www.theflowlabs.online/",
+    "email": "hello@theflowlabs.online",
+    "image": "https://www.theflowlabs.online/assets/work-droovee.png"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Lab Report" }
+    ]
+  }
+  </script>
+
+  <style>
+    /* Lab Report Cyber Scanner Custom Styles */
+    .lab-scanner-card {
+      background: rgba(11, 14, 20, 0.7);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius-lg);
+      padding: 36px 32px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(6, 182, 212, 0.1);
+    }
+    .lab-form {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .lab-form input[type="url"] {
+      flex: 1;
+      min-width: 260px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-pill);
+      padding: 14px 22px;
+      color: #FFFFFF;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 180ms ease;
+    }
+    .lab-form input[type="url"]:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25);
+      background: rgba(0, 0, 0, 0.7);
+    }
+    .lab-form button {
+      background: #FFFFFF;
+      color: #07090E;
+      border: none;
+      padding: 14px 28px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 200ms ease;
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+      white-space: nowrap;
+    }
+    .lab-form button:hover {
+      background: #E2E8F0;
+      transform: translateY(-2px);
+    }
+    .lab-form button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .lab-note {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 14px;
+      font-family: var(--font-mono);
+    }
+    .report-err {
+      color: #EF4444;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      margin-top: 14px;
+    }
+
+    /* Live Report Output Card */
+    .report {
+      display: none;
+      margin-top: 28px;
+    }
+    .report.show {
+      display: block;
+      animation: fadeIn 300ms ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .report-card {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .report-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+    .report-host {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .report-host strong {
+      display: block;
+      font-size: 1.15rem;
+      color: var(--text-main);
+      margin-top: 4px;
+    }
+    .grade {
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid var(--neon-emerald);
+      color: var(--neon-emerald);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .grade small {
+      font-size: 0.55rem;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+      color: var(--text-muted);
+    }
+    .grade.stamp {
+      animation: popStamp 400ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes popStamp {
+      0% { transform: scale(0.6); opacity: 0; }
+      80% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .bars {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 40px;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar i {
+      display: block;
+      height: 100%;
+      background: var(--neon-emerald);
+      border-radius: 4px;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 0%;
+    }
+    .bar.mid i { background: #EAB308; }
+    .bar.warn i { background: #EF4444; }
+    .report-findings {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 18px 20px 18px 36px;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .report-cta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+  </style>
+</head>
+<body data-page="lab-report">
+
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
+
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
+
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span data-cms="lab-hero-label">Free · No signup · ~10 seconds</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="lab-hero-title">
+        The Lab Report: <span class="gradient-text">your site, scored.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="lab-hero-subtitle">
+        Paste any URL and get a plain-English read on speed, accessibility and search readiness. One score, three bars, the three things worth fixing first.
+      </p>
+    </section>
+
+    <!-- SCANNER ENGINE & BENTO MATRIX -->
+    <section class="three-section">
+      <div class="three-bento-grid">
+
+        <!-- THE SCANNER COCKPIT (COL-12) -->
+        <div class="three-card col-12 lab-scanner-card" data-three-tilt>
+          <span class="card-tag">Automated Diagnostic Engine</span>
+          <h3 class="card-title" style="margin:8px 0 16px;">Scan Any Production Web Application</h3>
+          <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6; max-width:640px;">
+            Input your public domain. We test real-world rendering velocity, accessibility barriers, and search crawlers against Google PageSpeed benchmarks.
+          </p>
+
+          <form class="lab-form" id="labForm" novalidate>
+            <label for="labUrl" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Website URL</label>
+            <input id="labUrl" name="url" type="url" inputmode="url" placeholder="yourbusiness.com" autocomplete="url" required>
+            <button class="three-btn primary" type="submit" data-magnetic>
+              <span>Run Diagnostic Report &rarr;</span>
+            </button>
+          </form>
+
+          <p class="lab-note">Public data only. We store nothing except the score, cached for 24 hours. Zero marketing email gates.</p>
+          <p class="report-err" id="labError" hidden></p>
+
+          <!-- Report Dynamic Container -->
+          <div class="report" id="labReport" aria-live="polite"></div>
+        </div>
+
+        <!-- 3 CORE AUDIT PILLARS -->
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">Pillar 01 // Velocity</span>
+          <h3 class="card-title">Real-Device Performance</h3>
+          <p class="card-desc">Evaluates Largest Contentful Paint (LCP) and Cumulative Layout Shift (CLS) on budget 4G mobile devices rather than fiber-connected developer machines.</p>
+        </div>
+
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">Pillar 02 // Usability</span>
+          <h3 class="card-title">WCAG 2.1 Accessibility</h3>
+          <p class="card-desc">Audits screen reader readability, color contrast minimums (4.5:1), keyboard focus states, and semantic document outline hierarchies.</p>
+        </div>
+
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">Pillar 03 // Discoverability</span>
+          <h3 class="card-title">Search Readiness &amp; SEO</h3>
+          <p class="card-desc">Verifies Open Graph tags, canonical URLs, structured JSON-LD schemas, responsive viewports, and clean server headers that build engine trust.</p>
+        </div>
+
+        <!-- PHILOSOPHY BENTO: WHY WE GIVE THIS AWAY -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">Studio Transparency</span>
+          <h3 class="card-title">Why We Give This Away</h3>
+          <p class="card-desc" style="margin-top:12px; line-height:1.6;">
+            Most business owners have never seen their website measured objectively. They sense sluggishness or notice high visitor drop-offs, but have never been shown concrete numbers. The Lab Report reveals the facts in 10 seconds.
+          </p>
+          <p class="card-desc" style="margin-top:12px; line-height:1.6;">
+            If your score indicates issues and you want them resolved, our engineers fix bottlenecks for a living. If your score is pristine, you validated your team's quality for free. Either way, businesses win.
+          </p>
+        </div>
+
+        <!-- PRIVACY SAFEGUARDS BENTO -->
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">Privacy Commitments</span>
+          <h3 class="card-title">What The Scanner Never Does</h3>
+          <ul style="margin-top:16px; display:flex; flex-direction:column; gap:12px; color:var(--text-muted); font-size:0.88rem; line-height:1.6;">
+            <li>🛡️ <strong>Zero Email Gating:</strong> We never harvest email addresses or spam you with cold sales phone calls.</li>
+            <li>🛡️ <strong>Confidential Audit Runs:</strong> Scans are never published or publicly indexed — only visible to the user running them.</li>
+            <li>🛡️ <strong>Honest First Read:</strong> We provide real Lighthouse telemetry rather than inflated scare tactics or 50-page generic automated PDFs.</li>
+            <li>🛡️ <strong>Powered by Google PSI:</strong> Runs against public PageSpeed Insights APIs cached 24h to avoid rate-limit exhaustion.</li>
+          </ul>
+        </div>
+
+        <!-- Cross-Link Scoping Banner -->
+        <div class="three-card col-12" style="text-align:center; padding:48px 24px;">
+          <h3 style="font-size:1.75rem; color:var(--text-main); font-weight:700;">Want the Fixes, Not Just the Score?</h3>
+          <p style="max-width:540px; margin:12px auto 24px; color:var(--text-muted); line-height:1.6;">
+            Send us the URL you just scanned. We will tell you which three architectural changes would move your performance metric most, and exactly what they cost.
+          </p>
+          <div class="three-actions" style="justify-content:center;">
+            <a href="/contact/" class="three-btn primary" data-magnetic>
+              <span>Commission Optimization Build &rarr;</span>
+            </a>
+            <a href="/work/" class="three-btn glass" data-magnetic>
+              <span>View Case Studies</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Connect</h5>
+          <a href="/contact/">Start a project</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
+          <a href="/privacy-policy/">Privacy Policy</a>
+          <a href="/terms/">Terms of Service</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

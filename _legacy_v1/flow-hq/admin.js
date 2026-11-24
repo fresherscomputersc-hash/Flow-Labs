@@ -1,0 +1,4393 @@
+/* The Flow Labs — Flow HQ admin logic. Client-side only. */
+(function () {
+  'use strict';
+
+  var cfg = window.SITE_CONFIG || {};
+  var SCHEMA = window.CONTENT_SCHEMA || {};
+  var SETTINGS_DEFAULTS = window.SETTINGS_DEFAULTS || {};
+
+  var $ = function (id) { return document.getElementById(id); };
+  var state = {
+    session: null,
+    profile: null,
+    role: null,
+    tab: 'dashboard',
+    leadsPage: 0,
+    leadsPageSize: 25,
+    leadsTotal: 0,
+    contentPage: 'home',
+    contentCounts: null,
+    contentSnapshot: {},
+    contentDirty: false,
+    settings: {},
+    settingsSnapshot: {},
+    settingsDirty: false,
+    blogPosts: [],
+    blogEditing: null,
+    blogSlugTouched: false,
+    projects: [],
+    projectId: null,
+    project: null,
+    modules: [],
+    tasks: [],
+    people: [],
+    team: []
+  };
+
+  var TAB_META = {
+    dashboard: ['Dashboard', 'Site health at a glance.'],
+    leads: ['Leads', 'Every enquiry, newest first.'],
+    visitors: ['Visitors', 'Cookie-less page views and traffic sources.'],
+    content: ['Content', 'The words on your public pages.'],
+    blog: ['Blog', 'Write, draft and publish posts.'],
+    projects: ['Projects', 'Your projects, progress and modules.'],
+    project: ['Project', 'Modules, tasks and progress.'],
+    team: ['Team', 'Create logins, set roles, suspend access.'],
+    reports: ['Reports', 'Team workload, project velocity and standup logs.'],
+    settings: ['Settings', 'Brand colour, homepage blocks and search listings.']
+  };
+
+  // What each role is allowed to open. The server (RLS) is the real
+  // gate; this only keeps the interface honest.
+  var TAB_ACCESS = {
+    owner: ['dashboard', 'leads', 'visitors', 'content', 'blog', 'projects', 'project', 'team', 'reports', 'settings'],
+    admin: ['dashboard', 'leads', 'visitors', 'content', 'blog', 'projects', 'project', 'team', 'reports', 'settings'],
+    manager: ['projects', 'project', 'reports'],
+    member: ['projects', 'project', 'reports'],
+    client: []
+  };
+
+  function allowedTabs(role) {
+    return TAB_ACCESS[role] || [];
+  }
+
+  function canOpen(tab) {
+    return allowedTabs(state.role).indexOf(tab) !== -1;
+  }
+
+  function isAdmin() {
+    return state.role === 'owner' || state.role === 'admin';
+  }
+
+  var SECTION_LABELS = window.SECTION_LABELS || {};
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function stripTags(value) {
+    return String(value == null ? '' : value).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function fmtDate(value) {
+    if (!value) return '—';
+    var date = new Date(value);
+    if (isNaN(date.getTime())) return '—';
+    return date.toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  var toastTimer = null;
+  function toast(message, isError) {
+    var el = $('toast');
+    if (!el) return;
+    el.textContent = message;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3200);
+  }
+
+  function fail(message) {
+    toast(message || 'Something went wrong.', true);
+  }
+
+  /* ---------------- auth ---------------- */
+  if (!window.supabase || !cfg.supabaseUrl || !cfg.supabaseAnonKey) {
+    if ($('authError')) {
+      $('authError').textContent = 'Supabase client or site.config.js is missing.';
+      $('authError').classList.add('show');
+    }
+    return;
+  }
+
+  var db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+  function showAuth(message) {
+    $('appView').hidden = true;
+    $('authView').hidden = false;
+    $('loginPassword').value = '';
+    if (message) {
+      $('authError').textContent = message;
+      $('authError').classList.add('show');
+    } else {
+      $('authError').classList.remove('show');
+    }
+  }
+
+  async function enter(session) {
+    var result = await db.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+
+    if (result.error) {
+      var code = result.error.code || '';
+      var text = String(result.error.message || '');
+      await db.auth.signOut();
+      if (code === 'PGRST205' || /schema cache|does not exist/i.test(text)) {
+        showAuth('Database setup is incomplete. Run supabase/migrations/0001_identity.sql in the Supabase SQL editor, then sign in again.');
+      } else {
+        showAuth('Could not load your profile: ' + text);
+      }
+      return;
+    }
+
+    if (!result.data) {
+      await db.auth.signOut();
+      showAuth('No Flow HQ profile exists for this account.');
+      return;
+    }
+
+    var profile = result.data;
+
+    if (profile.status !== 'active') {
+      await db.auth.signOut();
+      showAuth('This account is ' + (profile.status === 'invited' ? 'still an invite.' : 'suspended. Ask an admin to restore access.'));
+      return;
+    }
+
+    if (profile.role === 'client') {
+      window.location.href = '/client/';
+      return;
+    }
+
+    if (!allowedTabs(profile.role).length) {
+      await db.auth.signOut();
+      showAuth('This account has no Flow HQ access.');
+      return;
+    }
+
+    state.session = session;
+    state.profile = profile;
+    state.role = profile.role;
+
+    $('authView').hidden = true;
+    $('appView').hidden = false;
+    $('adminUser').textContent = (profile.full_name || session.user.email || '') +
+      ' · ' + profile.role;
+    $('authError').classList.remove('show');
+
+    applyRole();
+
+    setupRealtime();
+    loadNotifications();
+
+    var route = readHash();
+    if (route.tab === 'project') {
+      if (route.id) state.projectId = route.id;
+      else route.tab = 'projects';
+    }
+    if (!canOpen(route.tab)) route.tab = allowedTabs(profile.role)[0];
+    activateTab(route.tab);
+  }
+
+  function readHash() {
+    var raw = (window.location.hash || '').replace(/^#/, '');
+    var parts = raw.split('/');
+    return { tab: parts[0] || '', id: parts[1] || null };
+  }
+
+  function applyRole() {
+    var tabs = allowedTabs(state.role);
+    Array.prototype.forEach.call(document.querySelectorAll('#adminNav [data-tab]'), function (button) {
+      var tab = button.getAttribute('data-tab');
+      button.hidden = tabs.indexOf(tab) === -1;
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('.admin-nav-group'), function (group) {
+      var visibleButtons = group.querySelectorAll('[data-tab]:not([hidden])');
+      group.hidden = visibleButtons.length === 0;
+    });
+
+    // Creating projects and accounts is admin-only at the database level.
+    if ($('projectNew')) $('projectNew').hidden = !isAdmin();
+  }
+
+  // Privileged calls that need the service role go through the one
+  // catch-all function. Everything else talks to PostgREST directly
+  // and is protected by RLS.
+  async function api(path, options) {
+    options = options || {};
+
+    var session = state.session;
+    var current = await db.auth.getSession();
+    if (current.data && current.data.session) {
+      session = current.data.session;
+      state.session = session;
+    }
+    if (!session || !session.access_token) throw new Error('Sign in required.');
+
+    var fetchOpts = {
+      method: options.method || 'GET',
+      headers: Object.assign({
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + session.access_token
+      }, options.headers || {}),
+      body: options.body ? JSON.stringify(options.body) : undefined
+    };
+
+    var response = null;
+    try {
+      response = await fetch('/api/platform' + path, fetchOpts);
+    } catch (_) {
+      response = null;
+    }
+
+    var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if ((!response || response.status === 404) && isLocal) {
+      try {
+        var remoteRes = await fetch('https://www.theflowlabs.online/api/platform' + path, fetchOpts);
+        if (remoteRes && remoteRes.ok) {
+          var remoteData = null;
+          try { remoteData = await remoteRes.json(); } catch (_) { remoteData = null; }
+          return remoteData || {};
+        }
+      } catch (_) {
+        // Fall back to original response handling
+      }
+    }
+
+    if (!response) {
+      throw new Error('Could not connect to the platform API.');
+    }
+
+    var data = null;
+    try { data = await response.json(); } catch (error) { data = null; }
+
+    if (response.status === 404) {
+      throw new Error('The platform API endpoint (' + path + ') returned 404. Ensure vercel.json rewrites are deployed.');
+    }
+    if (!response.ok) {
+      var error = new Error((data && data.error) || ('Request failed (' + response.status + ')'));
+      error.status = response.status;
+      throw error;
+    }
+    return data || {};
+  }
+
+  async function boot() {
+    var result = await db.auth.getSession();
+    if (result.data && result.data.session) {
+      await enter(result.data.session);
+    } else {
+      showAuth();
+    }
+
+    db.auth.onAuthStateChange(function (event) {
+      if (event === 'SIGNED_OUT') showAuth();
+    });
+  }
+
+  $('loginForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    var email = $('loginEmail').value.trim();
+    var password = $('loginPassword').value;
+    var button = $('loginBtn');
+
+    button.disabled = true;
+    $('authError').classList.remove('show');
+
+    var result = await db.auth.signInWithPassword({ email: email, password: password });
+    button.disabled = false;
+
+    if (result.error || !result.data.session) {
+      showAuth('Invalid email or password.');
+      return;
+    }
+
+    await enter(result.data.session);
+  });
+
+  $('logoutBtn').addEventListener('click', async function () {
+    await db.auth.signOut();
+    showAuth();
+  });
+
+  /* ---------------- tabs ---------------- */
+  var GROUP_NAMES = {
+    dashboard: 'Workspace',
+    projects: 'Workspace',
+    project: 'Workspace',
+    team: 'Workspace',
+    reports: 'Workspace',
+    content: 'Content',
+    blog: 'Content',
+    leads: 'Site',
+    visitors: 'Site',
+    settings: 'System'
+  };
+
+  function updateBreadcrumb(tab, detailLabel) {
+    var bc = $('adminBreadcrumb');
+    if (!bc) return;
+    var group = GROUP_NAMES[tab] || 'Workspace';
+    var title = TAB_META[tab] ? TAB_META[tab][0] : tab;
+
+    if (tab === 'project') {
+      var projName = detailLabel || (state.project && state.project.name) || 'Project';
+      bc.innerHTML = '<a href="#projects" class="breadcrumb-link">' + esc(group) + '</a>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<a href="#projects" class="breadcrumb-link">Projects</a>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<span class="breadcrumb-current">' + esc(projName) + '</span>';
+    } else if (tab === 'blog' && detailLabel) {
+      bc.innerHTML = '<a href="#blog" class="breadcrumb-link">' + esc(group) + '</a>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<a href="#blog" class="breadcrumb-link">Blog</a>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<span class="breadcrumb-current">' + esc(detailLabel) + '</span>';
+    } else {
+      bc.innerHTML = '<span class="breadcrumb-group">' + esc(group) + '</span>' +
+        '<span class="breadcrumb-sep">/</span>' +
+        '<span class="breadcrumb-current">' + esc(title) + '</span>';
+    }
+  }
+
+  function confirmLeaveTab(next) {
+    if (next === state.tab) return true;
+
+    if (state.tab === 'content' && state.contentDirty) {
+      return window.confirm('You have unsaved content changes. Leave without saving?');
+    }
+
+    if (state.tab === 'settings' && state.settingsDirty) {
+      return window.confirm('You have unsaved settings. Leave without saving?');
+    }
+
+    return true;
+  }
+
+  function activateTab(tab) {
+    if (!TAB_META[tab]) tab = 'dashboard';
+    if (!canOpen(tab)) tab = allowedTabs(state.role)[0] || 'dashboard';
+    if (!confirmLeaveTab(tab)) return false;
+    state.tab = tab;
+
+    var navTab = tab === 'project' ? 'projects' : tab;
+    Array.prototype.forEach.call(document.querySelectorAll('#adminNav [data-tab]'), function (button) {
+      var isActive = button.getAttribute('data-tab') === navTab;
+      button.classList.toggle('active', isActive);
+      if (isActive) {
+        button.setAttribute('aria-current', 'page');
+      } else {
+        button.removeAttribute('aria-current');
+      }
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.admin-view'), function (view) {
+      view.classList.toggle('active', view.id === 'view-' + tab);
+    });
+
+    $('viewTitle').textContent = TAB_META[tab][0];
+    $('viewSubtitle').textContent = TAB_META[tab][1];
+    updateBreadcrumb(tab);
+
+    var hash = (tab === 'project' && state.projectId)
+      ? '#project/' + state.projectId
+      : '#' + tab;
+    if (window.location.hash !== hash) {
+      history.replaceState(null, '', hash);
+    }
+
+    if (tab === 'dashboard') loadDashboard();
+    if (tab === 'leads') loadLeads();
+    if (tab === 'visitors') loadVisitors();
+    if (tab === 'content') loadContent();
+    if (tab === 'blog') loadBlog();
+    if (tab === 'projects') loadProjects();
+    if (tab === 'project') loadProjectScreen();
+    if (tab === 'team') loadTeam();
+    if (tab === 'reports') loadReports();
+    if (tab === 'settings') loadSettings();
+
+    return true;
+  }
+
+  $('adminNav').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-tab]');
+    if (button) activateTab(button.getAttribute('data-tab'));
+  });
+
+  document.addEventListener('click', function (event) {
+    var go = event.target.closest('[data-goto]');
+    if (go) activateTab(go.getAttribute('data-goto'));
+  });
+
+  window.addEventListener('hashchange', function () {
+    var route = readHash();
+
+    if (route.tab === 'project') {
+      if (!route.id) {
+        activateTab('projects');
+        return;
+      }
+      state.projectId = route.id;
+      if (state.tab === 'project') loadProjectScreen();
+      else activateTab('project');
+      return;
+    }
+
+    if (TAB_META[route.tab] && canOpen(route.tab) && route.tab !== state.tab) {
+      if (activateTab(route.tab) === false) {
+        history.replaceState(null, '', '#' + state.tab);
+      }
+    }
+  });
+
+  /* ---------------- shared queries ---------------- */
+  async function countRows(table, filter) {
+    var query = db.from(table).select('*', { count: 'exact', head: true });
+    if (filter) query = filter(query);
+    var result = await query;
+    return result.error ? null : result.count;
+  }
+
+  function statCard(value, label) {
+    return '<div class="admin-stat"><strong>' + esc(value == null ? '—' : value) + '</strong><span>' + esc(label) + '</span></div>';
+  }
+
+  function renderBars(container, items, labelKey, valueKey) {
+    if (!container) return;
+    if (!items || !items.length) {
+      container.innerHTML = '<p class="admin-empty">No data yet.</p>';
+      return;
+    }
+
+    var max = 1;
+    items.forEach(function (item) {
+      max = Math.max(max, Number(item[valueKey]) || 0);
+    });
+
+    container.innerHTML = items.map(function (item) {
+      var value = Number(item[valueKey]) || 0;
+      var pct = Math.max(2, Math.round((value / max) * 100));
+      var label = item[labelKey] == null ? '—' : item[labelKey];
+      return '<div class="admin-bar-row">' +
+        '<span class="admin-bar-label" title="' + esc(label) + '">' + esc(label) + '</span>' +
+        '<div class="admin-bar-track"><div class="admin-bar-fill" style="width:' + pct + '%"></div></div>' +
+        '<span class="admin-bar-value">' + esc(value) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* ---------------- dashboard ---------------- */
+  async function loadDashboard() {
+    var statsEl = $('dashboardStats');
+    var recentEl = $('recentLeads');
+    var trafficEl = $('dashboardTraffic');
+
+    statsEl.innerHTML = '<div class="admin-stat"><strong>…</strong><span>Loading</span></div>';
+    recentEl.innerHTML = '<p class="admin-empty">Loading…</p>';
+    trafficEl.innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    try {
+      var results = await Promise.all([
+        countRows('site_leads'),
+        countRows('site_leads', function (q) { return q.eq('status', 'new'); }),
+        db.rpc('visitor_stats'),
+        db.from('site_leads')
+          .select('id,name,contact,project_type,created_at,status')
+          .order('created_at', { ascending: false })
+          .limit(5)
+      ]);
+
+      var totalLeads = results[0];
+      var newLeads = results[1];
+      var visitors = results[2].data || {};
+      var recent = results[3].data || [];
+
+      statsEl.innerHTML =
+        statCard(totalLeads, 'Total leads') +
+        statCard(newLeads, 'New leads') +
+        statCard(visitors.today, 'Views today') +
+        statCard(visitors.week, 'Views 7 days') +
+        statCard(visitors.month, 'Views 30 days');
+
+      var attentionStrip = $('attentionStrip');
+      var attentionItems = $('attentionItems');
+      if (attentionStrip && attentionItems) {
+        var items = [];
+        if (newLeads > 0) {
+          items.push('<button type="button" class="attention-link" data-goto="leads"><strong>' + newLeads + '</strong> new lead' + (newLeads === 1 ? '' : 's') + ' awaiting review &rarr;</button>');
+        }
+        try {
+          var pendingInvites = await countRows('profiles', function (q) { return q.eq('status', 'invited'); });
+          if (pendingInvites > 0) {
+            items.push('<button type="button" class="attention-link" data-goto="team"><strong>' + pendingInvites + '</strong> pending team invite' + (pendingInvites === 1 ? '' : 's') + ' &rarr;</button>');
+          }
+        } catch (_) {}
+
+        if (items.length) {
+          attentionItems.innerHTML = items.join('<span class="attention-sep">&middot;</span>');
+          attentionStrip.hidden = false;
+        } else {
+          attentionStrip.hidden = true;
+        }
+      }
+
+      renderBars(trafficEl, [
+        { label: 'Today', value: visitors.today || 0 },
+        { label: '7 days', value: visitors.week || 0 },
+        { label: '30 days', value: visitors.month || 0 },
+        { label: 'All time', value: visitors.total || 0 }
+      ], 'label', 'value');
+
+      if (!recent.length) {
+        recentEl.innerHTML = '<p class="admin-empty">No leads yet.</p>';
+      } else {
+        recentEl.innerHTML = '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
+          '<th>Name</th><th>Contact</th><th>Project</th><th>Date</th><th>Status</th>' +
+          '</tr></thead><tbody>' + recent.map(function (lead) {
+            return '<tr><td><strong>' + esc(lead.name) + '</strong></td>' +
+              '<td>' + esc(lead.contact) + '</td>' +
+              '<td>' + esc(lead.project_type) + '</td>' +
+              '<td class="mono">' + esc(fmtDate(lead.created_at)) + '</td>' +
+              '<td><span class="badge ' + esc(lead.status || 'new') + '">' + esc(lead.status || 'new') + '</span></td></tr>';
+          }).join('') + '</tbody></table></div>';
+      }
+    } catch (error) {
+      fail('Could not load dashboard.');
+    }
+  }
+
+  /* ---------------- leads ---------------- */
+  function statusSelect(lead) {
+    var current = lead.status || 'new';
+    return '<select class="admin-select" data-status="' + esc(lead.id) + '" aria-label="Lead status">' +
+      ['new', 'contacted', 'converted', 'lost'].map(function (value) {
+        return '<option value="' + value + '"' + (current === value ? ' selected' : '') + '>' +
+          value.charAt(0).toUpperCase() + value.slice(1) + '</option>';
+      }).join('') + '</select>';
+  }
+
+  function renderLeadsTable(leads) {
+    var container = $('leadsTable');
+    if (!leads || !leads.length) {
+      container.innerHTML = '<p class="admin-empty">No leads yet.</p>';
+      return;
+    }
+
+    container.innerHTML = '<table class="admin-table"><thead><tr>' +
+      '<th>Name</th><th>Contact</th><th>Project</th><th>Message</th><th>Date</th><th>Status</th><th></th>' +
+      '</tr></thead><tbody>' + leads.map(function (lead) {
+        var idea = lead.idea || '';
+        return '<tr>' +
+          '<td><strong>' + esc(lead.name) + '</strong></td>' +
+          '<td>' + esc(lead.contact) + '</td>' +
+          '<td>' + esc(lead.project_type) + '</td>' +
+          '<td class="truncate" title="' + esc(idea) + '">' + esc(idea.slice(0, 90)) + (idea.length > 90 ? '…' : '') + '</td>' +
+          '<td class="mono">' + esc(fmtDate(lead.created_at)) + '</td>' +
+          '<td>' + statusSelect(lead) + '</td>' +
+          '<td class="mono">' +
+            '<button type="button" class="admin-btn ghost" data-view="' + esc(lead.id) + '">View</button> ' +
+            '<button type="button" class="admin-btn danger" data-delete="' + esc(lead.id) + '">Delete</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  async function loadLeads() {
+    var container = $('leadsTable');
+    container.innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    var from = state.leadsPage * state.leadsPageSize;
+    var to = from + state.leadsPageSize - 1;
+
+    var result = await db.from('site_leads')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (result.error) {
+      container.innerHTML = '<p class="admin-empty">Could not load leads. Check RLS policies.</p>';
+      return;
+    }
+
+    state.leadsTotal = result.count || 0;
+    renderLeadsTable(result.data || []);
+
+    var pages = Math.max(1, Math.ceil(state.leadsTotal / state.leadsPageSize));
+    $('leadsPageLabel').textContent = 'Page ' + (state.leadsPage + 1) + ' of ' + pages + ' · ' + state.leadsTotal + ' total';
+    $('leadsPrev').disabled = state.leadsPage <= 0;
+    $('leadsNext').disabled = state.leadsPage + 1 >= pages;
+  }
+
+  $('refreshLeads').addEventListener('click', loadLeads);
+  $('leadsPrev').addEventListener('click', function () {
+    if (state.leadsPage > 0) {
+      state.leadsPage -= 1;
+      loadLeads();
+    }
+  });
+  $('leadsNext').addEventListener('click', function () {
+    if (state.leadsPage + 1 < Math.ceil(state.leadsTotal / state.leadsPageSize)) {
+      state.leadsPage += 1;
+      loadLeads();
+    }
+  });
+
+  $('leadsTable').addEventListener('change', async function (event) {
+    var select = event.target.closest('[data-status]');
+    if (!select) return;
+
+    var id = select.getAttribute('data-status');
+    var status = select.value;
+    var result = await db.from('site_leads')
+      .update({ status: status, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (result.error) {
+      fail('Status update failed.');
+    } else {
+      toast('Status updated.');
+      loadDashboard();
+    }
+  });
+
+  $('leadsTable').addEventListener('click', async function (event) {
+    var view = event.target.closest('[data-view]');
+    var remove = event.target.closest('[data-delete]');
+
+    if (view) {
+      var id = view.getAttribute('data-view');
+      var result = await db.from('site_leads').select('*').eq('id', id).single();
+      if (result.error) {
+        fail('Could not load lead.');
+      } else {
+        renderLeadDetail(result.data);
+      }
+    }
+
+    if (remove) {
+      var leadId = remove.getAttribute('data-delete');
+      if (!window.confirm('Delete this lead permanently?')) return;
+      var deleted = await db.from('site_leads').delete().eq('id', leadId);
+      if (deleted.error) {
+        fail('Delete failed.');
+      } else {
+        toast('Lead deleted.');
+        $('leadDetail').innerHTML = '';
+        loadLeads();
+        loadDashboard();
+      }
+    }
+  });
+
+  function renderLeadDetail(lead) {
+    $('leadDetail').innerHTML =
+      '<div class="lead-detail">' +
+        '<div class="lead-detail-grid">' +
+          '<div class="lead-detail-item"><span>Name</span><strong>' + esc(lead.name) + '</strong></div>' +
+          '<div class="lead-detail-item"><span>Contact</span><strong>' + esc(lead.contact) + '</strong></div>' +
+          '<div class="lead-detail-item"><span>Project</span><strong>' + esc(lead.project_type) + '</strong></div>' +
+          '<div class="lead-detail-item"><span>Budget</span><strong>' + esc(lead.budget || 'Not specified') + '</strong></div>' +
+          '<div class="lead-detail-item"><span>Source</span><strong>' + esc(lead.source || 'site') + '</strong></div>' +
+          '<div class="lead-detail-item"><span>Received</span><strong>' + esc(fmtDate(lead.created_at)) + '</strong></div>' +
+        '</div>' +
+        '<div class="lead-message">' + esc(lead.idea || '') + '</div>' +
+        '<div class="admin-field" style="margin-bottom:0.75rem">' +
+          '<label for="leadNotes">Internal notes</label>' +
+          '<textarea class="admin-textarea" id="leadNotes">' + esc(lead.notes || '') + '</textarea>' +
+        '</div>' +
+        '<div class="admin-actions">' +
+          '<button type="button" class="admin-btn primary" data-save-notes="' + esc(lead.id) + '">Save notes</button>' +
+          '<button type="button" class="admin-btn ghost" data-close-detail>Close</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  $('leadDetail').addEventListener('click', async function (event) {
+    var save = event.target.closest('[data-save-notes]');
+    var close = event.target.closest('[data-close-detail]');
+
+    if (close) $('leadDetail').innerHTML = '';
+
+    if (save) {
+      var id = save.getAttribute('data-save-notes');
+      var notes = $('leadNotes').value;
+      var result = await db.from('site_leads')
+        .update({ notes: notes, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (result.error) fail('Could not save notes.');
+      else toast('Notes saved.');
+    }
+  });
+
+  /* ---------------- visitors ---------------- */
+  async function loadVisitors() {
+    var statsEl = $('visitorStats');
+    statsEl.innerHTML = '<div class="admin-stat"><strong>…</strong><span>Loading</span></div>';
+
+    var result = await db.rpc('visitor_stats');
+    if (result.error) {
+      statsEl.innerHTML = '<div class="admin-stat"><strong>—</strong><span>Stats unavailable</span></div>';
+      $('topPages').innerHTML = '<p class="admin-empty">Run the supabase-schema.sql update to enable visitor_stats().</p>';
+      $('topReferrers').innerHTML = '';
+      $('deviceSplit').innerHTML = '';
+      return;
+    }
+
+    var data = result.data || {};
+    statsEl.innerHTML =
+      statCard(data.today, 'Views today') +
+      statCard(data.week, 'Views 7 days') +
+      statCard(data.month, 'Views 30 days') +
+      statCard(data.total, 'All-time views');
+
+    renderBars($('topPages'), data.top_pages || [], 'page_url', 'views');
+    renderBars($('topReferrers'), data.top_referrers || [], 'referrer', 'views');
+
+    var devices = data.devices || {};
+    renderBars($('deviceSplit'), [
+      { label: 'Mobile', value: devices.mobile || 0 },
+      { label: 'Tablet', value: devices.tablet || 0 },
+      { label: 'Desktop', value: devices.desktop || 0 }
+    ], 'label', 'value');
+  }
+
+  $('refreshVisitors').addEventListener('click', loadVisitors);
+
+  /* ---------------- content ---------------- */
+  var CMS_TAGS = { BR: 1, EM: 1, STRONG: 1, B: 1, I: 1, A: 1 };
+
+  /* Inline tags only — the same allowlist the public overlay uses. */
+  function cmsSanitize(value) {
+    var box = document.createElement('div');
+    box.innerHTML = String(value == null ? '' : value);
+
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        if (child.nodeType !== 1) return;
+
+        if (!CMS_TAGS[child.tagName]) {
+          if (/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|LINK|META)$/.test(child.tagName)) {
+            child.remove();
+            return;
+          }
+          while (child.firstChild) node.insertBefore(child.firstChild, child);
+          child.remove();
+          return;
+        }
+
+        Array.prototype.slice.call(child.attributes).forEach(function (attr) {
+          if (child.tagName === 'A' && attr.name === 'href') return;
+          child.removeAttribute(attr.name);
+        });
+
+        if (child.tagName === 'A') {
+          var href = child.getAttribute('href') || '';
+          if (!/^(https?:|mailto:|\/|#)/i.test(href)) child.removeAttribute('href');
+        }
+
+        walk(child);
+      });
+    })(box);
+
+    return box.innerHTML;
+  }
+
+  function contentGroups(schema) {
+    var order = [];
+    var groups = {};
+
+    schema.fields.forEach(function (field) {
+      var name = field.group || 'Copy';
+      if (!groups[name]) {
+        groups[name] = [];
+        order.push(name);
+      }
+      groups[name].push(field);
+    });
+
+    return order.map(function (name) {
+      return { name: name, fields: groups[name] };
+    });
+  }
+
+  function contentInput(field, value) {
+    var id = 'cms-' + field.key;
+    var placeholder = esc(stripTags(field.default).slice(0, 90));
+
+    if (field.type === 'text') {
+      return '<input class="admin-input" id="' + id + '" data-key="' + esc(field.key) +
+        '" type="text" placeholder="' + placeholder + '" value="' + esc(value) + '">';
+    }
+
+    return '<textarea class="admin-textarea" id="' + id + '" data-key="' + esc(field.key) +
+      '" rows="' + (field.type === 'html' ? 3 : 2) + '" placeholder="' + placeholder + '">' +
+      esc(value) + '</textarea>';
+  }
+
+  function contentField(field) {
+    var input = document.getElementById('cms-' + field.key);
+    if (!input) return null;
+    return { input: input, value: input.value.trim() };
+  }
+
+  function contentResolved(field) {
+    var read = contentField(field);
+    return (read ? read.value : '') || field.default;
+  }
+
+  function renderContentRail(filterText) {
+    var counts = state.contentCounts || {};
+    var q = (filterText || '').toLowerCase().trim();
+    var keys = Object.keys(SCHEMA);
+
+    if (q) {
+      keys = keys.filter(function (key) {
+        var s = SCHEMA[key];
+        return (
+          key.toLowerCase().indexOf(q) !== -1 ||
+          s.label.toLowerCase().indexOf(q) !== -1 ||
+          s.path.toLowerCase().indexOf(q) !== -1 ||
+          (s.category && s.category.toLowerCase().indexOf(q) !== -1)
+        );
+      });
+    }
+
+    if (!keys.length) {
+      $('contentPages').innerHTML = '<p class="admin-empty" style="padding:1rem 0.5rem;font-size:0.75rem;">No matching pages</p>';
+      return;
+    }
+
+    var categories = {};
+    var categoryOrder = ['Site', 'Services', 'Work', 'Blog', 'Legal'];
+
+    keys.forEach(function (key) {
+      var cat = SCHEMA[key].category || 'Site';
+      if (!categories[cat]) {
+        categories[cat] = [];
+        if (categoryOrder.indexOf(cat) === -1) categoryOrder.push(cat);
+      }
+      categories[cat].push(key);
+    });
+
+    var html = '';
+    categoryOrder.forEach(function (cat) {
+      var catKeys = categories[cat];
+      if (!catKeys || !catKeys.length) return;
+
+      html += '<div class="rail-group-title">' + esc(cat) + '</div>';
+      html += catKeys.map(function (key) {
+        var edits = counts[key] || 0;
+        return '<button type="button" class="rail-item' + (key === state.contentPage ? ' active' : '') +
+          '" data-page="' + esc(key) + '"' + (key === state.contentPage ? ' aria-current="page"' : '') + '>' +
+          '<span>' + esc(SCHEMA[key].label) + '</span>' +
+          '<em class="rail-count' + (edits ? ' on' : '') + '">' +
+            (edits ? edits + (edits === 1 ? ' edit' : ' edits') : 'Default') +
+          '</em>' +
+          '</button>';
+      }).join('');
+    });
+
+    $('contentPages').innerHTML = html;
+  }
+
+  function sendCmsPreview(key, value, defaultValue) {
+    var iframe = $('contentIframe');
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      iframe.contentWindow.postMessage({
+        type: 'cms-preview',
+        key: key,
+        value: value,
+        default: defaultValue
+      }, '*');
+    } catch (e) {
+      /* cross-origin guard */
+    }
+  }
+
+  function broadcastCmsPreview(schema, overrides) {
+    if (!schema) return;
+    schema.fields.forEach(function (field) {
+      var val = Object.prototype.hasOwnProperty.call(overrides, field.key) ? overrides[field.key] : '';
+      sendCmsPreview(field.key, val, field.default);
+    });
+  }
+
+  async function refreshContentCounts() {
+    var result = await db.from('site_content').select('page');
+    var counts = {};
+
+    if (!result.error) {
+      (result.data || []).forEach(function (row) {
+        counts[row.page] = (counts[row.page] || 0) + 1;
+      });
+    }
+
+    state.contentCounts = counts;
+    var curSearch = $('contentSearch') ? $('contentSearch').value : '';
+    renderContentRail(curSearch);
+  }
+
+  async function loadContent() {
+    var page = state.contentPage || 'home';
+    var schema = SCHEMA[page];
+    if (!schema) return;
+
+    if (state.contentCounts === null) await refreshContentCounts();
+
+    $('contentPath').textContent = schema.path;
+    $('contentPageTitle').textContent = schema.label;
+    $('contentOpen').href = schema.path;
+    $('contentForm').innerHTML = '<p class="admin-empty">Loading…</p>';
+    $('contentPreview').innerHTML = '';
+    $('contentPageMeta').textContent = 'Loading…';
+
+    var result = await db.from('site_content').select('field_key,field_value').eq('page', page);
+    var overrides = {};
+
+    if (result.error) {
+      fail('Could not load this page. Check that you are still signed in.');
+    } else {
+      (result.data || []).forEach(function (row) {
+        overrides[row.field_key] = row.field_value;
+      });
+    }
+
+    var snapshot = {};
+    var edited = 0;
+
+    snapshotFromOverrides(schema, overrides, snapshot);
+    schema.fields.forEach(function (field) {
+      if (snapshot[field.key]) edited += 1;
+    });
+
+    var iframe = $('contentIframe');
+    if (iframe) {
+      var currentIframePath = iframe.getAttribute('data-loaded-path');
+      if (currentIframePath !== schema.path) {
+        iframe.src = schema.path;
+        iframe.setAttribute('data-loaded-path', schema.path);
+        iframe.onload = function () {
+          broadcastCmsPreview(schema, overrides);
+        };
+      } else {
+        broadcastCmsPreview(schema, overrides);
+      }
+    }
+
+    $('contentForm').innerHTML = contentGroups(schema).map(function (group) {
+      return '<details class="fieldblock" open>' +
+        '<summary class="fieldblock-summary">' +
+          '<span>' + esc(group.name) + '</span>' +
+          '<span class="field-counter">' + group.fields.length + (group.fields.length === 1 ? ' field' : ' fields') + '</span>' +
+        '</summary>' +
+        '<div class="fieldblock-body">' +
+        group.fields.map(function (field) {
+          var stored = Object.prototype.hasOwnProperty.call(overrides, field.key) ? overrides[field.key] : '';
+          var allowHtml = field.type === 'html';
+          var val = stored || '';
+
+          return '<div class="fieldrow" data-field="' + esc(field.key) + '">' +
+            '<div class="fieldrow-head">' +
+              '<label for="cms-' + esc(field.key) + '">' + esc(field.label) + '</label>' +
+              '<div style="display:flex;align-items:center;gap:0.5rem">' +
+                '<span class="field-counter" id="cnt-' + esc(field.key) + '">' + val.length + ' chars</span>' +
+                '<span class="fieldrow-flag" data-flag="' + esc(field.key) + '"></span>' +
+              '</div>' +
+            '</div>' +
+            contentInput(field, stored) +
+            '<div class="fieldrow-foot">' +
+              '<span>' + (allowHtml ? 'Line breaks and italic emphasis are allowed.' : '') + '</span>' +
+              '<button type="button" class="linkbtn field-reset-btn" data-revert="' + esc(field.key) + '"' +
+                (val === '' ? ' hidden' : '') + '>Reset to default</button>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+        '</div>' +
+      '</details>';
+    }).join('');
+
+    $('contentPageMeta').textContent = edited
+      ? edited + (edited === 1 ? ' field' : ' fields') + ' rewritten on this page'
+      : 'Everything on this page is still the original copy';
+
+    state.contentSnapshot = snapshot;
+    state.contentDirty = false;
+
+    refreshContentFlags();
+    renderContentPreview();
+    updateContentState();
+    var curSearch = $('contentSearch') ? $('contentSearch').value : '';
+    renderContentRail(curSearch);
+  }
+
+  function snapshotFromOverrides(schema, overrides, into) {
+    schema.fields.forEach(function (field) {
+      var stored = Object.prototype.hasOwnProperty.call(overrides, field.key) ? overrides[field.key] : '';
+      into[field.key] = String(stored == null ? '' : stored).trim();
+    });
+    return into;
+  }
+
+  function refreshContentFlags() {
+    Array.prototype.forEach.call(document.querySelectorAll('#contentForm .fieldrow'), function (row) {
+      var key = row.getAttribute('data-field');
+      var input = document.getElementById('cms-' + key);
+      var flag = row.querySelector('[data-flag]');
+      var revert = row.querySelector('[data-revert]');
+      if (!input || !flag) return;
+
+      var value = input.value.trim();
+      var stored = state.contentSnapshot[key] || '';
+
+      if (value !== stored) {
+        flag.textContent = 'Unsaved';
+        flag.className = 'fieldrow-flag pending';
+      } else if (value) {
+        flag.textContent = 'Custom copy';
+        flag.className = 'fieldrow-flag custom';
+      } else {
+        flag.textContent = '';
+        flag.className = 'fieldrow-flag';
+      }
+
+      if (revert) revert.hidden = value === '';
+    });
+  }
+
+  function renderContentPreview() {
+    var schema = SCHEMA[state.contentPage];
+    if (!schema) return;
+
+    var groups = contentGroups(schema);
+    var hero = groups.length ? groups[0].fields : [];
+    var eyebrow = hero[0] ? contentResolved(hero[0]) : '';
+    var headline = hero[1] ? contentResolved(hero[1]) : '';
+    var standfirst = hero[2] ? contentResolved(hero[2]) : '';
+
+    $('contentPreview').innerHTML =
+      '<div class="cms-preview-body">' +
+        (eyebrow ? '<p class="cms-eyebrow">' + esc(stripTags(eyebrow)) + '</p>' : '') +
+        '<p class="cms-headline">' + cmsSanitize(headline) + '</p>' +
+        (standfirst ? '<p class="cms-standfirst">' + esc(stripTags(standfirst)) + '</p>' : '') +
+      '</div>' +
+      '<span class="cms-preview-tag">Top of page · ' + esc(schema.label) + '</span>';
+  }
+
+  function updateContentState() {
+    if (!SCHEMA[state.contentPage]) return;
+
+    var changed = 0;
+    var seen = {};
+
+    Array.prototype.forEach.call(document.querySelectorAll('#contentForm [data-key]'), function (input) {
+      var key = input.getAttribute('data-key');
+      if (seen[key]) return;
+      seen[key] = true;
+      if (input.value.trim() !== (state.contentSnapshot[key] || '')) changed += 1;
+    });
+
+    state.contentDirty = changed > 0;
+
+    $('contentState').textContent = changed
+      ? changed + (changed === 1 ? ' unsaved change' : ' unsaved changes')
+      : 'No unsaved changes';
+    $('contentState').classList.toggle('dirty', changed > 0);
+
+    $('contentSave').disabled = !changed;
+    $('contentDiscard').disabled = !changed;
+  }
+
+  $('contentPages').addEventListener('click', function (event) {
+    var item = event.target.closest('[data-page]');
+    if (!item) return;
+
+    var page = item.getAttribute('data-page');
+    if (page === state.contentPage) return;
+    if (state.contentDirty && !window.confirm('Leave this page without saving your changes?')) return;
+
+    state.contentPage = page;
+    loadContent();
+  });
+
+  if ($('contentSearch')) {
+    $('contentSearch').addEventListener('input', function () {
+      renderContentRail(this.value);
+    });
+  }
+
+  function setPreviewMode(mode) {
+    var iframe = $('contentIframe');
+    var wrap = $('iframeWrap');
+    var status = $('previewStatus');
+    var btnD = $('btnPreviewDesktop');
+    var btnM = $('btnPreviewMobile');
+    var btnH = $('btnPreviewHide');
+
+    [btnD, btnM, btnH].forEach(function (b) { if (b) b.classList.remove('active'); });
+
+    if (mode === 'desktop') {
+      if (wrap) wrap.classList.remove('hidden');
+      if (iframe) iframe.className = 'cms-iframe desktop';
+      if (status) status.textContent = '● Live sync (Desktop)';
+      if (btnD) btnD.classList.add('active');
+    } else if (mode === 'mobile') {
+      if (wrap) wrap.classList.remove('hidden');
+      if (iframe) iframe.className = 'cms-iframe mobile';
+      if (status) status.textContent = '● Live sync (Mobile 375px)';
+      if (btnM) btnM.classList.add('active');
+    } else if (mode === 'hide') {
+      if (wrap) wrap.classList.add('hidden');
+      if (status) status.textContent = '○ Preview hidden';
+      if (btnH) btnH.classList.add('active');
+    }
+  }
+
+  if ($('btnPreviewDesktop')) $('btnPreviewDesktop').addEventListener('click', function () { setPreviewMode('desktop'); });
+  if ($('btnPreviewMobile')) $('btnPreviewMobile').addEventListener('click', function () { setPreviewMode('mobile'); });
+  if ($('btnPreviewHide')) $('btnPreviewHide').addEventListener('click', function () { setPreviewMode('hide'); });
+
+  $('contentForm').addEventListener('input', function (event) {
+    var input = event.target.closest('[data-key]');
+    if (!input) return;
+
+    var key = input.getAttribute('data-key');
+    var counter = document.getElementById('cnt-' + key);
+    if (counter) counter.textContent = input.value.length + ' chars';
+
+    var schema = SCHEMA[state.contentPage];
+    var field = null;
+    if (schema) {
+      for (var i = 0; i < schema.fields.length; i++) {
+        if (schema.fields[i].key === key) {
+          field = schema.fields[i];
+          break;
+        }
+      }
+    }
+    var defaultVal = field ? field.default : '';
+
+    sendCmsPreview(key, input.value, defaultVal);
+
+    refreshContentFlags();
+    updateContentState();
+    renderContentPreview();
+  });
+
+  $('contentForm').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-revert]');
+    if (!button) return;
+
+    var key = button.getAttribute('data-revert');
+    var input = document.getElementById('cms-' + key);
+    if (!input) return;
+
+    input.value = '';
+    var counter = document.getElementById('cnt-' + key);
+    if (counter) counter.textContent = '0 chars';
+
+    var schema = SCHEMA[state.contentPage];
+    var field = null;
+    if (schema) {
+      for (var i = 0; i < schema.fields.length; i++) {
+        if (schema.fields[i].key === key) {
+          field = schema.fields[i];
+          break;
+        }
+      }
+    }
+    var defaultVal = field ? field.default : '';
+
+    sendCmsPreview(key, '', defaultVal);
+
+    refreshContentFlags();
+    updateContentState();
+    renderContentPreview();
+    input.focus();
+  });
+
+  $('contentForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    await saveContent();
+  });
+
+  $('contentDiscard').addEventListener('click', function () {
+    loadContent();
+    toast('Changes discarded.');
+  });
+
+  async function saveContent() {
+    var page = state.contentPage;
+    var schema = SCHEMA[page];
+    if (!schema) return;
+
+    var rows = [];
+    var removeKeys = [];
+    var now = new Date().toISOString();
+
+    schema.fields.forEach(function (field) {
+      var read = contentField(field);
+      if (!read) return;
+
+      if (read.value === '') {
+        if (state.contentSnapshot[field.key]) removeKeys.push(field.key);
+      } else if (read.value !== (state.contentSnapshot[field.key] || '')) {
+        rows.push({
+          page: page,
+          field_key: field.key,
+          field_value: read.value,
+          updated_at: now
+        });
+      }
+    });
+
+    if (!rows.length && !removeKeys.length) {
+      toast('Nothing to save.');
+      return;
+    }
+
+    var button = $('contentSave');
+    button.disabled = true;
+
+    try {
+      if (rows.length) {
+        var upsert = await db.from('site_content').upsert(rows, { onConflict: 'page,field_key' });
+        if (upsert.error) throw upsert.error;
+      }
+
+      if (removeKeys.length) {
+        var removed = await db.from('site_content')
+          .delete()
+          .eq('page', page)
+          .in('field_key', removeKeys);
+        if (removed.error) throw removed.error;
+      }
+
+      await refreshContentCounts();
+      await loadContent();
+      toast('Saved. The live page picks this up within a minute.');
+    } catch (error) {
+      fail('Could not save. Check that you are still signed in as an admin.');
+      updateContentState();
+    }
+  }
+
+  $('contentReset').addEventListener('click', async function () {
+    var page = state.contentPage;
+    var schema = SCHEMA[page];
+    if (!schema) return;
+    if (!window.confirm('Restore every field on ' + schema.label + ' to the copy written into the page?')) return;
+
+    var result = await db.from('site_content').delete().eq('page', page);
+    if (result.error) {
+      fail('Could not restore this page.');
+      return;
+    }
+
+    await refreshContentCounts();
+    await loadContent();
+    toast(schema.label + ' restored to the original copy.');
+  });
+
+  /* ---------------- blog ---------------- */
+
+  var BLOG_FALLBACK = /relation .* does not exist|schema cache/i;
+
+  function blogSlug(value) {
+    var text = String(value || '').split('|')[0];
+    if (text.normalize) text = text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+  }
+
+  function mdInline(text) {
+    var out = esc(text);
+    out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img alt="$1" src="$2" loading="lazy">');
+    out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+    out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    out = out.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    return out;
+  }
+
+  function mdToHtml(markdown) {
+    var lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n');
+    var html = [];
+    var para = [];
+    var list = null;
+    var quote = [];
+    var code = null;
+
+    function flushPara() {
+      if (para.length) { html.push('<p>' + mdInline(para.join(' ')) + '</p>'); para = []; }
+    }
+    function flushList() {
+      if (!list) return;
+      html.push('<' + list.type + '>' + list.items.map(function (item) {
+        return '<li>' + mdInline(item) + '</li>';
+      }).join('') + '</' + list.type + '>');
+      list = null;
+    }
+    function flushQuote() {
+      if (quote.length) {
+        html.push('<blockquote>' + quote.map(mdInline).join('<br>') + '</blockquote>');
+        quote = [];
+      }
+    }
+    function flushAll() { flushPara(); flushList(); flushQuote(); }
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+
+      if (code !== null) {
+        if (/^```/.test(line.trim())) {
+          html.push('<pre><code>' + esc(code.join('\n')) + '</code></pre>');
+          code = null;
+        } else {
+          code.push(line);
+        }
+        continue;
+      }
+
+      if (/^```/.test(line.trim())) { flushAll(); code = []; continue; }
+      if (!line.trim()) { flushAll(); continue; }
+
+      var heading = line.match(/^(#{2,4})\s+(.*)$/);
+      if (heading) {
+        flushAll();
+        var level = heading[1].length;
+        html.push('<h' + level + '>' + mdInline(heading[2]) + '</h' + level + '>');
+        continue;
+      }
+
+      if (/^>\s?/.test(line)) {
+        flushPara(); flushList();
+        quote.push(line.replace(/^>\s?/, ''));
+        continue;
+      }
+
+      var bullet = line.match(/^\s*[-*]\s+(.*)$/);
+      var numbered = line.match(/^\s*\d+\.\s+(.*)$/);
+      if (bullet || numbered) {
+        flushPara(); flushQuote();
+        var type = bullet ? 'ul' : 'ol';
+        if (!list || list.type !== type) { flushList(); list = { type: type, items: [] }; }
+        list.items.push((bullet || numbered)[1]);
+        continue;
+      }
+
+      flushList(); flushQuote();
+      para.push(line.trim());
+    }
+
+    if (code !== null) html.push('<pre><code>' + esc(code.join('\n')) + '</code></pre>');
+    flushAll();
+    return html.join('\n');
+  }
+
+  function updateBlogPreview() {
+    var body = $('bp-body').value;
+    var words = body.trim() ? body.trim().split(/\s+/).length : 0;
+    $('blogWordCount').textContent = words ? words + ' words · ' + Math.max(1, Math.round(words / 220)) + ' min read' : '';
+    $('blogPreview').innerHTML = body.trim()
+      ? mdToHtml(body)
+      : '<p class="admin-empty">Start typing to see the rendered post.</p>';
+  }
+
+  function renderBlogTable() {
+    var container = $('blogTable');
+    var posts = state.blogPosts || [];
+
+    if (!posts.length) {
+      container.innerHTML = '<p class="admin-empty">No posts yet. Create the first one.</p>';
+      $('blogMeta').textContent = 'No posts yet.';
+      return;
+    }
+
+    var published = posts.filter(function (post) { return post.status === 'published'; }).length;
+    $('blogMeta').textContent = posts.length + ' post' + (posts.length === 1 ? '' : 's') + ' · ' +
+      published + ' published · ' + (posts.length - published) + ' draft' + (posts.length - published === 1 ? '' : 's');
+
+    container.innerHTML = '<table class="admin-table"><thead><tr>' +
+      '<th>Title</th><th>Slug</th><th>Status</th><th>Published</th><th>Updated</th><th></th>' +
+      '</tr></thead><tbody>' + posts.map(function (post) {
+        return '<tr>' +
+          '<td><strong>' + esc(post.title) + '</strong></td>' +
+          '<td class="mono">/blog/' + esc(post.slug) + '/</td>' +
+          '<td><span class="badge ' + (post.status === 'published' ? 'converted' : 'contacted') + '">' + esc(post.status) + '</span></td>' +
+          '<td class="mono">' + esc(post.published_at ? fmtDate(post.published_at) : '—') + '</td>' +
+          '<td class="mono">' + esc(fmtDate(post.updated_at)) + '</td>' +
+          '<td class="mono">' +
+            '<button type="button" class="admin-btn ghost" data-blog-edit="' + esc(post.id) + '">Edit</button> ' +
+            (post.status === 'published'
+              ? '<a class="admin-btn ghost" href="/blog/' + esc(post.slug) + '/" target="_blank" rel="noopener">View ↗</a> '
+              : '') +
+            '<button type="button" class="admin-btn danger" data-blog-del="' + esc(post.id) + '">Delete</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  async function loadBlog() {
+    var container = $('blogTable');
+    container.innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    var result = await db.from('site_blog_posts')
+      .select('id,slug,title,description,status,published_at,updated_at')
+      .order('updated_at', { ascending: false });
+
+    if (result.error) {
+      var message = result.error.message || '';
+      container.innerHTML = '<p class="admin-empty">Could not load posts. ' +
+        (BLOG_FALLBACK.test(message) ? 'Run <code>supabase-blog.sql</code> in the Supabase SQL editor first.' : 'Check your connection and RLS policies.') +
+        '</p>';
+      $('blogMeta').textContent = 'Blog unavailable.';
+      return;
+    }
+
+    state.blogPosts = result.data || [];
+    renderBlogTable();
+  }
+
+  function setBlogField(id, value) {
+    $(id).value = value == null ? '' : value;
+  }
+
+  function openBlogEditor(row, silent) {
+    state.blogEditing = row || null;
+    state.blogSlugTouched = !!(row && row.slug);
+
+    $('blogEditorCard').hidden = false;
+    $('blogEditorTitle').textContent = row ? 'Edit post' : 'New post';
+    updateBreadcrumb('blog', row ? ('Edit: ' + (row.title || 'Untitled')) : 'New post');
+    $('blogEditorMeta').textContent = row
+      ? (row.status === 'published'
+        ? 'Published — save to push a new build.'
+        : 'Draft — only admins can see this.')
+      : 'Not saved yet.';
+
+    setBlogField('bp-title', row && row.title);
+    setBlogField('bp-slug', row && row.slug);
+    setBlogField('bp-description', row && row.description);
+    setBlogField('bp-h1', row && row.h1);
+    setBlogField('bp-crumb', row && row.crumb);
+    setBlogField('bp-subtitle', row && row.subtitle);
+    setBlogField('bp-pill', row && row.pill);
+    setBlogField('bp-cta-h2', row && row.cta_h2);
+    setBlogField('bp-cta-p', row && row.cta_p);
+    setBlogField('bp-body', row && row.body);
+
+    var isPublished = !!(row && row.status === 'published');
+    $('blogDelete').hidden = !row;
+    $('blogUnpublish').hidden = !isPublished;
+    $('blogViewLive').hidden = !isPublished;
+    if (isPublished) $('blogViewLive').href = '/blog/' + row.slug + '/';
+
+    updateBlogPreview();
+    if (!silent) $('blogEditorCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function closeBlogEditor() {
+    state.blogEditing = null;
+    $('blogEditorCard').hidden = true;
+    updateBreadcrumb('blog');
+  }
+
+  function collectBlogFields() {
+    return {
+      title: $('bp-title').value.trim(),
+      slug: blogSlug($('bp-slug').value || $('bp-title').value),
+      description: $('bp-description').value.trim(),
+      body: $('bp-body').value.trim(),
+      h1: $('bp-h1').value.trim(),
+      subtitle: $('bp-subtitle').value.trim(),
+      pill: $('bp-pill').value.trim(),
+      crumb: $('bp-crumb').value.trim(),
+      cta_h2: $('bp-cta-h2').value.trim(),
+      cta_p: $('bp-cta-p').value.trim()
+    };
+  }
+
+  async function saveBlog(status) {
+    var values = collectBlogFields();
+    if (!values.title) { fail('Add a title first.'); return null; }
+    if (!values.slug) { fail('Add a URL slug first.'); return null; }
+    if (!values.body) { fail('The post needs a body.'); return null; }
+    if (values.slug.length < 3) { fail('The slug is too short.'); return null; }
+
+    var payload = Object.assign({}, values);
+    if (status) {
+      payload.status = status;
+      if (status === 'published') {
+        payload.published_at = (state.blogEditing && state.blogEditing.published_at) || new Date().toISOString();
+      }
+    } else if (!state.blogEditing) {
+      payload.status = 'draft';
+    }
+
+    var button = $('blogSave');
+    button.disabled = true;
+    var result;
+    try {
+      result = state.blogEditing
+        ? await db.from('site_blog_posts').update(payload).eq('id', state.blogEditing.id).select().single()
+        : await db.from('site_blog_posts').insert(payload).select().single();
+    } finally {
+      button.disabled = false;
+    }
+
+    if (result.error) {
+      var message = result.error.message || '';
+      if (/duplicate key|unique/i.test(message)) {
+        fail('That slug is already used by another post. Pick a different one.');
+      } else if (BLOG_FALLBACK.test(message)) {
+        fail('The blog table is missing. Run supabase-blog.sql in Supabase first.');
+      } else {
+        fail('Could not save the post.');
+      }
+      return null;
+    }
+
+    openBlogEditor(result.data, true);
+    loadBlog();
+    return result.data;
+  }
+
+  async function triggerRebuild() {
+    var sessionResult = await db.auth.getSession();
+    var token = sessionResult.data && sessionResult.data.session
+      ? sessionResult.data.session.access_token
+      : '';
+    if (!token) { fail('Session expired. Sign in again.'); return false; }
+
+    try {
+      var response = await fetch('/api/rebuild', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      var data = await response.json().catch(function () { return {}; });
+      if (response.ok) {
+        toast('Rebuild started. Live in about a minute.');
+        return true;
+      }
+      fail(data.error || 'Could not start the rebuild.');
+    } catch (error) {
+      fail('Could not reach the rebuild endpoint.');
+    }
+    return false;
+  }
+
+  async function removeBlogPost(id) {
+    if (!window.confirm('Delete this post permanently?')) return;
+    var result = await db.from('site_blog_posts').delete().eq('id', id);
+    if (result.error) {
+      fail('Delete failed.');
+      return;
+    }
+    if (state.blogEditing && state.blogEditing.id === id) closeBlogEditor();
+    toast('Post deleted.');
+    loadBlog();
+    triggerRebuild();
+  }
+
+  var rebuildTimer = null;
+  function scheduleDebouncedRebuild(delayMs) {
+    if (rebuildTimer) clearTimeout(rebuildTimer);
+    rebuildTimer = setTimeout(function () {
+      triggerRebuild();
+    }, delayMs || 15000);
+  }
+
+  $('blogRefresh').addEventListener('click', loadBlog);
+  $('blogRebuild').addEventListener('click', triggerRebuild);
+  $('blogNew').addEventListener('click', function () { openBlogEditor(null); });
+  $('blogClose').addEventListener('click', closeBlogEditor);
+
+  $('bp-body').addEventListener('input', updateBlogPreview);
+  $('bp-subtitle').addEventListener('input', updateBlogPreview);
+
+  $('bp-title').addEventListener('input', function () {
+    if (!state.blogSlugTouched) {
+      $('bp-slug').value = blogSlug($('bp-title').value);
+    }
+  });
+
+  $('bp-slug').addEventListener('input', function () {
+    state.blogSlugTouched = $('bp-slug').value.trim() !== '';
+  });
+
+  if ($('blogUploadMediaBtn') && $('blogMediaInput')) {
+    $('blogUploadMediaBtn').addEventListener('click', function () {
+      $('blogMediaInput').click();
+    });
+
+    $('blogMediaInput').addEventListener('change', async function () {
+      var file = this.files && this.files[0];
+      if (!file) return;
+
+      var btn = $('blogUploadMediaBtn');
+      btn.disabled = true;
+      btn.textContent = 'Uploading…';
+
+      var ext = file.name.split('.').pop();
+      var path = 'blog/' + Date.now() + '-' + slugify(file.name.replace(/\.[^/.]+$/, '')) + '.' + ext;
+
+      try {
+        var uploadRes = await db.storage.from('media').upload(path, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+        if (uploadRes.error) throw uploadRes.error;
+
+        var publicUrlRes = db.storage.from('media').getPublicUrl(path);
+        var url = publicUrlRes && publicUrlRes.data ? publicUrlRes.data.publicUrl : ('/assets/' + path);
+
+        var body = $('bp-body');
+        var snippet = '\n![' + esc(file.name) + '](' + url + ')\n';
+        var pos = body.selectionStart || body.value.length;
+        body.value = body.value.slice(0, pos) + snippet + body.value.slice(pos);
+        updateBlogPreview();
+        toast('Image uploaded and inserted into markdown.');
+      } catch (err) {
+        fail('Upload failed: ' + (err.message || 'Check storage policies.'));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Insert image';
+        $('blogMediaInput').value = '';
+      }
+    });
+  }
+
+  if ($('blogPreviewDraft')) {
+    $('blogPreviewDraft').addEventListener('click', async function () {
+      var slug = $('bp-slug').value.trim() || blogSlug($('bp-title').value);
+      if (!slug) {
+        fail('Enter a title or slug first to preview.');
+        return;
+      }
+      await saveBlog(null);
+      window.open('/blog/?preview=' + encodeURIComponent(slug), '_blank');
+    });
+  }
+
+  $('blogForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    var row = await saveBlog(null);
+    if (!row) return;
+    if (row.status === 'published') {
+      toast('Post saved and live on blog.');
+      scheduleDebouncedRebuild();
+    } else {
+      toast('Draft saved.');
+    }
+  });
+
+  $('blogPublish').addEventListener('click', async function () {
+    var row = await saveBlog('published');
+    if (row) {
+      toast('Post published! Live immediately on blog.');
+      scheduleDebouncedRebuild();
+    }
+  });
+
+  $('blogUnpublish').addEventListener('click', async function () {
+    if (!state.blogEditing) return;
+    if (!window.confirm('Move this post back to draft? It leaves the public blog after the next rebuild.')) return;
+
+    var result = await db.from('site_blog_posts')
+      .update({ status: 'draft' })
+      .eq('id', state.blogEditing.id)
+      .select()
+      .single();
+
+    if (result.error) {
+      fail('Could not unpublish.');
+      return;
+    }
+    openBlogEditor(result.data, true);
+    loadBlog();
+    triggerRebuild();
+  });
+
+  $('blogDelete').addEventListener('click', function () {
+    if (state.blogEditing) removeBlogPost(state.blogEditing.id);
+  });
+
+  $('blogTable').addEventListener('click', async function (event) {
+    var edit = event.target.closest('[data-blog-edit]');
+    var remove = event.target.closest('[data-blog-del]');
+
+    if (edit) {
+      var result = await db.from('site_blog_posts').select('*').eq('id', edit.getAttribute('data-blog-edit')).single();
+      if (result.error) fail('Could not load the post.');
+      else openBlogEditor(result.data);
+    }
+
+    if (remove) removeBlogPost(remove.getAttribute('data-blog-del'));
+  });
+
+  /* ---------------- projects ---------------- */
+  var PROJECT_STATUS = {
+    planning: 'Planning',
+    active: 'Active',
+    on_hold: 'On hold',
+    completed: 'Completed',
+    archived: 'Archived'
+  };
+
+  var ROLE_LABELS = {
+    owner: 'Owner',
+    admin: 'Admin',
+    manager: 'Manager',
+    member: 'Member',
+    client: 'Client'
+  };
+
+  function slugify(value) {
+    return String(value == null ? '' : value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60);
+  }
+
+  function missingSchema(error, migration) {
+    var code = (error && error.code) || '';
+    var text = String((error && error.message) || '');
+    if (code !== 'PGRST205' && code !== '42P01' && !/schema cache|does not exist/i.test(text)) {
+      return false;
+    }
+    return migration;
+  }
+
+  async function loadProjects() {
+    var grid = $('projectsGrid');
+    grid.innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    var result = await db
+      .from('projects')
+      .select('id,key,name,summary,status,priority,due_date,updated_at')
+      .order('updated_at', { ascending: false });
+
+    if (result.error) {
+      var migration = missingSchema(result.error, 'supabase/migrations/0002_work.sql');
+      if (migration) {
+        grid.innerHTML = '<div class="invite-result"><strong>Projects table is missing</strong>' +
+          '<p class="admin-empty" style="text-align:left;margin:0">Run <code>' + esc(migration) + '</code> in the Supabase SQL editor, then press Refresh.</p></div>';
+      } else {
+        grid.innerHTML = '<p class="admin-empty">Could not load projects: ' + esc(result.error.message) + '</p>';
+      }
+      return;
+    }
+
+    state.projects = result.data || [];
+
+    if (!state.projects.length) {
+      grid.innerHTML = '<p class="admin-empty">No projects yet.' +
+        (isAdmin() ? ' Use “New project” to create the first one.' : '') + '</p>';
+      return;
+    }
+
+    var progress = await Promise.all(state.projects.map(function (project) {
+      return db.rpc('project_progress', { p_project: project.id });
+    }));
+
+    grid.innerHTML = state.projects.map(function (project, index) {
+      var info = (progress[index] && progress[index].data) || {};
+      var percent = Math.max(0, Math.min(100, Number(info.percent) || 0));
+      var total = Number(info.total) || 0;
+      var done = Number(info.done) || 0;
+
+      return '<article class="project-card" role="button" tabindex="0" data-project-id="' + esc(project.id) + '">' +
+        '<div class="project-foot">' +
+          '<span class="project-key">' + esc(project.key) + '</span>' +
+          '<span class="badge ' + esc(project.status) + '">' + esc(PROJECT_STATUS[project.status] || project.status) + '</span>' +
+        '</div>' +
+        '<h3>' + esc(project.name) + '</h3>' +
+        '<p class="project-summary">' + esc(project.summary || 'No summary yet.') + '</p>' +
+        '<div class="progress-track"><span style="width:' + percent + '%"></span></div>' +
+        '<div class="project-foot">' +
+          '<span>' + percent + '% · ' + done + '/' + total + ' tasks</span>' +
+          '<span>' + esc(project.due_date ? 'Due ' + project.due_date : 'No due date') + '</span>' +
+        '</div>' +
+        '</article>';
+    }).join('');
+
+    fillProjectOptions(state.projects);
+  }
+
+  function fillProjectOptions(projects, force) {
+    var box = $('tm-projects');
+    if (!box) return;
+    if (!force && box.querySelector('input[type="checkbox"]')) return;
+
+    var list = projects || state.projects || [];
+    if (!list.length) {
+      box.innerHTML = '<p class="admin-empty">No projects yet.</p>';
+      return;
+    }
+
+    box.innerHTML = list.map(function (project) {
+      return '<label><input type="checkbox" value="' + esc(project.id) + '">' +
+        '<span>' + esc(project.name) + ' <span class="project-key">' + esc(project.key) + '</span></span></label>';
+    }).join('');
+  }
+
+  $('projectsRefresh').addEventListener('click', function () {
+    loadProjects();
+  });
+
+  $('projectNew').addEventListener('click', function () {
+    $('projectFormCard').hidden = false;
+    $('projectFormCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('pp-name').focus();
+  });
+
+  $('projectCancel').addEventListener('click', function () {
+    $('projectForm').reset();
+    $('pp-status').value = 'active';
+    $('projectFormCard').hidden = true;
+  });
+
+  $('projectForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    var key = $('pp-key').value.trim().toUpperCase();
+    var name = $('pp-name').value.trim();
+
+    if (!/^[A-Z][A-Z0-9]{1,7}$/.test(key)) {
+      fail('Key needs 2 to 8 characters: a letter, then letters or digits.');
+      return;
+    }
+    if (!name) {
+      fail('Give the project a name.');
+      return;
+    }
+
+    var base = slugify(name) || key.toLowerCase();
+    var payload = {
+      key: key,
+      name: name,
+      slug: base,
+      summary: $('pp-summary').value.trim() || null,
+      status: $('pp-status').value,
+      due_date: $('pp-due').value || null,
+      owner_id: state.profile.id,
+      created_by: state.profile.id
+    };
+
+    var button = $('projectSave');
+    button.disabled = true;
+
+    var result = await db.from('projects').insert(payload).select('id').single();
+
+    if (result.error && result.error.code === '23505' && /slug/i.test(result.error.message || '')) {
+      payload.slug = base + '-' + Math.random().toString(36).slice(2, 6);
+      result = await db.from('projects').insert(payload).select('id').single();
+    }
+
+    button.disabled = false;
+
+    if (result.error) {
+      fail(result.error.message || 'Could not create the project.');
+      return;
+    }
+
+    toast('Project created.');
+    $('projectForm').reset();
+    $('pp-status').value = 'active';
+    $('projectFormCard').hidden = true;
+    loadProjects();
+  });
+
+  /* ---------------- project workspace ---------------- */
+  var STATUS_COLUMNS = [
+    ['backlog', 'Backlog'],
+    ['todo', 'To do'],
+    ['in_progress', 'In progress'],
+    ['review', 'Review'],
+    ['blocked', 'Blocked'],
+    ['done', 'Done']
+  ];
+
+  function openProject(id) {
+    state.projectId = id;
+    activateTab('project');
+  }
+
+  function myProjectRole() {
+    if (!state.project || !state.profile) return null;
+    if (isAdmin()) return 'manager';
+    if (state.project.owner_id === state.profile.id) return 'manager';
+    for (var i = 0; i < state.people.length; i += 1) {
+      if (state.people[i].user_id === state.profile.id) return state.people[i].project_role;
+    }
+    return null;
+  }
+
+  function canManageProject() {
+    return myProjectRole() === 'manager';
+  }
+
+  async function loadProjectScreen() {
+    if (!state.projectId) {
+      activateTab('projects');
+      return;
+    }
+
+    $('projectName').textContent = 'Loading…';
+    $('projectKey').textContent = '—';
+    $('projectSummary').textContent = '';
+    $('projectMeta').innerHTML = '';
+    $('moduleList').innerHTML = '<p class="admin-empty">Loading…</p>';
+    $('projectMembers').innerHTML = '<p class="admin-empty">Loading…</p>';
+    $('kanban').innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    var results = await Promise.all([
+      db.from('projects').select('*').eq('id', state.projectId).maybeSingle(),
+      db.from('modules').select('*').eq('project_id', state.projectId).order('position', { ascending: true }),
+      db.from('tasks').select('*').eq('project_id', state.projectId).order('position', { ascending: true }),
+      db.rpc('project_member_directory', { p_project: state.projectId })
+    ]);
+
+    if (results[0].error || !results[0].data) {
+      fail(results[0].error ? results[0].error.message : 'Project not found.');
+      activateTab('projects');
+      return;
+    }
+
+    state.project = results[0].data;
+    state.modules = results[1].data || [];
+    state.tasks = results[2].data || [];
+    state.people = results[3].error ? [] : (results[3].data || []);
+    updateBreadcrumb('project');
+
+    if (results[3].error) {
+      toast('Run supabase/migrations/0003_collab.sql to show project people.', true);
+    }
+
+    renderProjectHeader();
+    switchProjectSubTab(state.projectSubTab || 'board');
+  }
+
+  function renderProjectHeader() {
+    var project = state.project;
+    $('projectKey').textContent = project.key;
+    $('projectName').textContent = project.name;
+    $('projectSummary').textContent = project.summary || 'No summary yet.';
+
+    var ghBadge = $('projectGithubBadge');
+    if (ghBadge) {
+      if (project.github_repo) {
+        ghBadge.textContent = project.github_repo + ' ↗';
+        ghBadge.href = 'https://github.com/' + project.github_repo;
+        ghBadge.hidden = false;
+      } else {
+        ghBadge.hidden = true;
+      }
+    }
+
+    var done = state.tasks.filter(function (task) { return task.status === 'done'; }).length;
+    var total = state.tasks.length;
+    var percent = total ? Math.round(done * 100 / total) : 0;
+
+    $('projectProgressBar').style.width = percent + '%';
+    $('projectProgressText').innerHTML =
+      '<span>' + percent + '% · ' + done + '/' + total + ' tasks</span>' +
+      '<span>' + esc(project.due_date ? 'Due ' + project.due_date : 'No due date') + '</span>';
+
+    $('projectMeta').innerHTML = [
+      '<span class="badge ' + esc(project.status) + '">' + esc(PROJECT_STATUS[project.status] || project.status) + '</span>',
+      '<span><strong>Key</strong> ' + esc(project.key) + '</span>',
+      '<span><strong>Modules</strong> ' + state.modules.length + '</span>',
+      '<span><strong>People</strong> ' + state.people.length + '</span>',
+      project.start_date ? '<span><strong>Started</strong> ' + esc(project.start_date) + '</span>' : '',
+      project.due_date ? '<span><strong>Due</strong> ' + esc(project.due_date) + '</span>' : ''
+    ].join('');
+  }
+
+  function renderModules() {
+    var box = $('moduleList');
+    $('moduleNew').hidden = !canManageProject();
+
+    if (!state.modules.length) {
+      box.innerHTML = '<p class="admin-empty">No modules yet.' +
+        (canManageProject() ? ' Create one to group tasks.' : '') + '</p>';
+      return;
+    }
+
+    box.innerHTML = state.modules.map(function (module) {
+      var tasks = state.tasks.filter(function (task) { return task.module_id === module.id; });
+      var done = tasks.filter(function (task) { return task.status === 'done'; }).length;
+      var percent = tasks.length ? Math.round(done * 100 / tasks.length) : 0;
+
+      return '<div class="module-row">' +
+        '<div class="module-row-head">' +
+          '<strong>' + esc(module.name) + '</strong>' +
+          '<span class="badge ' + esc(module.status) + '">' + esc(PROJECT_STATUS[module.status] || module.status) + '</span>' +
+        '</div>' +
+        (module.description ? '<p>' + esc(module.description) + '</p>' : '') +
+        '<div class="progress-track"><span style="width:' + percent + '%"></span></div>' +
+        '<div class="module-foot">' +
+          '<span>' + done + '/' + tasks.length + ' tasks</span>' +
+          '<button type="button" class="admin-btn ghost" data-add-task="' + esc(module.id) + '">Add task</button>' +
+        '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderMembers() {
+    var box = $('projectMembers');
+    $('memberForm').hidden = !isAdmin();
+
+    if (!state.people.length) {
+      box.innerHTML = '<p class="admin-empty">Nobody assigned yet. The project owner still has access.</p>';
+      return;
+    }
+
+    box.innerHTML = state.people.map(function (person) {
+      return '<div class="member-row">' +
+        '<div><strong>' + esc(person.full_name || person.email || 'Member') + '</strong>' +
+        '<span>' + esc(person.email || '') + '</span></div>' +
+        '<span class="badge">' + esc(person.project_role) + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* ---------------- Phase B: Project subtabs & views ---------------- */
+  function switchProjectSubTab(subtab) {
+    state.projectSubTab = subtab || 'board';
+    Array.prototype.forEach.call(document.querySelectorAll('.project-tab-btn'), function (btn) {
+      var isAct = btn.getAttribute('data-subtab') === state.projectSubTab;
+      btn.classList.toggle('active', isAct);
+      btn.setAttribute('aria-selected', isAct ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.project-subpanel'), function (panel) {
+      panel.classList.toggle('active', panel.id === 'subpanel-' + state.projectSubTab);
+    });
+
+    if (state.projectSubTab === 'board') renderBoard();
+    else if (state.projectSubTab === 'modules') { renderModules(); renderMembers(); renderProjectClients(); }
+    else if (state.projectSubTab === 'tasks') renderProjectTasksTable();
+    else if (state.projectSubTab === 'updates') loadProjectUpdates();
+    else if (state.projectSubTab === 'activity') loadProjectActivity();
+    else if (state.projectSubTab === 'files') loadProjectFiles();
+    else if (state.projectSubTab === 'settings') loadProjectSettings();
+  }
+
+  /* ---------------- Collaborator & Avatar Helpers ---------------- */
+  var AVATAR_PALETTE = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#0ea5e9'];
+  function getInitials(name) {
+    if (!name) return '?';
+    var parts = String(name).trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  function getAvatarColor(name) {
+    if (!name) return AVATAR_PALETTE[0];
+    var hash = 0;
+    for (var i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
+    return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
+  }
+
+  function parseCollaborators(desc) {
+    if (!desc) return [];
+    var match = desc.match(/<!--\s*collab:\s*(\[[^\]]*\])\s*-->/);
+    if (!match) return [];
+    try {
+      var arr = JSON.parse(match[1]);
+      return Array.isArray(arr) ? arr : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function cleanDescription(desc) {
+    if (!desc) return '';
+    return desc.replace(/\s*<!--\s*collab:\s*\[[^\]]*\]\s*-->\s*$/, '').trim();
+  }
+
+  function packDescription(text, collabIds) {
+    var clean = String(text || '').replace(/\s*<!--\s*collab:\s*\[[^\]]*\]\s*-->\s*$/, '').trim();
+    if (!collabIds || !collabIds.length) return clean;
+    return clean + '\n\n<!-- collab: ' + JSON.stringify(collabIds) + ' -->';
+  }
+
+  function renderBoard() {
+    var modFilter = $('boardModuleFilter').value || '';
+    var assFilter = $('boardAssigneeFilter') ? $('boardAssigneeFilter').value : '';
+    var scope = state.boardScope || 'all';
+    var currentUserId = state.profile ? state.profile.id : null;
+
+    $('boardModuleFilter').innerHTML = '<option value="">All modules</option>' +
+      state.modules.map(function (module) {
+        return '<option value="' + esc(module.id) + '">' + esc(module.name) + '</option>';
+      }).join('');
+    $('boardModuleFilter').value = modFilter;
+
+    if ($('boardAssigneeFilter')) {
+      $('boardAssigneeFilter').innerHTML = '<option value="">All assignees</option>' +
+        '<option value="unassigned">Unassigned</option>' +
+        state.people.map(function (person) {
+          return '<option value="' + esc(person.user_id) + '">' + esc(person.full_name || person.email) + '</option>';
+        }).join('');
+      $('boardAssigneeFilter').value = assFilter;
+    }
+
+    var byId = {};
+    state.people.forEach(function (person) { byId[person.user_id] = person; });
+    var moduleMap = {};
+    state.modules.forEach(function (m) { moduleMap[m.id] = m.name; });
+
+    var tasks = state.tasks.filter(function (task) {
+      var modMatch = !modFilter || task.module_id === modFilter;
+      var assMatch = !assFilter || (assFilter === 'unassigned' ? !task.assignee_id : task.assignee_id === assFilter);
+
+      var isAssignedToMe = currentUserId && task.assignee_id === currentUserId;
+      var collabs = parseCollaborators(task.description);
+      var isSharedWithMe = currentUserId && collabs.indexOf(currentUserId) !== -1;
+      var isSharedTask = collabs.length > 0;
+
+      var scopeMatch = true;
+      if (scope === 'mine') {
+        scopeMatch = isAssignedToMe;
+      } else if (scope === 'shared') {
+        scopeMatch = isSharedWithMe || (isAssignedToMe && isSharedTask) || isSharedTask;
+      } else if (scope === 'unassigned') {
+        scopeMatch = !task.assignee_id;
+      }
+
+      return modMatch && assMatch && scopeMatch;
+    });
+
+    $('kanban').innerHTML = STATUS_COLUMNS.map(function (column) {
+      var items = tasks.filter(function (task) { return task.status === column[0]; });
+
+      var cards = items.length ? items.map(function (task) {
+        var person = byId[task.assignee_id];
+        var who = person ? (person.full_name || person.email) : 'Unassigned';
+        var initials = getInitials(who);
+        var avatarColor = getAvatarColor(who);
+        var modName = moduleMap[task.module_id] || '';
+        var prio = task.priority || 'medium';
+
+        var collabs = parseCollaborators(task.description);
+        var collabAvatars = collabs.slice(0, 3).map(function (cid) {
+          var cp = byId[cid];
+          if (!cp) return '';
+          var cName = cp.full_name || cp.email;
+          return '<span class="avatar-chip sm" title="Collaborator: ' + esc(cName) + '" style="background:' + getAvatarColor(cName) + '">' +
+            esc(getInitials(cName)) + '</span>';
+        }).join('');
+
+        return '<div class="kanban-card prio-' + esc(prio) + '" draggable="true" tabindex="0" data-task-id="' + esc(task.id) + '" aria-label="' + esc(task.title) + '">' +
+          '<div class="kanban-card-top">' +
+            '<span class="kanban-key mono">' + esc(task.key || '') + '</span>' +
+            (modName ? '<span class="kanban-mod-pill" title="' + esc(modName) + '">' + esc(modName) + '</span>' : '') +
+            '<span class="prio-tag ' + esc(prio) + '">' + esc(prio) + '</span>' +
+          '</div>' +
+          '<div class="kanban-card-title">' + esc(task.title) + '</div>' +
+          '<div class="kanban-card-bottom">' +
+            '<div class="kanban-avatars">' +
+              (task.assignee_id
+                ? '<span class="avatar-chip" title="Lead: ' + esc(who) + '" style="background:' + avatarColor + '">' + esc(initials) + '</span>'
+                : '<span class="avatar-chip" title="Unassigned" style="background:#475569;font-size:0.55rem;">—</span>') +
+              collabAvatars +
+              (collabs.length ? '<span class="shared-tag" title="Shared with ' + collabs.length + ' teammates">👥 ' + collabs.length + '</span>' : '') +
+            '</div>' +
+            '<div class="kanban-meta-right">' +
+              (task.due_date ? '<span class="kanban-due mono">📅 ' + esc(task.due_date) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '</div>';
+      }).join('') : '<p class="admin-empty" style="font-size:0.7rem">Empty</p>';
+
+      return '<div class="kanban-col" data-status="' + column[0] + '">' +
+        '<div class="kanban-col-head"><span>' + column[1] + '</span><b>' + items.length + '</b></div>' +
+        '<div class="kanban-cards">' + cards + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderProjectTasksTable() {
+    var container = $('projectTasksTable');
+    if (!container) return;
+    if (!state.tasks || !state.tasks.length) {
+      container.innerHTML = '<p class="admin-empty">No tasks in this project yet.</p>';
+      return;
+    }
+
+    var byId = {};
+    state.people.forEach(function (person) { byId[person.user_id] = person; });
+    var moduleMap = {};
+    state.modules.forEach(function (m) { moduleMap[m.id] = m.name; });
+
+    container.innerHTML = '<table class="admin-table"><thead><tr>' +
+      '<th>Key</th><th>Title</th><th>Module</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Due</th><th>Actions</th>' +
+      '</tr></thead><tbody>' +
+      state.tasks.map(function (task) {
+        var person = byId[task.assignee_id];
+        var who = person ? (person.full_name || person.email) : 'Unassigned';
+        var modName = moduleMap[task.module_id] || '—';
+        return '<tr>' +
+          '<td class="mono">' + esc(task.key || '—') + '</td>' +
+          '<td><strong>' + esc(task.title) + '</strong></td>' +
+          '<td>' + esc(modName) + '</td>' +
+          '<td>' + esc(who) + '</td>' +
+          '<td><span class="prio ' + esc(task.priority) + '"></span> ' + esc(task.priority) + '</td>' +
+          '<td><span class="badge ' + esc(task.status) + '">' + esc(task.status) + '</span></td>' +
+          '<td class="mono">' + esc(task.due_date || '—') + '</td>' +
+          '<td><button type="button" class="admin-btn ghost" data-open-task="' + esc(task.id) + '">Edit</button></td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  async function loadProjectActivity() {
+    var container = $('projectActivityList');
+    if (!container) return;
+    container.innerHTML = '<p class="admin-empty">Loading activity…</p>';
+
+    try {
+      var result = await db.from('activity')
+        .select('*, profiles(full_name, email)')
+        .eq('project_id', state.projectId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (result.error) throw result.error;
+      var rows = result.data || [];
+      if (!rows.length) {
+        container.innerHTML = '<p class="admin-empty">No activity recorded for this project yet.</p>';
+        return;
+      }
+
+      container.innerHTML = rows.map(function (ev) {
+        var actor = ev.profiles ? (ev.profiles.full_name || ev.profiles.email) : (ev.actor_id ? 'Team member' : 'GitHub');
+        var icon = '•';
+        if (ev.kind === 'task.created') icon = '+';
+        else if (ev.kind === 'task.status') icon = '⇄';
+        else if (ev.kind === 'github.commit') icon = '⚡';
+        else if (ev.kind && ev.kind.indexOf('github.pr') === 0) icon = '🔀';
+
+        var extra = '';
+        if (ev.kind === 'github.commit' && ev.meta && ev.meta.url) {
+          extra = ' <a href="' + esc(ev.meta.url) + '" target="_blank" rel="noopener" style="font-size:0.72rem;color:var(--accent);">View commit ↗</a>';
+        } else if (ev.meta && ev.meta.url) {
+          extra = ' <a href="' + esc(ev.meta.url) + '" target="_blank" rel="noopener" style="font-size:0.72rem;color:var(--accent);">View on GitHub ↗</a>';
+        }
+
+        return '<div class="activity-item' + (ev.kind && ev.kind.indexOf('github') === 0 ? ' github-commit' : '') + '">' +
+          '<div class="activity-icon">' + icon + '</div>' +
+          '<div class="activity-content">' +
+            '<div><span class="activity-actor">' + esc(actor) + '</span> <span class="activity-summary">' + esc(ev.summary) + extra + '</span></div>' +
+            '<div class="activity-time mono">' + esc(fmtDate(ev.created_at)) + '</div>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+    } catch (err) {
+      container.innerHTML = '<p class="admin-empty error">Could not load activity feed.</p>';
+    }
+  }
+
+  async function loadProjectFiles() {
+    var container = $('projectFilesList');
+    if (!container) return;
+    container.innerHTML = '<p class="admin-empty">Loading files…</p>';
+
+    try {
+      var result = await db.from('attachments')
+        .select('*, profiles(full_name, email)')
+        .eq('project_id', state.projectId)
+        .order('created_at', { ascending: false });
+
+      if (result.error) throw result.error;
+      var files = result.data || [];
+      if (!files.length) {
+        container.innerHTML = '<p class="admin-empty">No files attached to this project yet.</p>';
+        return;
+      }
+
+      var canManage = canManageProject();
+
+      container.innerHTML = '<table class="admin-table"><thead><tr>' +
+        '<th>File</th><th>Size</th><th>Uploaded by</th><th>Date</th><th>Client visible</th><th>Actions</th>' +
+        '</tr></thead><tbody>' +
+        files.map(function (f) {
+          var uploader = f.profiles ? (f.profiles.full_name || f.profiles.email) : '—';
+          var size = f.size_bytes ? Math.round(f.size_bytes / 1024) + ' KB' : '—';
+          return '<tr>' +
+            '<td><strong>' + esc(f.file_name) + '</strong></td>' +
+            '<td class="mono">' + esc(size) + '</td>' +
+            '<td>' + esc(uploader) + '</td>' +
+            '<td class="mono">' + esc(fmtDate(f.created_at)) + '</td>' +
+            '<td><span class="badge ' + (f.client_visible ? 'active' : 'draft') + '">' + (f.client_visible ? 'Yes' : 'No') + '</span></td>' +
+            '<td>' +
+              (canManage ? '<button type="button" class="admin-btn ghost sm" data-toggle-file-vis="' + esc(f.id) + '" data-vis="' + (f.client_visible ? 'true' : 'false') + '">' + (f.client_visible ? 'Hide from client' : 'Show to client') + '</button>' : '—') +
+            '</td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table>';
+    } catch (err) {
+      container.innerHTML = '<p class="admin-empty error">Could not load files.</p>';
+    }
+  }
+
+  /* ---------------- Phase D: Client Updates & Portal Linking ---------------- */
+  async function loadProjectUpdates() {
+    var container = $('projectUpdatesList');
+    if (!container) return;
+    container.innerHTML = '<p class="admin-empty">Loading updates…</p>';
+
+    try {
+      var res = await db.from('client_updates')
+        .select('*, profiles(full_name, email)')
+        .eq('project_id', state.projectId)
+        .order('created_at', { ascending: false });
+
+      if (res.error) throw res.error;
+      var updates = res.data || [];
+
+      if (!updates.length) {
+        container.innerHTML = '<p class="admin-empty">No updates posted yet. Use the form above to share milestone reports with the client.</p>';
+        return;
+      }
+
+      var canManage = canManageProject();
+
+      container.innerHTML = updates.map(function (u) {
+        var author = u.profiles ? (u.profiles.full_name || u.profiles.email) : 'Founders';
+        var isPub = u.published;
+        return '<div class="activity-item">' +
+          '<div class="activity-icon" style="background:' + (isPub ? 'var(--success-soft)' : 'var(--accent-soft)') + ';color:' + (isPub ? 'var(--success)' : 'var(--accent)') + '">📢</div>' +
+          '<div class="activity-content">' +
+            '<div class="activity-head">' +
+              '<strong>' + esc(u.title) + '</strong>' +
+              '<span class="badge ' + (isPub ? 'active' : 'draft') + '">' + (isPub ? 'Published to Client' : 'Internal Draft') + '</span>' +
+              '<span class="activity-time mono">' + esc(fmtDate(u.published_at || u.created_at)) + '</span>' +
+            '</div>' +
+            '<p class="activity-summary" style="margin-top:0.4rem;white-space:pre-wrap;">' + esc(u.body) + '</p>' +
+            '<div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.75rem;">' +
+              (canManage ? '<button type="button" class="admin-btn ghost sm" data-toggle-update="' + esc(u.id) + '" data-pub="' + (isPub ? 'true' : 'false') + '">' +
+                (isPub ? 'Unpublish' : 'Publish to Client') +
+              '</button>' : '') +
+              (canManage ? '<button type="button" class="admin-btn danger sm" data-delete-update="' + esc(u.id) + '">Delete</button>' : '') +
+              '<span style="font-size:0.68rem;color:var(--text-muted);margin-left:auto;">By ' + esc(author) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+    } catch (err) {
+      container.innerHTML = '<p class="admin-empty error">Could not load client updates.</p>';
+    }
+  }
+
+  async function renderProjectClients() {
+    var container = $('projectClientsList');
+    var form = $('clientLinkForm');
+    var select = $('client-select');
+    if (!container) return;
+
+    var canManage = canManageProject();
+    if (form) form.hidden = !canManage;
+
+    try {
+      var res = await db.from('project_clients')
+        .select('project_id, user_id, profiles(id, full_name, email, status)')
+        .eq('project_id', state.projectId);
+
+      if (res.error) throw res.error;
+      var clients = res.data || [];
+      state.projectClients = clients;
+
+      if (!clients.length) {
+        container.innerHTML = '<p class="admin-empty">No client accounts linked to this project yet.</p>';
+      } else {
+        container.innerHTML = clients.map(function (c) {
+          var prof = c.profiles || {};
+          var name = prof.full_name || prof.email || 'Client';
+          return '<div class="member-item">' +
+            '<div><strong>' + esc(name) + '</strong>' +
+            '<span>' + esc(prof.email || '') + '</span></div>' +
+            '<div style="display:flex;align-items:center;gap:0.5rem">' +
+              '<span class="badge active">Client</span>' +
+              (canManage ? '<button type="button" class="admin-btn ghost sm" data-unlink-client="' + esc(c.user_id) + '">Unlink</button>' : '') +
+            '</div>' +
+            '</div>';
+        }).join('');
+      }
+
+      if (select && canManage) {
+        if (!state.team || !state.team.length) {
+          try {
+            var teamRes = await api('/team');
+            state.team = teamRes.members || [];
+          } catch (_) {
+            state.team = [];
+          }
+        }
+
+        var linkedIds = clients.map(function (c) { return c.user_id; });
+        var clientCandidates = state.team.filter(function (m) {
+          return m.role === 'client' && m.status === 'active' && linkedIds.indexOf(m.id) === -1;
+        });
+
+        select.innerHTML = clientCandidates.length
+          ? clientCandidates.map(function (m) {
+              return '<option value="' + esc(m.id) + '">' + esc((m.full_name || m.email)) + '</option>';
+            }).join('')
+          : '<option value="">No available clients to link</option>';
+      }
+    } catch (err) {
+      container.innerHTML = '<p class="admin-empty error">Could not load clients.</p>';
+    }
+  }
+
+  function loadProjectSettings() {
+    var p = state.project;
+    if (!p) return;
+    $('ps-name').value = p.name || '';
+    $('ps-key').value = p.key || '';
+    $('ps-summary').value = p.summary || '';
+    $('ps-status').value = p.status || 'active';
+    $('ps-due').value = p.due_date || '';
+    if ($('ps-repo')) $('ps-repo').value = p.github_repo || '';
+  }
+
+  async function saveProjectSettings(event) {
+    event.preventDefault();
+    if (!canManageProject()) {
+      fail('Only project managers or admins can change project settings.');
+      return;
+    }
+    var btn = $('psSaveBtn');
+    btn.disabled = true;
+
+    var payload = {
+      name: $('ps-name').value.trim(),
+      summary: $('ps-summary').value.trim() || null,
+      status: $('ps-status').value,
+      due_date: $('ps-due').value || null,
+      github_repo: $('ps-repo') ? ($('ps-repo').value.trim() || null) : null
+    };
+
+    var result = await db.from('projects').update(payload).eq('id', state.projectId).select().single();
+    btn.disabled = false;
+
+    if (result.error) {
+      fail(result.error.message);
+      return;
+    }
+
+    state.project = result.data;
+    renderProjectHeader();
+    updateBreadcrumb('project');
+    toast('Project settings saved.');
+  }
+
+  /* ---------------- Phase B: Task Comments & History ---------------- */
+  async function loadTaskComments(taskId) {
+    var collabSec = $('taskCollabSection');
+    var commentsList = $('taskCommentsList');
+    var historyList = $('taskHistoryList');
+    if (!collabSec) return;
+
+    if (!taskId) {
+      collabSec.hidden = true;
+      return;
+    }
+    collabSec.hidden = false;
+    commentsList.innerHTML = '<p class="admin-empty">Loading comments…</p>';
+    historyList.innerHTML = '<p class="admin-empty">Loading history…</p>';
+
+    try {
+      var commRes = await db.from('task_comments')
+        .select('*, profiles(full_name, email)')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: true });
+
+      if (commRes.error) throw commRes.error;
+      var comments = commRes.data || [];
+      if (!comments.length) {
+        commentsList.innerHTML = '<p class="admin-empty">No comments yet. Start the discussion below.</p>';
+      } else {
+        commentsList.innerHTML = comments.map(function (c) {
+          var author = c.profiles ? (c.profiles.full_name || c.profiles.email) : 'Member';
+          return '<div class="task-comment-card">' +
+            '<div class="task-comment-head">' +
+              '<span class="task-comment-author">' + esc(author) + '</span>' +
+              '<span class="task-comment-time mono">' + esc(fmtDate(c.created_at)) + '</span>' +
+            '</div>' +
+            '<div class="task-comment-body">' + esc(c.body) + '</div>' +
+            '</div>';
+        }).join('');
+      }
+    } catch (err) {
+      commentsList.innerHTML = '<p class="admin-empty error">Could not load comments.</p>';
+    }
+
+    try {
+      var actRes = await db.from('activity')
+        .select('*, profiles(full_name, email)')
+        .eq('entity_id', taskId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (actRes.error) throw actRes.error;
+      var acts = actRes.data || [];
+      if (!acts.length) {
+        historyList.innerHTML = '<p class="admin-empty">No status changes recorded yet.</p>';
+      } else {
+        historyList.innerHTML = acts.map(function (a) {
+          var actor = a.profiles ? (a.profiles.full_name || a.profiles.email) : 'System';
+          return '<div class="task-history-item">' +
+            '<span><strong>' + esc(actor) + '</strong>: ' + esc(a.summary) + '</span>' +
+            '<span class="mono" style="margin-left:auto;font-size:0.65rem;color:var(--text-muted)">' + esc(fmtDate(a.created_at)) + '</span>' +
+            '</div>';
+        }).join('');
+      }
+    } catch (_) {
+      historyList.innerHTML = '<p class="admin-empty">Could not load history.</p>';
+    }
+  }
+
+  async function postTaskComment() {
+    var taskId = $('taskId').value;
+    if (!taskId) return;
+    var input = $('taskCommentInput');
+    var body = (input.value || '').trim();
+    if (!body) return;
+
+    var btn = $('taskCommentSubmit');
+    btn.disabled = true;
+
+    var result = await db.from('task_comments').insert({
+      task_id: taskId,
+      author_id: state.profile.id,
+      body: body
+    });
+    btn.disabled = false;
+
+    if (result.error) {
+      fail(result.error.message || 'Could not post comment.');
+      return;
+    }
+
+    input.value = '';
+    toast('Comment posted.');
+    loadTaskComments(taskId);
+  }
+
+  /* ---------------- Phase B: Keyboard Move Menu ---------------- */
+  function showKanbanMoveMenu(card, taskId) {
+    var existing = document.querySelector('.kanban-move-menu');
+    if (existing) existing.remove();
+
+    var task = state.tasks.find(function (t) { return t.id === taskId; });
+    if (!task) return;
+
+    var menu = document.createElement('div');
+    menu.className = 'kanban-move-menu';
+    var rect = card.getBoundingClientRect();
+    menu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    menu.style.left = Math.min(rect.left + window.scrollX, window.innerWidth - 180) + 'px';
+
+    menu.innerHTML = '<div style="font-size:0.68rem;font-weight:600;color:var(--text-muted);padding:0.25rem 0.5rem;text-transform:uppercase;letter-spacing:0.06em">Move to:</div>' +
+      STATUS_COLUMNS.map(function (col) {
+        var isCurrent = col[0] === task.status;
+        return '<div class="kanban-move-item" data-move-status="' + col[0] + '" style="' + (isCurrent ? 'opacity:0.4;pointer-events:none;' : '') + '">' +
+          '<span>' + col[1] + '</span>' +
+          (isCurrent ? '<small>(current)</small>' : '') +
+          '</div>';
+      }).join('');
+
+    document.body.appendChild(menu);
+
+    function onMenuClick(e) {
+      var item = e.target.closest('[data-move-status]');
+      if (!item) return;
+      var newStatus = item.getAttribute('data-move-status');
+      cleanup();
+      moveTaskStatus(taskId, newStatus);
+    }
+
+    function onDocClick(e) {
+      if (!menu.contains(e.target) && e.target !== card) cleanup();
+    }
+
+    function onKey(e) {
+      if (e.key === 'Escape') cleanup();
+    }
+
+    function cleanup() {
+      menu.removeEventListener('click', onMenuClick);
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+      if (menu.parentNode) menu.parentNode.removeChild(menu);
+    }
+
+    menu.addEventListener('click', onMenuClick);
+    setTimeout(function () {
+      document.addEventListener('click', onDocClick);
+      document.addEventListener('keydown', onKey);
+    }, 10);
+  }
+
+  async function moveTaskStatus(taskId, newStatus) {
+    var task = state.tasks.find(function (t) { return t.id === taskId; });
+    if (!task || task.status === newStatus) return;
+
+    var result = await db.from('tasks').update({ status: newStatus }).eq('id', taskId);
+    if (result.error) {
+      fail(result.error.message || 'Could not move task.');
+      return;
+    }
+    task.status = newStatus;
+    renderBoard();
+    renderProjectHeader();
+    toast('Task moved to ' + (STATUS_COLUMNS.find(function (c) { return c[0] === newStatus; }) || [newStatus, newStatus])[1] + '.');
+  }
+
+  function fillTaskSelectors() {
+    $('task-module').innerHTML = '<option value="">Project level</option>' +
+      state.modules.map(function (module) {
+        return '<option value="' + esc(module.id) + '">' + esc(module.name) + '</option>';
+      }).join('');
+
+    $('task-assignee').innerHTML = '<option value="">Unassigned</option>' +
+      state.people.map(function (person) {
+        return '<option value="' + esc(person.user_id) + '">' +
+          esc(person.full_name || person.email) + '</option>';
+      }).join('');
+  }
+
+  function openTask(task) {
+    fillTaskSelectors();
+
+    $('taskEditorCard').hidden = false;
+    $('taskId').value = task ? task.id : '';
+    $('taskEditorKey').textContent = task ? (task.key || 'Task') : 'New task';
+    $('task-title').value = task ? task.title : '';
+    $('task-desc').value = task && task.description ? cleanDescription(task.description) : '';
+    $('task-module').value = task && task.module_id ? task.module_id : '';
+    $('task-assignee').value = task && task.assignee_id ? task.assignee_id : '';
+    $('task-status').value = task ? task.status : 'todo';
+    $('task-priority').value = task ? task.priority : 'medium';
+    $('task-due').value = task && task.due_date ? task.due_date : '';
+    $('task-estimate').value = task && task.estimate_hours ? task.estimate_hours : '';
+    $('taskDelete').hidden = !(task && canManageProject());
+
+    if ($('taskHandoffBtn')) {
+      $('taskHandoffBtn').hidden = !task;
+    }
+
+    renderCollaboratorsPicker(task);
+
+    $('taskEditorCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('task-title').focus();
+    loadTaskComments(task ? task.id : null);
+  }
+
+  function renderCollaboratorsPicker(task) {
+    var container = $('taskCollaboratorsPicker');
+    if (!container) return;
+
+    var activeCollabs = task && task.description ? parseCollaborators(task.description) : [];
+    var members = state.people.filter(function (p) {
+      return p.project_role !== 'client';
+    });
+
+    if (!members.length) {
+      container.innerHTML = '<span class="admin-empty" style="font-size:0.75rem;padding:0.2rem">No teammates on this project yet.</span>';
+      return;
+    }
+
+    container.innerHTML = members.map(function (m) {
+      var name = m.full_name || m.email;
+      var isSelected = activeCollabs.indexOf(m.user_id) !== -1;
+      var color = getAvatarColor(name);
+      var initials = getInitials(name);
+      return '<label class="collab-chip ' + (isSelected ? 'selected' : '') + '">' +
+        '<input type="checkbox" value="' + esc(m.user_id) + '" ' + (isSelected ? 'checked' : '') + '>' +
+        '<span class="avatar-chip sm" style="background:' + color + ';margin:0">' + esc(initials) + '</span>' +
+        '<span>' + esc(name) + '</span>' +
+        '</label>';
+    }).join('');
+
+    container.querySelectorAll('.collab-chip').forEach(function (chip) {
+      chip.addEventListener('change', function () {
+        var input = chip.querySelector('input');
+        chip.classList.toggle('selected', input.checked);
+      });
+    });
+  }
+
+  function getSelectedCollaborators() {
+    var container = $('taskCollaboratorsPicker');
+    if (!container) return [];
+    var checked = container.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.prototype.map.call(checked, function (inp) { return inp.value; });
+  }
+
+  async function fillMemberCandidates() {
+    if (!state.team.length) {
+      try {
+        var data = await api('/team');
+        state.team = data.members || [];
+      } catch (error) {
+        state.team = [];
+      }
+    }
+
+    var existing = state.people.map(function (person) { return person.user_id; });
+    var options = state.team.filter(function (member) {
+      return member.status === 'active'
+        && member.role !== 'client'
+        && existing.indexOf(member.id) === -1;
+    });
+
+    $('member-select').innerHTML = options.length
+      ? options.map(function (member) {
+          return '<option value="' + esc(member.id) + '">' +
+            esc((member.full_name || member.email) + ' · ' + member.role) + '</option>';
+        }).join('')
+      : '<option value="">No one left to add</option>';
+  }
+
+  $('projectsGrid').addEventListener('click', function (event) {
+    var card = event.target.closest('[data-project-id]');
+    if (card) openProject(card.getAttribute('data-project-id'));
+  });
+
+  $('projectsGrid').addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
+    var card = event.target.closest('[data-project-id]');
+    if (!card) return;
+    event.preventDefault();
+    openProject(card.getAttribute('data-project-id'));
+  });
+
+  $('projectBack').addEventListener('click', function () {
+    state.projectId = null;
+    activateTab('projects');
+  });
+
+  $('moduleNew').addEventListener('click', function () {
+    $('moduleForm').reset();
+    $('mod-status').value = 'active';
+    $('moduleForm').hidden = false;
+    $('mod-name').focus();
+  });
+
+  $('moduleCancel').addEventListener('click', function () {
+    $('moduleForm').reset();
+    $('moduleForm').hidden = true;
+  });
+
+  $('moduleForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    var result = await db.from('modules').insert({
+      project_id: state.projectId,
+      name: $('mod-name').value.trim(),
+      description: $('mod-desc').value.trim() || null,
+      status: $('mod-status').value,
+      due_date: $('mod-due').value || null,
+      position: state.modules.length + 1
+    });
+
+    if (result.error) {
+      fail(result.error.message);
+      return;
+    }
+
+    toast('Module created.');
+    $('moduleForm').reset();
+    $('moduleForm').hidden = true;
+    loadProjectScreen();
+  });
+
+  $('moduleList').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-add-task]');
+    if (!button) return;
+    openTask(null);
+    $('task-module').value = button.getAttribute('data-add-task');
+  });
+
+  $('memberForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    var userId = $('member-select').value;
+    if (!userId) return;
+
+    var result = await db.from('project_members').insert({
+      project_id: state.projectId,
+      user_id: userId,
+      role: $('member-role').value,
+      added_by: state.profile.id
+    });
+
+    if (result.error) {
+      fail(result.error.message);
+      return;
+    }
+
+    toast('Added to project.');
+    loadProjectScreen();
+  });
+
+  $('memberForm').addEventListener('focusin', function () {
+    if (!$('member-select').options.length) fillMemberCandidates();
+  });
+
+  $('taskNew').addEventListener('click', function () { openTask(null); });
+  $('taskEditorClose').addEventListener('click', function () { $('taskEditorCard').hidden = true; });
+
+  $('taskForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    var id = $('taskId').value;
+    var estimate = $('task-estimate').value;
+    var selectedCollabs = getSelectedCollaborators();
+    var cleanDesc = $('task-desc').value.trim();
+    var finalDesc = packDescription(cleanDesc, selectedCollabs);
+
+    var payload = {
+      title: $('task-title').value.trim(),
+      description: finalDesc || null,
+      module_id: $('task-module').value || null,
+      assignee_id: $('task-assignee').value || null,
+      status: $('task-status').value,
+      priority: $('task-priority').value,
+      due_date: $('task-due').value || null,
+      estimate_hours: estimate ? Number(estimate) : null
+    };
+
+    var result;
+    if (id) {
+      result = await db.from('tasks').update(payload).eq('id', id);
+    } else {
+      payload.project_id = state.projectId;
+      payload.reporter_id = state.profile.id;
+      payload.position = (state.tasks.length + 1) * 1000;
+      result = await db.from('tasks').insert(payload);
+    }
+
+    if (result.error) {
+      fail(result.error.message);
+      return;
+    }
+
+    toast(id ? 'Task saved.' : 'Task created.');
+    $('taskEditorCard').hidden = true;
+    loadProjectScreen();
+  });
+
+  if ($('taskHandoffBtn')) {
+    $('taskHandoffBtn').addEventListener('click', async function () {
+      var taskId = $('taskId').value;
+      if (!taskId) return;
+      var task = state.tasks.find(function (t) { return t.id === taskId; });
+      if (!task) return;
+
+      var members = state.people.filter(function (p) { return p.project_role !== 'client'; });
+      if (!members.length) {
+        fail('No teammates available to hand off to.');
+        return;
+      }
+
+      var promptMsg = 'Select teammate to hand off this task to:\n' +
+        members.map(function (m, idx) { return (idx + 1) + '. ' + (m.full_name || m.email); }).join('\n') +
+        '\n\nEnter number (1-' + members.length + '):';
+      var choice = window.prompt(promptMsg);
+      if (!choice) return;
+      var num = parseInt(choice, 10);
+      if (isNaN(num) || num < 1 || num > members.length) {
+        fail('Invalid selection.');
+        return;
+      }
+
+      var targetMember = members[num - 1];
+      var targetName = targetMember.full_name || targetMember.email;
+      var prevAssignee = state.people.find(function (p) { return p.user_id === task.assignee_id; });
+      var prevName = prevAssignee ? (prevAssignee.full_name || prevAssignee.email) : 'Unassigned';
+
+      var res = await db.from('tasks').update({ assignee_id: targetMember.user_id }).eq('id', taskId);
+      if (res.error) {
+        fail(res.error.message);
+        return;
+      }
+
+      var handoffNote = '⇄ Task handed off from ' + prevName + ' to ' + targetName;
+      await db.from('task_comments').insert({
+        task_id: taskId,
+        author_id: state.profile.id,
+        body: handoffNote
+      });
+
+      await db.from('activity').insert({
+        project_id: state.projectId,
+        actor_id: state.profile.id,
+        entity_id: taskId,
+        kind: 'task.status',
+        summary: 'Handed off ' + (task.key || 'task') + ' to ' + targetName
+      });
+
+      task.assignee_id = targetMember.user_id;
+      $('task-assignee').value = targetMember.user_id;
+      toast('Task handed off to ' + targetName);
+      loadTaskComments(taskId);
+      renderBoard();
+      renderProjectTasksTable();
+    });
+  }
+
+  $('taskDelete').addEventListener('click', async function () {
+    var id = $('taskId').value;
+    if (!id || !window.confirm('Delete this task and its comments?')) return;
+
+    var result = await db.from('tasks').delete().eq('id', id);
+    if (result.error) {
+      fail(result.error.message);
+      return;
+    }
+
+    toast('Task deleted.');
+    $('taskEditorCard').hidden = true;
+    loadProjectScreen();
+  });
+
+  // Board Filter Events
+  var scopeContainer = $('boardScopeFilter');
+  if (scopeContainer) {
+    scopeContainer.addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-scope]');
+      if (!btn) return;
+      var scope = btn.getAttribute('data-scope');
+      state.boardScope = scope;
+      Array.prototype.forEach.call(scopeContainer.querySelectorAll('[data-scope]'), function (b) {
+        b.classList.toggle('active', b === btn);
+      });
+      renderBoard();
+    });
+  }
+
+  $('boardModuleFilter').addEventListener('change', renderBoard);
+  if ($('boardAssigneeFilter')) {
+    $('boardAssigneeFilter').addEventListener('change', renderBoard);
+  }
+
+  $('kanban').addEventListener('click', function (event) {
+    var card = event.target.closest('[data-task-id]');
+    if (!card) return;
+    var id = card.getAttribute('data-task-id');
+    var task = state.tasks.find(function (item) { return item.id === id; });
+    if (task) openTask(task);
+  });
+
+  $('kanban').addEventListener('dragstart', function (event) {
+    var card = event.target.closest('[data-task-id]');
+    if (!card) return;
+    event.dataTransfer.setData('text/plain', card.getAttribute('data-task-id'));
+    event.dataTransfer.effectAllowed = 'move';
+    card.classList.add('dragging');
+  });
+
+  $('kanban').addEventListener('dragend', function (event) {
+    var card = event.target.closest('[data-task-id]');
+    if (card) card.classList.remove('dragging');
+  });
+
+  $('kanban').addEventListener('dragover', function (event) {
+    var column = event.target.closest('.kanban-col');
+    if (!column) return;
+    event.preventDefault();
+    column.classList.add('drop');
+  });
+
+  $('kanban').addEventListener('dragleave', function (event) {
+    var column = event.target.closest('.kanban-col');
+    if (column && !column.contains(event.relatedTarget)) column.classList.remove('drop');
+  });
+
+  $('kanban').addEventListener('drop', async function (event) {
+    var column = event.target.closest('.kanban-col');
+    if (!column) return;
+
+    event.preventDefault();
+    column.classList.remove('drop');
+
+    var id = event.dataTransfer.getData('text/plain');
+    var status = column.getAttribute('data-status');
+    var task = state.tasks.find(function (item) { return item.id === id; });
+
+    if (!task || task.status === status) return;
+
+    var result = await db.from('tasks').update({ status: status }).eq('id', id);
+    if (result.error) {
+      fail(result.error.message);
+      return;
+    }
+
+    task.status = status;
+    renderBoard();
+    renderProjectHeader();
+  });
+
+  /* ---------------- Phase B: Event bindings ---------------- */
+  if ($('projectSubTabs')) {
+    $('projectSubTabs').addEventListener('click', function (event) {
+      var btn = event.target.closest('.project-tab-btn');
+      if (btn) switchProjectSubTab(btn.getAttribute('data-subtab'));
+    });
+  }
+
+  if ($('boardAssigneeFilter')) {
+    $('boardAssigneeFilter').addEventListener('change', renderBoard);
+  }
+
+  $('kanban').addEventListener('keydown', function (event) {
+    var card = event.target.closest('.kanban-card');
+    if (!card) return;
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar' || event.key === 'm') {
+      event.preventDefault();
+      event.stopPropagation();
+      var id = card.getAttribute('data-task-id');
+      showKanbanMoveMenu(card, id);
+    }
+  });
+
+  if ($('taskCommentSubmit')) {
+    $('taskCommentSubmit').addEventListener('click', postTaskComment);
+  }
+
+  if ($('taskCommentInput')) {
+    $('taskCommentInput').addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey || !event.shiftKey)) {
+        event.preventDefault();
+        postTaskComment();
+      }
+    });
+  }
+
+  if ($('refreshActivity')) {
+    $('refreshActivity').addEventListener('click', loadProjectActivity);
+  }
+
+  if ($('projectSettingsForm')) {
+    $('projectSettingsForm').addEventListener('submit', saveProjectSettings);
+  }
+
+  if ($('projectTasksTable')) {
+    $('projectTasksTable').addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-open-task]');
+      if (btn) {
+        var id = btn.getAttribute('data-open-task');
+        var task = state.tasks.find(function (t) { return t.id === id; });
+        if (task) openTask(task);
+      }
+    });
+  }
+
+  if ($('tasksListNew')) {
+    $('tasksListNew').addEventListener('click', function () { openTask(null); });
+  }
+
+  /* ---------------- Phase D: Client Updates & Portal event bindings ---------------- */
+  if ($('newClientUpdateBtn')) {
+    $('newClientUpdateBtn').addEventListener('click', function () {
+      var form = $('clientUpdateForm');
+      form.hidden = !form.hidden;
+      if (!form.hidden) $('cu-title').focus();
+    });
+  }
+
+  if ($('cuCancelBtn')) {
+    $('cuCancelBtn').addEventListener('click', function () {
+      $('clientUpdateForm').reset();
+      $('clientUpdateForm').hidden = true;
+    });
+  }
+
+  if ($('clientUpdateForm')) {
+    $('clientUpdateForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var btn = $('cuSubmitBtn');
+      btn.disabled = true;
+      var title = $('cu-title').value.trim();
+      var body = $('cu-body').value.trim();
+      var published = $('cu-published').checked;
+
+      var result = await db.from('client_updates').insert({
+        project_id: state.projectId,
+        author_id: state.profile.id,
+        title: title,
+        body: body,
+        published: published,
+        published_at: published ? new Date().toISOString() : null
+      });
+
+      btn.disabled = false;
+      if (result.error) {
+        fail(result.error.message);
+        return;
+      }
+
+      toast(published ? 'Update posted and published to client portal.' : 'Update saved as internal draft.');
+      $('clientUpdateForm').reset();
+      $('clientUpdateForm').hidden = true;
+      loadProjectUpdates();
+    });
+  }
+
+  if ($('projectUpdatesList')) {
+    $('projectUpdatesList').addEventListener('click', async function (event) {
+      var toggleBtn = event.target.closest('[data-toggle-update]');
+      if (toggleBtn) {
+        var id = toggleBtn.getAttribute('data-toggle-update');
+        var wasPub = toggleBtn.getAttribute('data-pub') === 'true';
+        var nowPub = !wasPub;
+        var res = await db.from('client_updates').update({
+          published: nowPub,
+          published_at: nowPub ? new Date().toISOString() : null
+        }).eq('id', id);
+
+        if (res.error) {
+          fail('Could not change publication status.');
+          return;
+        }
+        toast(nowPub ? 'Published to client portal.' : 'Unpublished from client portal.');
+        loadProjectUpdates();
+        return;
+      }
+
+      var delBtn = event.target.closest('[data-delete-update]');
+      if (delBtn) {
+        var delId = delBtn.getAttribute('data-delete-update');
+        if (!window.confirm('Delete this client update?')) return;
+        var delRes = await db.from('client_updates').delete().eq('id', delId);
+        if (delRes.error) {
+          fail('Could not delete update.');
+          return;
+        }
+        toast('Update deleted.');
+        loadProjectUpdates();
+      }
+    });
+  }
+
+  if ($('clientLinkForm')) {
+    $('clientLinkForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var userId = $('client-select').value;
+      if (!userId) return;
+
+      var res = await db.from('project_clients').insert({
+        project_id: state.projectId,
+        user_id: userId
+      });
+
+      if (res.error) {
+        fail(res.error.message || 'Could not link client.');
+        return;
+      }
+
+      toast('Client linked to project.');
+      renderProjectClients();
+    });
+  }
+
+  if ($('projectClientsList')) {
+    $('projectClientsList').addEventListener('click', async function (event) {
+      var unlinkBtn = event.target.closest('[data-unlink-client]');
+      if (!unlinkBtn) return;
+      var userId = unlinkBtn.getAttribute('data-unlink-client');
+      if (!window.confirm('Unlink this client from this project?')) return;
+
+      var res = await db.from('project_clients')
+        .delete()
+        .eq('project_id', state.projectId)
+        .eq('user_id', userId);
+
+      if (res.error) {
+        fail('Could not unlink client.');
+        return;
+      }
+
+      toast('Client unlinked.');
+      renderProjectClients();
+    });
+  }
+
+  if ($('projectFilesList')) {
+    $('projectFilesList').addEventListener('click', async function (event) {
+      var btn = event.target.closest('[data-toggle-file-vis]');
+      if (!btn) return;
+      var fileId = btn.getAttribute('data-toggle-file-vis');
+      var wasVis = btn.getAttribute('data-vis') === 'true';
+      var nowVis = !wasVis;
+
+      var res = await db.from('attachments').update({
+        client_visible: nowVis
+      }).eq('id', fileId);
+
+      if (res.error) {
+        fail('Could not update file visibility.');
+        return;
+      }
+
+      toast(nowVis ? 'File is now visible in client portal.' : 'File hidden from client portal.');
+      loadProjectFiles();
+    });
+  }
+
+  if ($('btnUploadProjectFile') && $('projectFileInput')) {
+    $('btnUploadProjectFile').addEventListener('click', function () {
+      $('projectFileInput').click();
+    });
+
+    $('projectFileInput').addEventListener('change', async function () {
+      var file = this.files && this.files[0];
+      if (!file || !state.projectId) return;
+
+      var btn = $('btnUploadProjectFile');
+      btn.disabled = true;
+      btn.textContent = 'Uploading…';
+
+      var ext = file.name.split('.').pop();
+      var safeName = slugify(file.name.replace(/\.[^/.]+$/, '')) + '.' + ext;
+      var path = 'projects/' + state.projectId + '/' + Date.now() + '-' + safeName;
+
+      try {
+        var uploadRes = await db.storage.from('attachments').upload(path, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+        var storagePath = (uploadRes.data && uploadRes.data.path) || path;
+
+        var attachRes = await db.from('attachments').insert({
+          project_id: state.projectId,
+          uploaded_by: state.profile.id,
+          file_name: file.name,
+          storage_path: storagePath,
+          size_bytes: file.size,
+          mime_type: file.type || null,
+          client_visible: false
+        });
+
+        if (attachRes.error) throw attachRes.error;
+
+        toast('File uploaded to project.');
+        loadProjectFiles();
+      } catch (err) {
+        fail('File upload failed: ' + (err.message || 'Check storage bucket configuration.'));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Upload file';
+        $('projectFileInput').value = '';
+      }
+    });
+  }
+
+  /* ---------------- team ---------------- */
+  function randomPassword() {
+    var alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%*';
+    var bytes = new Uint32Array(20);
+    (window.crypto || window.msCrypto).getRandomValues(bytes);
+    var out = '';
+    for (var i = 0; i < bytes.length; i += 1) {
+      out += alphabet.charAt(bytes[i] % alphabet.length);
+    }
+    return out;
+  }
+
+  function syncTeamMode() {
+    var invite = $('tm-mode').value === 'invite';
+    var client = $('tm-role').value === 'client';
+
+    if (client) {
+      $('tm-mode').value = 'password';
+      invite = false;
+    }
+
+    var inviteOption = $('tm-mode').querySelector('option[value="invite"]');
+    if (inviteOption) inviteOption.disabled = client;
+
+    $('tm-password-field').hidden = invite;
+  }
+
+  async function loadTeam() {
+    var wrap = $('teamTable');
+    wrap.innerHTML = '<p class="admin-empty">Loading…</p>';
+
+    var data;
+    try {
+      data = await api('/team');
+    } catch (error) {
+      try {
+        var profRes = await db.from('profiles')
+          .select('id,email,full_name,role,status,github_username,created_at')
+          .order('created_at', { ascending: true });
+        if (profRes.data && profRes.data.length) {
+          data = { members: profRes.data };
+        } else {
+          throw error;
+        }
+      } catch (_) {
+        wrap.innerHTML = '<div class="invite-result"><strong>Could not load accounts</strong>' +
+          '<p class="admin-empty" style="text-align:left;margin:0">' + esc(error.message) + '</p>' +
+          (error.status === 503 ? '<p class="admin-empty" style="text-align:left;margin:0">Set <code>SUPABASE_SERVICE_KEY</code> in Vercel, then redeploy.</p>' : '') +
+          '</div>';
+        return;
+      }
+    }
+
+    var members = data.members || [];
+    state.team = members;
+
+    if (!members.length) {
+      wrap.innerHTML = '<p class="admin-empty">No accounts yet.</p>';
+      return;
+    }
+
+    wrap.innerHTML = '<table class="admin-table"><thead><tr>' +
+      '<th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th></th>' +
+      '</tr></thead><tbody>' +
+      members.map(function (member) {
+        var self = member.id === state.profile.id;
+        var options = ['owner', 'admin', 'manager', 'member', 'client'].map(function (role) {
+          var disabled = (role === 'owner' && state.role !== 'owner') ? ' disabled' : '';
+          return '<option value="' + role + '"' + (member.role === role ? ' selected' : '') + disabled + '>' +
+            ROLE_LABELS[role] + '</option>';
+        }).join('');
+
+        var next = member.status === 'suspended' ? 'active' : 'suspended';
+        var action = member.status === 'suspended' ? 'Restore' : 'Suspend';
+
+        return '<tr>' +
+          '<td><strong>' + esc(member.full_name || '—') + '</strong></td>' +
+          '<td>' + esc(member.email) + '</td>' +
+          '<td><select class="admin-select" data-role-for="' + esc(member.id) + '"' +
+            (self ? ' disabled title="You cannot change your own role"' : '') + '>' + options + '</select></td>' +
+          '<td><span class="badge ' + esc(member.status) + '">' + esc(member.status) + '</span></td>' +
+          '<td class="mono">' + esc(fmtDate(member.created_at)) + '</td>' +
+          '<td class="mono">' +
+            (self ? '' :
+              '<button type="button" class="admin-btn ghost" data-status-for="' + esc(member.id) + '" data-next="' + next + '">' + action + '</button> ' +
+              '<button type="button" class="admin-btn ghost" data-delete-for="' + esc(member.id) + '">Delete</button>') +
+          '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
+  $('teamNew').addEventListener('click', async function () {
+    $('teamForm').reset();
+    $('tm-role').value = 'member';
+    $('tm-mode').value = 'password';
+    $('teamResult').innerHTML = '';
+    $('teamFormCard').hidden = false;
+    syncTeamMode();
+
+    if (!state.projects.length) {
+      var result = await db.from('projects').select('id,key,name').order('name');
+      if (!result.error) state.projects = result.data || [];
+    }
+    fillProjectOptions(state.projects, true);
+
+    $('tm-name').focus();
+  });
+
+  $('teamCancel').addEventListener('click', function () {
+    $('teamForm').reset();
+    $('teamResult').innerHTML = '';
+    $('teamFormCard').hidden = true;
+  });
+
+  $('tm-mode').addEventListener('change', syncTeamMode);
+  $('tm-role').addEventListener('change', syncTeamMode);
+
+  $('tm-generate').addEventListener('click', function () {
+    $('tm-password').value = randomPassword();
+    $('tm-password').focus();
+  });
+
+  $('teamForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    var role = $('tm-role').value;
+    var invite = $('tm-mode').value === 'invite' && role !== 'client';
+    var password = invite ? '' : $('tm-password').value;
+
+    if (!invite && password.length < 10) {
+      fail('Temporary passwords need at least 10 characters.');
+      return;
+    }
+
+    var projectIds = Array.prototype.map.call(
+      $('tm-projects').querySelectorAll('input[type="checkbox"]:checked'),
+      function (input) { return input.value; }
+    );
+
+    var button = $('teamSave');
+    button.disabled = true;
+
+    try {
+      var data = await api('/team/invite', {
+        method: 'POST',
+        body: {
+          full_name: $('tm-name').value.trim(),
+          email: $('tm-email').value.trim(),
+          role: role,
+          password: password,
+          project_ids: projectIds
+        }
+      });
+
+      $('teamResult').innerHTML = '<div class="invite-result">' +
+        '<strong>Account created — ' + esc(data.email) + ' (' + esc(ROLE_LABELS[data.role] || data.role) + ')</strong>' +
+        (data.password
+          ? '<p class="admin-empty" style="text-align:left;margin:0">Share this password once. It is never shown again.</p>' +
+            '<code>' + esc(data.password) + '</code>'
+          : '<p class="admin-empty" style="text-align:left;margin:0">Supabase sent an invite email. The account stays “invited” until they set a password.</p>') +
+        '</div>';
+
+      $('teamForm').reset();
+      $('tm-role').value = 'member';
+      $('tm-mode').value = 'password';
+      syncTeamMode();
+      toast('Account created.');
+      loadTeam();
+      loadProjects();
+    } catch (error) {
+      var emailVal = $('tm-email').value.trim();
+      var nameVal = $('tm-name').value.trim();
+      var createdFallback = false;
+
+      if (password && password.length >= 8) {
+        try {
+          var signUpRes = await db.auth.signUp({
+            email: emailVal,
+            password: password,
+            options: { data: { full_name: nameVal } }
+          });
+          if (signUpRes.data && signUpRes.data.user) {
+            var newUid = signUpRes.data.user.id;
+            await db.from('profiles').upsert({
+              id: newUid,
+              email: emailVal,
+              full_name: nameVal,
+              role: role,
+              status: 'active'
+            });
+            if (projectIds && projectIds.length) {
+              var pInserts = projectIds.map(function (pid) {
+                return { project_id: pid, user_id: newUid, role: role === 'client' ? 'client' : 'contributor' };
+              });
+              await db.from('project_members').insert(pInserts);
+            }
+            createdFallback = true;
+            $('teamResult').innerHTML = '<div class="invite-result">' +
+              '<strong>Account registered — ' + esc(emailVal) + ' (' + esc(ROLE_LABELS[role] || role) + ')</strong>' +
+              '<p class="admin-empty" style="text-align:left;margin:0">Credentials saved. Share this temporary password:</p>' +
+              '<code>' + esc(password) + '</code>' +
+              '</div>';
+            $('teamForm').reset();
+            $('tm-role').value = 'member';
+            $('tm-mode').value = 'password';
+            syncTeamMode();
+            toast('Account created.');
+            loadTeam();
+            loadProjects();
+          }
+        } catch (_) {
+          createdFallback = false;
+        }
+      }
+
+      if (!createdFallback) {
+        $('teamResult').innerHTML = '<div class="invite-result" style="border-left:3px solid var(--amber, #f59e0b);">' +
+          '<strong>Platform API: ' + esc(error.message) + '</strong>' +
+          '<p class="admin-empty" style="text-align:left;margin:0.5rem 0;">To create this account directly via Supabase Auth:</p>' +
+          '<ol style="font-size:0.8rem;color:var(--text-muted);margin:0;padding-left:1.2rem;line-height:1.6;">' +
+            '<li>Open <a href="https://supabase.com/dashboard/project/jolcqqwvzrvqydzxpwij/auth/users" target="_blank" rel="noopener" style="color:var(--accent,#06b6d4);">Supabase Auth Users ↗</a></li>' +
+            '<li>Click <strong>Add user &rarr; Create user</strong> (Email: <code>' + esc(emailVal) + '</code>, Password: <code>' + esc(password || '••••••••') + '</code>, Auto Confirm: ON).</li>' +
+            '<li>Refresh this page to assign project roles.</li>' +
+          '</ol>' +
+          '</div>';
+        fail(error.message);
+      }
+    }
+
+    button.disabled = false;
+  });
+
+  $('teamTable').addEventListener('change', async function (event) {
+    var select = event.target.closest('[data-role-for]');
+    if (!select) return;
+
+    var id = select.getAttribute('data-role-for');
+    select.disabled = true;
+
+    try {
+      await api('/team/' + id, { method: 'PATCH', body: { role: select.value } });
+      toast('Role updated.');
+    } catch (error) {
+      var up = await db.from('profiles').update({ role: select.value }).eq('id', id);
+      if (up.error) fail(up.error.message || error.message);
+      else toast('Role updated.');
+    }
+
+    loadTeam();
+  });
+
+  $('teamTable').addEventListener('click', async function (event) {
+    var statusButton = event.target.closest('[data-status-for]');
+    var deleteButton = event.target.closest('[data-delete-for]');
+
+    if (statusButton) {
+      statusButton.disabled = true;
+      try {
+        await api('/team/' + statusButton.getAttribute('data-status-for'), {
+          method: 'PATCH',
+          body: { status: statusButton.getAttribute('data-next') }
+        });
+        toast('Account updated.');
+      } catch (error) {
+        var up = await db.from('profiles').update({ status: statusButton.getAttribute('data-next') }).eq('id', statusButton.getAttribute('data-status-for'));
+        if (up.error) fail(up.error.message || error.message);
+        else toast('Account updated.');
+      }
+      loadTeam();
+      return;
+    }
+
+    if (deleteButton) {
+      var id = deleteButton.getAttribute('data-delete-for');
+      if (!window.confirm('Delete this account permanently? Their auth user is removed too.')) return;
+
+      deleteButton.disabled = true;
+      try {
+        await api('/team/' + id, { method: 'DELETE' });
+        toast('Account deleted.');
+      } catch (error) {
+        fail(error.message);
+      }
+      loadTeam();
+    }
+  });
+
+  /* ---------------- settings ---------------- */
+  var SEO_PAGES = [
+    ['home', 'Homepage', '/'],
+    ['about', 'About', '/about/'],
+    ['services', 'Services', '/services/'],
+    ['contact', 'Contact', '/contact/']
+  ];
+
+  var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+
+  var COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six'];
+
+  function rgbaFromHex(hex, alpha) {
+    var match = /^#([0-9a-f]{6})$/i.exec(hex);
+    if (!match) return 'transparent';
+    var value = parseInt(match[1], 16);
+    return 'rgba(' + ((value >> 16) & 255) + ', ' + ((value >> 8) & 255) + ', ' + (value & 255) + ', ' + alpha + ')';
+  }
+
+  function paintAccent(hex) {
+    var box = $('accentPreview');
+    if (!box) return;
+
+    var colour = /^#[0-9a-f]{6}$/i.test(hex) ? hex : SETTINGS_DEFAULTS.accent_color;
+    box.style.setProperty('--accent', colour);
+    box.style.setProperty('--accent-hover', 'color-mix(in srgb, ' + colour + ' 78%, white)');
+    box.style.setProperty('--accent-soft', rgbaFromHex(colour, 0.08));
+    box.style.setProperty('--border-accent', rgbaFromHex(colour, 0.25));
+  }
+
+  function renderSectionSwitches() {
+    $('sectionToggles').innerHTML = Object.keys(SECTION_LABELS).map(function (key) {
+      var meta = SECTION_LABELS[key];
+      var on = (state.settings[key] || 'on') !== 'off';
+
+      return '<div class="switch-row">' +
+        '<div class="switch-copy">' +
+          '<label for="set-' + esc(key) + '">' + esc(meta.label) + '</label>' +
+          '<p>' + esc(meta.note) + '</p>' +
+        '</div>' +
+        '<input class="switch" type="checkbox" id="set-' + esc(key) + '" data-setting="' + esc(key) + '"' + (on ? ' checked' : '') + '>' +
+      '</div>';
+    }).join('');
+  }
+
+  function seoValue(key) {
+    var value = state.settings[key];
+    return value == null || value === '' ? (SETTINGS_DEFAULTS[key] || '') : value;
+  }
+
+  function renderSeoFields() {
+    $('seoFields').innerHTML = SEO_PAGES.map(function (page) {
+      var key = page[0];
+
+      return '<section class="seo-item" data-seo-page="' + esc(key) + '">' +
+        '<div class="seo-item-head">' +
+          '<h3>' + esc(page[1]) + '</h3>' +
+          '<span class="mono">' + esc(page[2]) + '</span>' +
+        '</div>' +
+        '<div class="admin-field">' +
+          '<label for="seo-title-' + esc(key) + '">Page title</label>' +
+          '<input class="admin-input" id="seo-title-' + esc(key) + '" data-seo="seo_title_' + esc(key) +
+            '" type="text" maxlength="90" value="' + esc(seoValue('seo_title_' + key)) + '">' +
+          '<span class="counter" data-counter="seo-title-' + esc(key) + '"></span>' +
+        '</div>' +
+        '<div class="admin-field">' +
+          '<label for="seo-desc-' + esc(key) + '">Description</label>' +
+          '<textarea class="admin-textarea" id="seo-desc-' + esc(key) + '" data-seo="seo_description_' + esc(key) +
+            '" rows="2" maxlength="240">' + esc(seoValue('seo_description_' + key)) + '</textarea>' +
+          '<span class="counter" data-counter="seo-desc-' + esc(key) + '"></span>' +
+        '</div>' +
+        '<div class="seo-snippet">' +
+          '<p class="seo-snippet-title" data-snippet-title></p>' +
+          '<p class="seo-snippet-url">theflowlabs.online' + esc(page[2]) + '</p>' +
+          '<p class="seo-snippet-desc" data-snippet-desc></p>' +
+        '</div>' +
+      '</section>';
+    }).join('');
+
+    updateSeoUi();
+  }
+
+  function updateSeoUi() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-seo]'), function (input) {
+      var limit = input.getAttribute('data-seo').indexOf('seo_title_') === 0 ? 60 : 155;
+      var length = input.value.trim().length;
+      var counter = document.querySelector('[data-counter="' + input.id + '"]');
+
+      if (counter) {
+        counter.textContent = length + ' / ' + limit;
+        counter.className = 'counter' + (length > limit ? ' over' : (length > limit * 0.9 ? ' near' : ''));
+      }
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-seo-page]'), function (item) {
+      var page = item.getAttribute('data-seo-page');
+      var titleInput = document.getElementById('seo-title-' + page);
+      var descInput = document.getElementById('seo-desc-' + page);
+      var titleEl = item.querySelector('[data-snippet-title]');
+      var descEl = item.querySelector('[data-snippet-desc]');
+
+      if (titleEl) {
+        titleEl.textContent = (titleInput && titleInput.value.trim()) ||
+          SETTINGS_DEFAULTS['seo_title_' + page] || '';
+      }
+      if (descEl) {
+        descEl.textContent = (descInput && descInput.value.trim()) ||
+          SETTINGS_DEFAULTS['seo_description_' + page] || '';
+      }
+    });
+  }
+
+  function slotNote() {
+    var month = String($('slotMonth').value || '');
+    var total = parseInt($('slotTotal').value, 10);
+    var taken = parseInt($('slotTaken').value, 10);
+
+    var match = /^(\d{4})-(\d{2})$/.exec(month);
+    if (!match) return 'Pick a month to describe availability.';
+
+    var index = parseInt(match[2], 10) - 1;
+    if (index < 0 || index > 11) return 'Pick a valid month.';
+
+    var name = MONTH_NAMES[index];
+    var next = MONTH_NAMES[(index + 1) % 12];
+
+    if (isNaN(total) || total <= 0 || isNaN(taken) || taken < 0) {
+      return 'Set how many seats the month offers and how many are taken.';
+    }
+
+    var left = Math.max(0, total - taken);
+
+    if (left <= 0) return name + ' is full. The next opening is ' + next + '.';
+    if (left === 1) return 'One ' + name + ' seat is left. After that, the next opening is ' + next + '.';
+
+    var word = COUNT_WORDS[left] ? COUNT_WORDS[left].charAt(0).toUpperCase() + COUNT_WORDS[left].slice(1) : String(left);
+    return word + ' ' + name + ' seats are still open. After those, the next opening is ' + next + '.';
+  }
+
+  function updateSlotPreview() {
+    $('slotPreview').innerHTML = '<span>Public copy:</span> ' + esc(slotNote());
+  }
+
+  function collectSettings() {
+    var values = {};
+
+    values.accent_color = String($('accentHex').value || '').trim().toUpperCase();
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-setting]'), function (input) {
+      var key = input.getAttribute('data-setting');
+      values[key] = input.type === 'checkbox'
+        ? (input.checked ? 'on' : 'off')
+        : String(input.value || '').trim();
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-seo]'), function (input) {
+      values[input.getAttribute('data-seo')] = input.value.trim();
+    });
+
+    return values;
+  }
+
+  function updateSettingsState() {
+    var current = collectSettings();
+    var changed = 0;
+
+    Object.keys(current).forEach(function (key) {
+      if (current[key] !== (state.settingsSnapshot[key] || '')) changed += 1;
+    });
+
+    state.settingsDirty = changed > 0;
+
+    $('settingsState').textContent = changed
+      ? changed + (changed === 1 ? ' unsaved change' : ' unsaved changes')
+      : 'No unsaved changes';
+    $('settingsState').classList.toggle('dirty', changed > 0);
+
+    $('settingsSave').disabled = !changed;
+  }
+
+  async function loadSettings() {
+    var result = await db.from('site_settings').select('*');
+    var stored = {};
+
+    if (result.error) {
+      fail('Could not load settings. Check that you are still signed in.');
+    } else {
+      (result.data || []).forEach(function (row) { stored[row.key] = row.value; });
+    }
+
+    state.settings = Object.assign({}, SETTINGS_DEFAULTS, stored);
+
+    var accent = /^#[0-9a-f]{6}$/i.test(state.settings.accent_color || '')
+      ? state.settings.accent_color
+      : SETTINGS_DEFAULTS.accent_color;
+
+    $('accentColor').value = accent.toLowerCase();
+    $('accentHex').value = accent.toUpperCase();
+    paintAccent(accent);
+
+    renderSectionSwitches();
+
+    $('slotMonth').value = state.settings.slot_month || '';
+    $('slotTotal').value = state.settings.slot_total || '';
+    $('slotTaken').value = state.settings.slot_taken || '';
+    updateSlotPreview();
+
+    renderSeoFields();
+
+    state.settingsSnapshot = collectSettings();
+    state.settingsDirty = false;
+    updateSettingsState();
+  }
+
+  $('accentColor').addEventListener('input', function () {
+    $('accentHex').value = $('accentColor').value.toUpperCase();
+    paintAccent($('accentColor').value);
+    updateSettingsState();
+  });
+
+  $('accentHex').addEventListener('input', function () {
+    var value = $('accentHex').value.trim();
+    if (/^#[0-9a-f]{6}$/i.test(value)) $('accentColor').value = value.toLowerCase();
+    paintAccent(value);
+    updateSettingsState();
+  });
+
+  $('accentReset').addEventListener('click', function () {
+    var fallback = SETTINGS_DEFAULTS.accent_color;
+    $('accentColor').value = fallback.toLowerCase();
+    $('accentHex').value = fallback.toUpperCase();
+    paintAccent(fallback);
+    updateSettingsState();
+  });
+
+  $('settingsForm').addEventListener('input', function (event) {
+    if (event.target.closest('[data-seo]')) updateSeoUi();
+    if (event.target.id === 'slotMonth' || event.target.id === 'slotTotal' || event.target.id === 'slotTaken') {
+      updateSlotPreview();
+    }
+    updateSettingsState();
+  });
+
+  $('settingsForm').addEventListener('change', function (event) {
+    if (event.target.type === 'checkbox' || event.target.type === 'month') updateSettingsState();
+    if (event.target.type === 'month') updateSlotPreview();
+  });
+
+  $('settingsForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    var values = collectSettings();
+
+    if (!/^#[0-9A-F]{6}$/.test(values.accent_color)) {
+      fail('Accent must be a six-digit hex colour, for example #3B82F6.');
+      return;
+    }
+
+    var total = parseInt(values.slot_total, 10);
+    var taken = parseInt(values.slot_taken, 10);
+
+    if (isNaN(total) || total < 0 || isNaN(taken) || taken < 0) {
+      fail('Availability needs a whole number of seats.');
+      return;
+    }
+
+    if (taken > total) {
+      fail('Seats taken cannot be higher than seats offered.');
+      return;
+    }
+
+    var now = new Date().toISOString();
+    var rows = [];
+
+    Object.keys(values).forEach(function (key) {
+      if (values[key] === (state.settingsSnapshot[key] || '')) return;
+      rows.push({ key: key, value: values[key], updated_at: now });
+    });
+
+    if (!rows.length) {
+      toast('Nothing to save.');
+      return;
+    }
+
+    var button = $('settingsSave');
+    button.disabled = true;
+
+    var result = await db.from('site_settings').upsert(rows, { onConflict: 'key' });
+    if (result.error) {
+      button.disabled = false;
+      fail('Could not save settings. Check that you are still signed in as an admin.');
+      return;
+    }
+
+    await loadSettings();
+    toast('Settings saved. The live site picks this up within a minute.');
+  });
+
+  /* ---------------- Phase F: Realtime, Notifications & Reports ---------------- */
+
+  var realtimeChannel = null;
+  var realtimeDebounceTimers = {};
+
+  function setRealtimeStatus(status) {
+    var badge = $('realtimeBadge');
+    var text = $('realtimeText');
+    if (!badge || !text) return;
+    badge.classList.remove('connecting', 'disconnected');
+    if (status === 'SUBSCRIBED') {
+      text.textContent = 'Live';
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+      badge.classList.add('disconnected');
+      text.textContent = 'Offline';
+    } else {
+      badge.classList.add('connecting');
+      text.textContent = 'Syncing';
+    }
+  }
+
+  function showToastNotification(title, body, link) {
+    var container = $('toastContainer');
+    if (!container) return;
+    var item = document.createElement('div');
+    item.className = 'toast-item';
+    item.innerHTML = '<strong>' + esc(title) + '</strong>' +
+      (body ? '<p style="margin:4px 0 0;font-size:0.72rem;color:var(--text-secondary);">' + esc(body) + '</p>' : '');
+    if (link) {
+      item.style.cursor = 'pointer';
+      item.addEventListener('click', function () {
+        item.remove();
+        handleNotifLink(link);
+      });
+    }
+    container.appendChild(item);
+    setTimeout(function () {
+      item.style.transition = 'opacity 0.3s, transform 0.3s';
+      item.style.opacity = '0';
+      item.style.transform = 'translateY(10px)';
+      setTimeout(function () { item.remove(); }, 320);
+    }, 4500);
+  }
+
+  function debounceReload(key, fn, delay) {
+    clearTimeout(realtimeDebounceTimers[key]);
+    realtimeDebounceTimers[key] = setTimeout(fn, delay || 300);
+  }
+
+  function setupRealtime() {
+    if (!db || !db.channel || !state.profile) return;
+    if (realtimeChannel) {
+      db.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
+
+    setRealtimeStatus('CONNECTING');
+
+    realtimeChannel = db.channel('flow-hq-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, function (payload) {
+        if (state.tab === 'project' && state.projectId) {
+          if (!payload.new || payload.new.project_id === state.projectId || (payload.old && payload.old.project_id === state.projectId)) {
+            debounceReload('tasks', function () { loadProjectScreen(); });
+          }
+        } else if (state.tab === 'projects') {
+          debounceReload('projects', loadProjects);
+        } else if (state.tab === 'dashboard') {
+          debounceReload('dashboard', loadDashboard);
+        } else if (state.tab === 'reports') {
+          debounceReload('reports', loadReports);
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task_comments' }, function (payload) {
+        if (state.tab === 'project' && state.projectId) {
+          if (state.currentTaskId && payload.new && payload.new.task_id === state.currentTaskId) {
+            debounceReload('comments', function () { loadTaskComments(state.currentTaskId); });
+          }
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity' }, function (payload) {
+        if (state.tab === 'project' && state.projectId) {
+          debounceReload('activity', function () { loadProjectActivity(state.projectId); });
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, function (payload) {
+        if (payload.new && payload.new.user_id === state.profile.id) {
+          loadNotifications();
+          if (payload.eventType === 'INSERT') {
+            showToastNotification(payload.new.title, payload.new.body, payload.new.link);
+          }
+        }
+      })
+      .subscribe(function (status) {
+        setRealtimeStatus(status);
+      });
+  }
+
+  /* Notifications */
+  var notificationsState = {
+    items: [],
+    unreadCount: 0,
+    isOpen: false
+  };
+
+  async function loadNotifications() {
+    if (!state.profile) return;
+    var res = await db.from('notifications')
+      .select('*')
+      .eq('user_id', state.profile.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    if (res.error) {
+      console.warn('Could not load notifications:', res.error);
+      return;
+    }
+
+    notificationsState.items = res.data || [];
+    notificationsState.unreadCount = notificationsState.items.filter(function (n) { return !n.read_at; }).length;
+
+    var badge = $('notifBadge');
+    if (badge) {
+      if (notificationsState.unreadCount > 0) {
+        badge.textContent = notificationsState.unreadCount > 99 ? '99+' : notificationsState.unreadCount;
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+      }
+    }
+
+    renderNotificationsList();
+  }
+
+  function handleNotifLink(link) {
+    if (!link) return;
+    try {
+      var url = new URL(link, window.location.origin);
+      var proj = url.searchParams.get('project');
+      var task = url.searchParams.get('task');
+      if (proj) {
+        state.projectId = proj;
+        activateTab('project');
+        if (task) {
+          setTimeout(function () {
+            if (typeof openTaskDrawer === 'function') {
+              openTaskDrawer(task);
+            }
+          }, 400);
+        }
+      }
+    } catch (e) {}
+  }
+
+  function renderNotificationsList() {
+    var list = $('notifList');
+    if (!list) return;
+    if (!notificationsState.items.length) {
+      list.innerHTML = '<p class="admin-empty">No notifications yet.</p>';
+      return;
+    }
+
+    list.innerHTML = notificationsState.items.map(function (n) {
+      var isUnread = !n.read_at;
+      return '<div class="notif-item' + (isUnread ? ' unread' : '') + '" data-id="' + esc(n.id) + '" data-link="' + esc(n.link || '') + '">' +
+        '<div class="notif-title">' + esc(n.title) + '</div>' +
+        (n.body ? '<div class="notif-body">' + esc(n.body) + '</div>' : '') +
+        '<div class="notif-meta">' +
+          '<span>' + fmtDate(n.created_at) + '</span>' +
+          (isUnread ? '<button type="button" class="notif-action-btn mark-read-btn" data-id="' + esc(n.id) + '">Mark read</button>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    Array.prototype.forEach.call(list.querySelectorAll('.notif-item'), function (el) {
+      el.addEventListener('click', async function (ev) {
+        if (ev.target.classList.contains('mark-read-btn')) return;
+        var id = el.getAttribute('data-id');
+        var link = el.getAttribute('data-link');
+        await markNotificationRead(id);
+        if (link) handleNotifLink(link);
+        toggleNotifDropdown(false);
+      });
+    });
+
+    Array.prototype.forEach.call(list.querySelectorAll('.mark-read-btn'), function (btn) {
+      btn.addEventListener('click', async function (ev) {
+        ev.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        await markNotificationRead(id);
+      });
+    });
+  }
+
+  async function markNotificationRead(id) {
+    await db.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id);
+    var item = notificationsState.items.find(function (n) { return n.id === id; });
+    if (item && !item.read_at) {
+      item.read_at = new Date().toISOString();
+      notificationsState.unreadCount = Math.max(0, notificationsState.unreadCount - 1);
+      var badge = $('notifBadge');
+      if (badge) {
+        if (notificationsState.unreadCount > 0) {
+          badge.textContent = notificationsState.unreadCount;
+          badge.hidden = false;
+        } else {
+          badge.hidden = true;
+        }
+      }
+      renderNotificationsList();
+    }
+  }
+
+  async function markAllNotificationsRead() {
+    var rpc = await db.rpc('mark_all_notifications_read');
+    if (rpc.error) {
+      await db.from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('user_id', state.profile.id)
+        .is('read_at', null);
+    }
+    notificationsState.items.forEach(function (n) { n.read_at = n.read_at || new Date().toISOString(); });
+    notificationsState.unreadCount = 0;
+    if ($('notifBadge')) $('notifBadge').hidden = true;
+    renderNotificationsList();
+    toast('All notifications marked as read.');
+  }
+
+  function toggleNotifDropdown(forceState) {
+    var dd = $('notifDropdown');
+    if (!dd) return;
+    var show = typeof forceState === 'boolean' ? forceState : dd.hidden;
+    dd.hidden = !show;
+    notificationsState.isOpen = show;
+  }
+
+  if ($('notifBellBtn')) {
+    $('notifBellBtn').addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      toggleNotifDropdown();
+    });
+  }
+
+  if ($('markAllReadBtn')) {
+    $('markAllReadBtn').addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      markAllNotificationsRead();
+    });
+  }
+
+  document.addEventListener('click', function (ev) {
+    var dd = $('notifDropdown');
+    var bell = $('notifBellBtn');
+    if (dd && !dd.hidden && !dd.contains(ev.target) && !bell.contains(ev.target)) {
+      toggleNotifDropdown(false);
+    }
+  });
+
+  /* Reports View */
+  var reportsState = {
+    subtab: 'projectsRollup',
+    projects: [],
+    members: [],
+    standups: []
+  };
+
+  async function loadReports() {
+    var tableWrap = $('reportsProjectTable');
+    if (tableWrap) tableWrap.innerHTML = '<p class="admin-empty">Loading reports data…</p>';
+
+    var projRes = await db.from('projects').select('*').order('name');
+    var tasksRes = await db.from('tasks').select('*');
+    var profilesRes = await db.from('profiles').select('*').order('full_name');
+    var standupsRes = await db.from('daily_reports').select('*, profiles(full_name, email), projects(name, key)').order('report_date', { ascending: false }).limit(40);
+
+    var projects = projRes.data || [];
+    var tasks = tasksRes.data || [];
+    var profiles = profilesRes.data || [];
+    var standups = standupsRes.data || [];
+
+    reportsState.projects = projects;
+    reportsState.members = profiles;
+    reportsState.standups = standups;
+
+    var totalTasks = tasks.length;
+    var sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    var completed7d = tasks.filter(function (t) {
+      return t.status === 'done' && t.completed_at && new Date(t.completed_at) >= sevenDaysAgo;
+    }).length;
+    var nowStr = new Date().toISOString().split('T')[0];
+    var overdue = tasks.filter(function (t) {
+      return t.status !== 'done' && t.due_date && t.due_date < nowStr;
+    }).length;
+    var activeProjs = projects.filter(function (p) { return p.status === 'active' || p.status === 'planning'; }).length;
+
+    if ($('repTotalTasks')) $('repTotalTasks').textContent = totalTasks;
+    if ($('repCompletedTasks')) $('repCompletedTasks').textContent = completed7d;
+    if ($('repOverdueTasks')) $('repOverdueTasks').textContent = overdue;
+    if ($('repActiveProjects')) $('repActiveProjects').textContent = activeProjs;
+
+    renderProjectsRollup(projects, tasks);
+    renderMembersRollup(profiles, tasks, standups);
+    renderStandupFeed(standups);
+    populateStandupProjectSelect(projects);
+  }
+
+  function renderProjectsRollup(projects, tasks) {
+    var wrap = $('reportsProjectTable');
+    if (!wrap) return;
+    if (!projects.length) {
+      wrap.innerHTML = '<p class="admin-empty">No projects found.</p>';
+      return;
+    }
+
+    var html = '<table class="admin-table"><thead><tr>' +
+      '<th>Project</th>' +
+      '<th>Status</th>' +
+      '<th>Total Tasks</th>' +
+      '<th>Done</th>' +
+      '<th>Progress</th>' +
+      '<th>Overdue</th>' +
+      '<th>Velocity (7d)</th>' +
+      '</tr></thead><tbody>';
+
+    var sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    var nowStr = new Date().toISOString().split('T')[0];
+
+    projects.forEach(function (p) {
+      var pTasks = tasks.filter(function (t) { return t.project_id === p.id; });
+      var total = pTasks.length;
+      var done = pTasks.filter(function (t) { return t.status === 'done'; }).length;
+      var percent = total ? Math.round((done / total) * 100) : 0;
+      var overdue = pTasks.filter(function (t) { return t.status !== 'done' && t.due_date && t.due_date < nowStr; }).length;
+      var vel = pTasks.filter(function (t) {
+        return t.status === 'done' && t.completed_at && new Date(t.completed_at) >= sevenDaysAgo;
+      }).length;
+
+      html += '<tr>' +
+        '<td><strong><a href="#project/' + esc(p.id) + '">' + esc(p.name) + '</a></strong> <span class="badge">' + esc(p.key) + '</span></td>' +
+        '<td><span class="badge ' + esc(p.status) + '">' + esc(p.status) + '</span></td>' +
+        '<td>' + total + '</td>' +
+        '<td>' + done + '</td>' +
+        '<td>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<div class="reports-progress-wrap" style="flex:1;"><div class="reports-progress-bar" style="width:' + percent + '%;"></div></div>' +
+            '<span style="font-size:0.75rem;font-weight:600;min-width:32px;">' + percent + '%</span>' +
+          '</div>' +
+        '</td>' +
+        '<td>' + (overdue > 0 ? '<span style="color:#ef4444;font-weight:600;">' + overdue + '</span>' : '0') + '</td>' +
+        '<td><strong>+' + vel + '</strong></td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function renderMembersRollup(profiles, tasks, standups) {
+    var wrap = $('reportsMemberTable');
+    if (!wrap) return;
+    var teamProfiles = profiles.filter(function (pr) { return pr.role !== 'client'; });
+    if (!teamProfiles.length) {
+      wrap.innerHTML = '<p class="admin-empty">No team members found.</p>';
+      return;
+    }
+
+    var html = '<table class="admin-table"><thead><tr>' +
+      '<th>Member</th>' +
+      '<th>Role</th>' +
+      '<th>Assigned</th>' +
+      '<th>In Progress</th>' +
+      '<th>Completed</th>' +
+      '<th>Overdue</th>' +
+      '<th>Hours Logged</th>' +
+      '</tr></thead><tbody>';
+
+    var nowStr = new Date().toISOString().split('T')[0];
+
+    teamProfiles.forEach(function (m) {
+      var mTasks = tasks.filter(function (t) { return t.assignee_id === m.id; });
+      var total = mTasks.length;
+      var inProg = mTasks.filter(function (t) { return t.status === 'in_progress'; }).length;
+      var done = mTasks.filter(function (t) { return t.status === 'done'; }).length;
+      var overdue = mTasks.filter(function (t) { return t.status !== 'done' && t.due_date && t.due_date < nowStr; }).length;
+      var hours = standups.filter(function (s) { return s.author_id === m.id; })
+        .reduce(function (sum, s) { return sum + (Number(s.hours) || 0); }, 0);
+
+      html += '<tr>' +
+        '<td><strong>' + esc(m.full_name || m.email) + '</strong></td>' +
+        '<td><span class="badge">' + esc(m.role) + '</span></td>' +
+        '<td>' + total + '</td>' +
+        '<td><span style="color:#3b82f6;font-weight:600;">' + inProg + '</span></td>' +
+        '<td><span style="color:#10b981;font-weight:600;">' + done + '</span></td>' +
+        '<td>' + (overdue > 0 ? '<span style="color:#ef4444;font-weight:600;">' + overdue + '</span>' : '0') + '</td>' +
+        '<td>' + (hours > 0 ? hours.toFixed(1) + ' hrs' : '—') + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+
+  function renderStandupFeed(standups) {
+    var feed = $('standupFeed');
+    if (!feed) return;
+    if (!standups.length) {
+      feed.innerHTML = '<p class="admin-empty">No standups submitted yet. Use the form to submit today\'s check-in.</p>';
+      return;
+    }
+
+    feed.innerHTML = standups.map(function (s) {
+      var authorName = (s.profiles && s.profiles.full_name) || (s.profiles && s.profiles.email) || 'Team Member';
+      var projName = (s.projects && s.projects.name) || 'Project';
+      return '<div class="standup-card">' +
+        '<div class="standup-head">' +
+          '<strong>' + esc(authorName) + ' · ' + esc(projName) + '</strong>' +
+          '<span>' + esc(s.report_date) + (s.hours ? ' · ' + esc(s.hours) + ' hrs' : '') + '</span>' +
+        '</div>' +
+        '<div class="standup-summary">' + esc(s.summary) + '</div>' +
+        (s.blockers ? '<div class="standup-blocker"><strong>Blocker:</strong> ' + esc(s.blockers) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  function populateStandupProjectSelect(projects) {
+    var sel = $('reportProjectSelect');
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">Select project…</option>' +
+      projects.map(function (p) {
+        return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' (' + esc(p.key) + ')</option>';
+      }).join('');
+    if (current) sel.value = current;
+    if ($('reportDate') && !$('reportDate').value) {
+      $('reportDate').value = new Date().toISOString().split('T')[0];
+    }
+  }
+
+  if ($('reportsSubTabs')) {
+    Array.prototype.forEach.call($('reportsSubTabs').querySelectorAll('[data-subtab]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var subtab = btn.getAttribute('data-subtab');
+        reportsState.subtab = subtab;
+        Array.prototype.forEach.call($('reportsSubTabs').querySelectorAll('[data-subtab]'), function (b) {
+          b.classList.toggle('active', b === btn);
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('.reports-subtab-pane'), function (pane) {
+          pane.hidden = pane.id !== 'pane-' + subtab;
+        });
+      });
+    });
+  }
+
+  if ($('refreshReportsBtn')) {
+    $('refreshReportsBtn').addEventListener('click', function () {
+      loadReports();
+    });
+  }
+
+  if ($('dailyReportForm')) {
+    $('dailyReportForm').addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      var btn = $('submitReportBtn');
+      var fb = $('reportFeedback');
+      btn.disabled = true;
+      if (fb) fb.textContent = 'Saving standup…';
+
+      var projId = $('reportProjectSelect').value;
+      var rDate = $('reportDate').value;
+      var rHours = parseFloat($('reportHours').value) || null;
+      var rSummary = $('reportSummary').value.trim();
+      var rBlockers = $('reportBlockers').value.trim() || null;
+
+      var res = await db.from('daily_reports').upsert({
+        project_id: projId,
+        author_id: state.profile.id,
+        report_date: rDate,
+        summary: rSummary,
+        blockers: rBlockers,
+        hours: rHours
+      }, { onConflict: 'project_id,author_id,report_date' });
+
+      btn.disabled = false;
+      if (res.error) {
+        if (fb) fb.textContent = 'Error: ' + res.error.message;
+        fail('Could not submit standup: ' + res.error.message);
+      } else {
+        if (fb) fb.textContent = 'Standup saved!';
+        toast('Daily standup report submitted.');
+        $('reportSummary').value = '';
+        $('reportBlockers').value = '';
+        loadReports();
+      }
+    });
+  }
+
+  /* ---------------- start ---------------- */
+
+  boot().catch(function () {
+    showAuth('Could not reach Supabase. Check the project URL and anon key.');
+  });
+})();

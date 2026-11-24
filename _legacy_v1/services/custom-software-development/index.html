@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Software Development, Fixed Price | The Flow Labs</title>
+  <meta name="description" content="Internal tools, operations consoles and management dashboards built around your process instead of vendor limits. Fixed quote per phase, agreed before code.">
+  <link rel="canonical" href="https://www.theflowlabs.online/services/custom-software-development/">
+
+  <meta property="og:title" content="Custom Software Development, Fixed Price | The Flow Labs">
+  <meta property="og:description" content="Software shaped around how you actually work. Built in-house, four builds a month.">
+  <meta property="og:url" content="https://www.theflowlabs.online/services/custom-software-development/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+  <meta property="og:locale" content="en_IN">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Custom Software Development, Fixed Price | The Flow Labs">
+  <meta name="twitter:description" content="Software shaped around how you actually work. Built in-house, four builds a month.">
+  <meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Services", "item": "https://www.theflowlabs.online/services/" },
+      { "@type": "ListItem", "position": 3, "name": "Custom software development" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Custom Software & Cloud Platform Development",
+    "description": "Internal tools, operations consoles and management dashboards built around your process. Fixed quote per phase, agreed before code.",
+    "provider": {
+      "@type": "Organization",
+      "name": "The Flow Labs",
+      "url": "https://www.theflowlabs.online/",
+      "email": "hello@theflowlabs.online"
+    },
+    "serviceType": "Custom software development"
+  }
+  </script>
+</head>
+<body data-page="services-software">
+
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
+
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
+
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item active">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span data-cms="customsoft-hero-pill">Systems · Custom Software</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="customsoft-hero-h1">
+        Software shaped around <span class="gradient-text">how you actually work.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="customsoft-hero-sub">
+        Internal tools, operations consoles and dashboards built around your process instead of a vendor's feature list. Fixed quote per phase, agreed before code.
+      </p>
+
+      <div class="three-actions">
+        <a href="/contact/" class="three-btn primary" data-magnetic>
+          <span>Scope Custom Software</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="m12 5 7 7-7 7"></path>
+          </svg>
+        </a>
+        <a href="/work/" class="three-btn glass" data-magnetic>
+          <span>Inspect Architecture Case Studies</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- SYSTEMS BENTO BREAKDOWN -->
+    <section class="three-section">
+      <div class="section-eyebrow">Backend &amp; Platform Architecture</div>
+      <h2 class="section-heading">Replace fragmented spreadsheets with scaled systems.</h2>
+      <p class="section-subtext">We build reliable, maintainable platforms that eliminate manual friction and scale with your business.</p>
+
+      <div class="three-bento-grid">
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">01 // Operations Hubs</span>
+          <h3 class="card-title">Internal Consoles &amp; Management Tools</h3>
+          <p class="card-desc">Custom administrative panels, dispatch consoles, inventory trackers, and role-based operational hubs shaped to match your exact team workflows.</p>
+          <div class="pill-group">
+            <span class="pill-chip">Role-Based Access (RBAC)</span>
+            <span class="pill-chip">Audit Trails</span>
+            <span class="pill-chip">Live Fleet Telemetry</span>
+            <span class="pill-chip">Fast Filters</span>
+          </div>
+        </div>
+
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">02 // Database Architecture</span>
+          <h3 class="card-title">ACID-Compliant Relational Schemas</h3>
+          <p class="card-desc">PostgreSQL database modeling designed for integrity, zero duplicate entries, optimized indices, and rapid analytical query execution under high concurrency.</p>
+          <div class="pill-group">
+            <span class="pill-chip">PostgreSQL</span>
+            <span class="pill-chip">Row Level Security</span>
+            <span class="pill-chip">Automated Backups</span>
+            <span class="pill-chip">Migration Rigs</span>
+          </div>
+        </div>
+
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">03 // Real-Time Pipelines</span>
+          <h3 class="card-title">APIs, Webhooks &amp; Data Sync</h3>
+          <p class="card-desc">High-throughput REST and WebSocket endpoints connecting payment processors, third-party logistics, communication APIs, and customer databases seamlessly.</p>
+          <div class="pill-group">
+            <span class="pill-chip">FastAPI</span>
+            <span class="pill-chip">Supabase Realtime</span>
+            <span class="pill-chip">Webhook Idempotency</span>
+            <span class="pill-chip">Redis Caching</span>
+          </div>
+        </div>
+
+        <div class="three-card col-6" data-three-tilt>
+          <span class="card-tag">04 // Infrastructure &amp; Deployment</span>
+          <h3 class="card-title">Zero-Downtime Cloud Deployment</h3>
+          <p class="card-desc">Containerized with Docker, automated CI/CD deployment pipelines, health check monitors, and complete infrastructure ownership handed over to you.</p>
+          <div class="pill-group">
+            <span class="pill-chip">Docker</span>
+            <span class="pill-chip">GitHub Actions</span>
+            <span class="pill-chip">Health Monitors</span>
+            <span class="pill-chip">Full IP Ownership</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALLOUT SECTION -->
+    <section class="three-section">
+      <div class="three-card col-12" style="background:rgba(18, 24, 38, 0.7); padding:48px 40px;">
+        <span class="card-tag">In-House Engineering Guarantee</span>
+        <h3 class="card-title" style="font-size:2rem;">Fixed quotes per milestone. No open-ended retainers.</h3>
+        <p class="card-desc" style="max-width:680px;">We map your database schemas, user permissions, and user journeys first. You get a clear statement of work, milestone delivery dates, and direct access to the founders architecting the system.</p>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:24px;">
+          <a href="/contact/" class="three-btn primary" data-magnetic>
+            <span>Book a Scoping Call</span>
+          </a>
+          <a href="/services/" class="three-btn glass" data-magnetic>
+            <span>Back to Services Hub</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Connect</h5>
+          <a href="/contact/">Start a project</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
+          <a href="/privacy-policy/">Privacy Policy</a>
+          <a href="/terms/">Terms of Service</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

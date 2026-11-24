@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Plan a Website for a New Startup | The Flow Labs</title>
+  <meta name="description" content="How to plan a startup website that actually gets you customers: goals, must-have pages, copy, budget and common traps. Practical, founder-written.">
+  <link rel="canonical" href="https://www.theflowlabs.online/blog/how-to-plan-a-website-for-a-new-startup/">
+
+  <meta property="og:title" content="How to Plan a Website for a New Startup | The Flow Labs">
+  <meta property="og:description" content="Goals, pages, copy, budget and the classic traps startups fall into. A practical plan you can follow this week.">
+  <meta property="og:url" content="https://www.theflowlabs.online/blog/how-to-plan-a-website-for-a-new-startup/">
+  <meta property="og:type" content="article">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data: Article -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "How to Plan a Website for a New Startup",
+    "description": "How to plan a startup website that actually gets you customers: goals, must-have pages, copy, budget and common traps. Practical, founder-written.",
+    "datePublished": "2026-11-05",
+    "dateModified": "2026-11-05",
+    "author": {
+      "@type": "Organization",
+      "name": "The Flow Labs",
+      "url": "https://www.theflowlabs.online/"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Flow Labs",
+      "url": "https://www.theflowlabs.online/"
+    },
+    "mainEntityOfPage": "https://www.theflowlabs.online/blog/how-to-plan-a-website-for-a-new-startup/",
+    "image": "https://www.theflowlabs.online/assets/work-droovee.png"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://www.theflowlabs.online/blog/" },
+      { "@type": "ListItem", "position": 3, "name": "How to Plan a Startup Website" }
+    ]
+  }
+  </script>
+
+  <style>
+    .article-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .article-body h2 {
+      font-size: 1.5rem;
+      color: var(--text-main);
+      margin: 36px 0 16px;
+      font-weight: 700;
+    }
+    .article-body p {
+      font-size: 1.02rem;
+      line-height: 1.75;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+    .article-body ol, .article-body ul {
+      margin: 16px 0 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .article-body li strong {
+      color: var(--text-main);
+    }
+    .article-body blockquote {
+      border-left: 3px solid var(--neon-cyan);
+      background: rgba(6, 182, 212, 0.05);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 24px 0;
+      color: var(--text-main);
+      font-style: italic;
+    }
+  </style>
+</head>
+<body data-page="blog-article">
+
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
+
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
+
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span>Founder-written · Production Insights</span>
+      </div>
+
+      <h1 class="three-hero-title">
+        How to plan a website for a <span class="gradient-text">new startup.</span>
+      </h1>
+
+      <p class="three-hero-desc">
+        Goals, pages, copy, budget and the classic traps startups fall into with their first website. A practical plan you can actually follow this week.
+      </p>
+
+      <div style="margin-top:16px; font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">
+        By The Flow Labs Engineering Team · Updated November 2026
+      </div>
+    </section>
+
+    <!-- ARTICLE BODY & CARDS -->
+    <section class="three-section">
+      <div class="article-wrap">
+
+        <div class="three-card col-12 article-body">
+          <p>
+            Most startup websites fail before a single line of code is written, because nobody decided what the website is actually FOR. Not the all-hands committee decisions — the practical commercial ones. Here is the operational plan we wish every founder walked in with.
+          </p>
+
+          <h2>Step 1: Choose ONE primary commercial job</h2>
+          <p>
+            A website can pull off multiple secondary tasks, but it is exponentially stronger when one job is primary:
+          </p>
+          <ul>
+            <li><strong>Collect qualified leads:</strong> The primary objective for B2B service studios and consultancies.</li>
+            <li><strong>Convert self-service signups:</strong> Crucial for product-stage SaaS apps and early betas.</li>
+            <li><strong>Convince angel/institutional investors:</strong> Essential in early fundraising cycles where technical credibility is everything.</li>
+            <li><strong>Establish professional legitimacy:</strong> Ensuring visitors get immediate proof when Googling your brand name after a meeting.</li>
+          </ul>
+
+          <h2>Step 2: The essential pages you actually need</h2>
+          <ul>
+            <li><strong>Home:</strong> What you build, who it is for, and one obvious next step. If a visitor cannot tell what you do within 5 seconds, nothing else matters.</li>
+            <li><strong>Proof:</strong> Real case studies with verifiable labels. Proof beats promises every day of the week. (See how our <a href="/work/" style="color:var(--neon-cyan);">work showroom</a> classifies live, in-house, and open-source systems).</li>
+            <li><strong>Services / Product:</strong> A concrete, transparent offer rather than vague generic agency buzzwords.</li>
+            <li><strong>Scoping / Contact:</strong> A streamlined intake form that routes directly to decision-makers.</li>
+          </ul>
+
+          <blockquote>
+            "Nine-page drop-down menus are distraction. One primary page, one focused job, and one clear call to action."
+          </blockquote>
+
+          <h2>Step 3: Write for the customer, not for the founder</h2>
+          <p>
+            The most common trap is writing pages that describe what the founder finds fascinating, while ignoring what the customer needs to know. Every sentence must either help a prospect decide or be deleted.
+          </p>
+
+          <h2>Step 4: Realistic budget expectations</h2>
+          <p>
+            DIY website builders are cheap up front, but produce slow-loading bloat and poor mobile experiences. Large agencies bill high overhead for account managers. Founder-led studios like ours deliver fixed pricing, sub-second performance, and clean repository ownership.
+          </p>
+
+          <h2>Step 5: Pre-launch quality verification</h2>
+          <ol>
+            <li>Renders fast on a budget 4G mobile device without layout shifts.</li>
+            <li>All forms transmit cleanly to a database with zero dropped inquiries.</li>
+            <li>SEO canonicals, Open Graph cards, and structured JSON-LD schemas are indexed.</li>
+            <li>Every interactive button and touchpoint works without error.</li>
+          </ol>
+
+          <p style="margin-top:28px;">
+            Want this planned with you directly? Explore our <a href="/services/web-development/" style="color:var(--neon-cyan);">web development service</a>, or start a scoping conversation at <a href="mailto:hello@theflowlabs.online" style="color:var(--neon-cyan);">hello@theflowlabs.online</a>.
+          </p>
+        </div>
+
+        <!-- Cross-Link Scoping Banner -->
+        <div class="three-card col-12" style="text-align:center; padding:40px 24px; margin-top:24px;">
+          <h3 style="font-size:1.5rem; color:var(--text-main); font-weight:700;">Planning Your Next Web Application or Site?</h3>
+          <p style="max-width:500px; margin:12px auto 20px; color:var(--text-muted); line-height:1.6;">
+            Tell us what the site needs to achieve. We will help prioritize features, define the scope, and build it for performance.
+          </p>
+          <div class="three-actions" style="justify-content:center;">
+            <a href="/contact/" class="three-btn primary" data-magnetic>
+              <span>Schedule Scoping Session &rarr;</span>
+            </a>
+            <a href="/blog/" class="three-btn glass" data-magnetic>
+              <span>Back to All Articles</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Connect</h5>
+          <a href="/contact/">Start a project</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
+          <a href="/privacy-policy/">Privacy Policy</a>
+          <a href="/terms/">Terms of Service</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

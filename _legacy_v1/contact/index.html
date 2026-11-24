@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Start a Project | The Flow Labs</title>
+  <meta name="description" content="Tell The Flow Labs what you are building: a website, a system or an AI workflow. Two December build slots open, honest 48-hour reply from the founders.">
+  <link rel="canonical" href="https://www.theflowlabs.online/contact/">
+
+  <meta property="og:title" content="Start a Project | The Flow Labs">
+  <meta property="og:description" content="Direct scoping with Smruti, Biswash, and Arpita. 48-hour response with scope, timeline, and fixed pricing.">
+  <meta property="og:url" content="https://www.theflowlabs.online/contact/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "The Flow Labs",
+    "url": "https://www.theflowlabs.online/",
+    "email": "hello@theflowlabs.online",
+    "image": "https://www.theflowlabs.online/assets/work-droovee.png"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Contact" }
+    ]
+  }
+  </script>
+
+  <style>
+    /* Scoping Studio Form Styles */
+    .field {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .field label, .field-label {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .field input, .field textarea, .field select {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 13px 16px;
+      color: #FFFFFF;
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      outline: none;
+      transition: all 180ms ease;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+      background: rgba(0, 0, 0, 0.6);
+    }
+    .field textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    .field select {
+      cursor: pointer;
+    }
+    .field select option {
+      background: #0B0E14;
+      color: #FFFFFF;
+    }
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .chip-opt {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+      padding: 9px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 0.86rem;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      transition: all 180ms ease;
+    }
+    .chip-opt:hover {
+      color: #FFFFFF;
+      border-color: var(--neon-cyan);
+      background: rgba(6, 182, 212, 0.1);
+    }
+    .chip-opt.sel, .chip-opt[aria-checked="true"] {
+      background: var(--neon-blue);
+      border-color: var(--neon-blue);
+      color: #FFFFFF;
+      box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+    }
+    .err {
+      display: none;
+      color: #EF4444;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      margin-top: 4px;
+    }
+    .err.show {
+      display: block;
+    }
+    .hp {
+      display: none !important;
+    }
+    .submit-btn {
+      width: 100%;
+      background: #FFFFFF;
+      color: #07090E;
+      border: none;
+      padding: 15px 28px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 200ms ease;
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+    }
+    .submit-btn:hover {
+      background: #E2E8F0;
+      box-shadow: 0 6px 25px rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .submit-btn .spin {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(0, 0, 0, 0.2);
+      border-top-color: #07090E;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .submit-btn.loading .spin {
+      display: inline-block;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .form-note {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      text-align: center;
+      margin-top: 12px;
+    }
+    .form-note a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+    }
+    .form-note a:hover {
+      text-decoration: underline;
+    }
+    /* Success Panel */
+    .success-box {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      color: var(--neon-emerald);
+    }
+  </style>
+</head>
+<body data-page="contact">
+
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
+
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
+
+  <!-- SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item active">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span data-cms="contact-hero-label">Direct response within 48 hours</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="contact-hero-title">
+        Start a project with <span class="gradient-text">The Flow Labs.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="contact-hero-subtitle">
+        Submit your requirements, send an email, or message us directly. We will review your project and reply within 48 hours with scope, timeline, and pricing.
+      </p>
+    </section>
+
+    <!-- LIVE SCOPING STUDIO BENTO GRID -->
+    <section class="three-section">
+      <div class="three-bento-grid">
+
+        <!-- SLOT TELEMETRY BAR -->
+        <div class="three-card col-12" style="padding:20px 24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <span class="three-pill-dot" style="position:static;"></span>
+              <span style="font-family:var(--font-mono); font-size:0.85rem; color:var(--text-main); font-weight:600;">
+                Build Slots · <span data-slots-label>December</span>
+              </span>
+              <span style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); padding:3px 10px; border-radius:12px; font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-cyan);">
+                <b data-slots-taken>2</b> of <span data-slots-total>4</span> RESERVED
+              </span>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);" class="slot-note">
+              We take four builds a month. Two December seats are already reserved.
+            </div>
+          </div>
+        </div>
+
+        <!-- MAIN SCOPING TERMINAL (COL-8) -->
+        <div class="three-card col-8 contact-card" data-three-tilt>
+          <div id="formView">
+            <span class="card-tag">Technical Scoping Intake</span>
+            <h3 class="card-title" style="margin:8px 0 20px;">Direct Founder Inquiry</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.6; margin-bottom:24px;">
+              Tell us what you want to build. Smruti, Biswash, and Arpita personally review your requirements and provide architectural recommendations and a fixed-price proposal.
+            </p>
+
+            <form id="ideaForm" novalidate>
+              <div class="field">
+                <label for="fName">Your name / Company <span style="color:var(--neon-cyan);">*</span></label>
+                <input id="fName" name="name" type="text" placeholder="Full name or company name" autocomplete="name" required aria-describedby="errName" aria-invalid="false">
+                <div class="err" id="errName" role="alert">Please enter your name or company.</div>
+              </div>
+
+              <div class="field">
+                <label for="fContact">Email or phone number <span style="color:var(--neon-cyan);">*</span></label>
+                <input id="fContact" name="contact" type="text" placeholder="name@company.com or +91..." autocomplete="email" required aria-describedby="errContact" aria-invalid="false">
+                <div class="err" id="errContact" role="alert">Please enter a valid email address or phone number.</div>
+              </div>
+
+              <div class="field">
+                <span class="field-label" id="typeLabel">Project Category <span style="color:var(--neon-cyan);">*</span></span>
+                <div class="chips-row" id="typeChips" role="radiogroup" aria-labelledby="typeLabel" aria-describedby="errType">
+                  <span class="chip-opt" data-val="Website" role="radio" aria-checked="false" tabindex="0">Website</span>
+                  <span class="chip-opt" data-val="AI tool" role="radio" aria-checked="false" tabindex="0">AI tool</span>
+                  <span class="chip-opt" data-val="Automation" role="radio" aria-checked="false" tabindex="0">Automation</span>
+                  <span class="chip-opt" data-val="Software" role="radio" aria-checked="false" tabindex="0">Software</span>
+                  <span class="chip-opt" data-val="Not sure yet" role="radio" aria-checked="false" tabindex="0">Other / Discuss</span>
+                </div>
+                <div class="err" id="errType" role="alert">Please select a project category.</div>
+              </div>
+
+              <div class="field">
+                <label for="fIdea">Project Requirements &amp; Goals <span style="color:var(--neon-cyan);">*</span></label>
+                <textarea id="fIdea" name="idea" placeholder="Describe what you want to build, the problems you are solving, or key features needed..." required aria-describedby="errIdea" aria-invalid="false"></textarea>
+                <div class="err" id="errIdea" role="alert">Please describe your project or requirements.</div>
+              </div>
+
+              <div class="field">
+                <label for="fBudget">Estimated Investment Budget (₹)</label>
+                <select id="fBudget" name="budget">
+                  <option value="">To be discussed during technical scoping</option>
+                  <option value="under25k">Under ₹25,000</option>
+                  <option value="25k-1L">₹25,000 – ₹1,00,000</option>
+                  <option value="1L+">₹1,00,000+</option>
+                  <option value="discuss">Flexible / Phased Implementation</option>
+                </select>
+              </div>
+
+              <!-- Honeypot -->
+              <div class="field hp" aria-hidden="true">
+                <label for="fCompany">Company</label>
+                <input id="fCompany" name="company" type="text" tabindex="-1" autocomplete="off">
+              </div>
+
+              <div style="margin-top:28px;">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                  <span class="label">Transmit Project Details &rarr;</span>
+                  <span class="spin" aria-hidden="true"></span>
+                </button>
+                <p class="form-note" id="formNote">Direct reply within 48 hours. No spam, guaranteed.</p>
+                <p class="form-note">Submitting shares your details so we can reply with scope and pricing. See our <a href="/privacy-policy/">privacy policy</a>.</p>
+              </div>
+            </form>
+          </div>
+
+          <!-- SUCCESS STATE TEMPLATE -->
+          <template id="successTpl">
+            <div class="success-box" id="successView" role="status" aria-live="polite">
+              <div class="success-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <h3 id="successHeading" tabindex="-1" style="font-size:1.5rem; color:var(--text-main); font-weight:700; margin-bottom:12px;">
+                Project Details Received
+              </h3>
+              <p style="color:var(--text-muted); max-width:440px; margin:0 auto 24px; line-height:1.6; font-size:0.95rem;">
+                Thank you for reaching out. Smruti, Biswash, and Arpita will review your technical requirements and respond within 48 hours with scope, timeline, and pricing.
+              </p>
+              <button class="three-btn glass" id="successClose" type="button" style="margin:0 auto;">
+                <span>Send Another Message</span>
+              </button>
+            </div>
+          </template>
+        </div>
+
+        <!-- DIRECT CHANNELS & STUDIO RADAR (COL-4) -->
+        <div class="three-card col-4" style="display:flex; flex-direction:column; gap:24px;">
+
+          <!-- Direct 1-Click Email Card -->
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); padding:20px; border-radius:12px;">
+            <span class="card-tag">Direct Mail</span>
+            <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <a href="mailto:hello@theflowlabs.online" data-cms="contact-email" style="color:var(--text-main); font-family:var(--font-mono); font-size:0.9rem; text-decoration:none; font-weight:600;">
+                  hello@theflowlabs.online
+                </a>
+                <div style="color:var(--text-muted); font-size:0.75rem; margin-top:2px;">Include brief specs for fast review</div>
+              </div>
+              <button type="button" class="three-btn glass" style="padding:6px 12px; font-size:0.75rem;" data-copy-email data-user="hello" data-domain="theflowlabs.online">
+                <span>Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Studio Location -->
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); padding:20px; border-radius:12px;">
+            <span class="card-tag">Studio Coordinates</span>
+            <h4 style="margin-top:8px; font-size:1rem; color:var(--text-main);">The Flow Labs Studio</h4>
+            <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.5; margin:6px 0 12px;">
+              Bhubaneswar, Odisha, India. Working remotely with teams across India, Singapore, and globally.
+            </p>
+            <a href="/bhubaneswar/" style="color:var(--neon-cyan); font-family:var(--font-mono); font-size:0.8rem; text-decoration:none;">
+              Learn about Bhubaneswar Studio &rarr;
+            </a>
+          </div>
+
+          <!-- Instagram & Quick Touchpoints -->
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); padding:20px; border-radius:12px;">
+            <span class="card-tag">Quick Touchpoints</span>
+            <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+              <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener" style="display:flex; justify-content:space-between; color:var(--text-main); text-decoration:none; font-size:0.88rem;">
+                <span>Instagram</span>
+                <span style="color:var(--neon-purple); font-family:var(--font-mono);">@the.flow.labs &rarr;</span>
+              </a>
+              <a href="/lab-report/" style="display:flex; justify-content:space-between; color:var(--text-main); text-decoration:none; font-size:0.88rem;">
+                <span>Free Lab Report</span>
+                <span style="color:var(--neon-emerald); font-family:var(--font-mono);">Instant Audit &rarr;</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Strict SLA Commitment -->
+          <div style="background:rgba(6,182,212,0.05); border:1px solid rgba(6,182,212,0.2); padding:16px; border-radius:12px;">
+            <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-cyan); font-weight:600; margin-bottom:4px;">
+              FOUNDER COMMITMENT
+            </div>
+            <p style="color:var(--text-muted); font-size:0.82rem; line-height:1.5;">
+              Every submission is read directly by Smruti, Biswash, and Arpita. No account managers, no automated phone banks.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Connect</h5>
+          <a href="/contact/">Start a project</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
+          <a href="/privacy-policy/">Privacy Policy</a>
+          <a href="/terms/">Terms of Service</a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    const formView = document.getElementById('formView');
+    const ideaForm = document.getElementById('ideaForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const contactCard = document.querySelector('.contact-card');
+    let successView = null;
+    let projectType = '';
+
+    // Chip selection logic
+    const chipElements = document.querySelectorAll('#typeChips .chip-opt');
+    chipElements.forEach(chip => {
+      const pick = () => {
+        chipElements.forEach(c => {
+          c.classList.remove('sel');
+          c.setAttribute('aria-checked', 'false');
+        });
+        chip.classList.add('sel');
+        chip.setAttribute('aria-checked', 'true');
+        projectType = chip.dataset.val;
+        document.getElementById('errType').classList.remove('show');
+      };
+      chip.addEventListener('click', pick);
+      chip.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pick();
+        }
+      });
+    });
+
+    const validContact = (v) => {
+      const s = v.trim();
+      if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s)) return true;
+      return s.replace(/[^\d]/g, '').length >= 8;
+    };
+
+    const showError = (id, show) => {
+      const err = document.getElementById(id);
+      if (!err) return;
+      err.classList.toggle('show', show);
+      const field = err.parentElement && err.parentElement.querySelector('input, textarea, select');
+      if (field) field.setAttribute('aria-invalid', show ? 'true' : 'false');
+    };
+
+    ['fName', 'fIdea'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('blur', (e) => showError('err' + id.slice(1), !e.target.value.trim()));
+      }
+    });
+
+    const contactEl = document.getElementById('fContact');
+    if (contactEl) {
+      contactEl.addEventListener('blur', (e) => showError('errContact', !validContact(e.target.value)));
+    }
+
+    // 1-Click Copy Email Handler
+    const copyBtn = document.querySelector('[data-copy-email]');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const email = 'hello@theflowlabs.online';
+        navigator.clipboard.writeText(email).then(() => {
+          const span = copyBtn.querySelector('span');
+          if (span) {
+            const original = span.textContent;
+            span.textContent = 'Copied!';
+            setTimeout(() => { span.textContent = original; }, 2000);
+          }
+        });
+      });
+    }
+
+    const cfg = (typeof window !== 'undefined' && window.SITE_CONFIG) || {};
+    const supabaseReady = !!(cfg && cfg.supabaseUrl && cfg.supabaseAnonKey &&
+      !cfg.supabaseUrl.includes('YOURPROJECT') && !cfg.supabaseUrl.includes('yourproject'));
+    const leadSrc = new URLSearchParams(location.search).get('src') || 'site';
+    const note = document.getElementById('formNote');
+
+    function mailtoLink(name, cont, type, idea, budget) {
+      const body = `Name: ${name}\nContact: ${cont}\nProject Category: ${type}\nEstimated Budget: ${budget || '-'}\nSource: ${leadSrc}\n\nProject Requirements:\n${idea}`;
+      return 'mailto:hello@theflowlabs.online?subject=' +
+        encodeURIComponent('New project inquiry | The Flow Labs') +
+        '&body=' + encodeURIComponent(body);
+    }
+
+    async function postLead(payload) {
+      const url = cfg.supabaseUrl.replace(/\/+$/, '') + '/rest/v1/site_leads';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': cfg.supabaseAnonKey,
+          'Authorization': 'Bearer ' + cfg.supabaseAnonKey,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.status !== 201 && res.status !== 200) throw new Error('supabase ' + res.status);
+    }
+
+    function closeSuccess() {
+      if (!successView) return;
+      successView.remove();
+      successView = null;
+      formView.hidden = false;
+      const nameField = document.getElementById('fName');
+      if (nameField) nameField.focus();
+    }
+
+    function showSuccess() {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+      if (!successView) {
+        const tpl = document.getElementById('successTpl');
+        if (tpl && contactCard) {
+          contactCard.appendChild(tpl.content.cloneNode(true));
+          successView = document.getElementById('successView');
+          const closeBtn = document.getElementById('successClose');
+          if (closeBtn) closeBtn.addEventListener('click', closeSuccess);
+        }
+      }
+      formView.hidden = true;
+      if (successView) successView.classList.add('show');
+      ideaForm.reset();
+      chipElements.forEach(c => {
+        c.classList.remove('sel');
+        c.setAttribute('aria-checked', 'false');
+      });
+      projectType = '';
+      if (note) note.textContent = 'Direct reply within 48 hours. No spam, guaranteed.';
+      const heading = document.getElementById('successHeading');
+      if (heading) heading.focus();
+    }
+
+    ideaForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nameC = document.getElementById('fName');
+      const contactC = document.getElementById('fContact');
+      const ideaC = document.getElementById('fIdea');
+      let ok = true;
+
+      const check = (input, errId, valid) => { showError(errId, !valid); if (!valid) ok = false; };
+      check(nameC, 'errName', nameC.value.trim().length > 0);
+      check(contactC, 'errContact', validContact(contactC.value));
+      check(ideaC, 'errIdea', ideaC.value.trim().length > 0);
+      showError('errType', !projectType);
+      if (!projectType) ok = false;
+
+      if (!ok) {
+        const first = document.querySelector('.err.show');
+        if (first) {
+          const inp = first.previousElementSibling;
+          if (inp && inp.focus) inp.focus();
+        }
+        return;
+      }
+
+      if (document.getElementById('fCompany').value.trim()) { showSuccess(); return; } // honeypot
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('loading');
+
+      const payload = {
+        name: nameC.value.trim(),
+        contact: contactC.value.trim(),
+        project_type: projectType,
+        idea: ideaC.value.trim(),
+        budget: document.getElementById('fBudget').value || null,
+        source: leadSrc,
+        user_agent: (navigator.userAgent || '').slice(0, 250)
+      };
+
+      try {
+        if (supabaseReady) {
+          await postLead(payload);
+          fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(() => {});
+          showSuccess();
+        } else {
+          const a = document.createElement('a');
+          a.href = mailtoLink(payload.name, payload.contact, payload.project_type, payload.idea, payload.budget);
+          a.click();
+          showSuccess();
+        }
+      } catch (ex) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        if (note) {
+          note.innerHTML =
+            'Direct submission unavailable. <a href="' +
+            mailtoLink(payload.name, payload.contact, payload.project_type, payload.idea, payload.budget) +
+            '" style="color:var(--neon-cyan);">Click here to email us these exact details &rarr;</a>';
+        }
+      }
+    });
+  })();
+  </script>
+
+</body>
+</html>
