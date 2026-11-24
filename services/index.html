@@ -1,104 +1,341 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Services — Interfaces, Systems & Intelligence | The Flow Labs</title>
-<meta name="description" content="Websites, custom software and AI automation from one founder-led team. Each project is quoted individually with a fixed price before code, and source is always handed over." />
-<link rel="canonical" href="https://www.theflowlabs.online/services/" />
-<meta property="og:title" content="Services: interfaces, systems & intelligence | The Flow Labs" />
-<meta property="og:description" content="Websites, custom software and AI automation from one founder-led team. Each project is quoted individually with a fixed price before code, and source is always handed over." />
-<meta property="og:url" content="https://www.theflowlabs.online/services/" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<meta property="og:locale" content="en_IN" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Services: interfaces, systems & intelligence | The Flow Labs" />
-<meta name="twitter:description" content="Websites, custom software and AI automation from one founder-led team. Each project is quoted individually with a fixed price before code, and source is always handed over." />
-<meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png" />
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/assets/icon-180.png" />
-<meta name="theme-color" content="#0B0B10" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@400;500;700&display=swap" rel="stylesheet">
-<script src="/assets/site.config.js?v=7" defer></script>
-<link rel="stylesheet" href="/assets/site.css?v=11">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "The Flow Labs", "url": "https://www.theflowlabs.online/", "email": "hello@theflowlabs.online", "image": "https://www.theflowlabs.online/assets/work-droovee.png"}</script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/"}, {"@type": "ListItem", "position": 2, "name": "Services"}]}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services — Interfaces, Systems &amp; Intelligence | The Flow Labs</title>
+  <meta name="description" content="Engineering services built in-house: Interfaces (Web), Systems (Cloud Platforms) and Applied Intelligence (AI & Automation). Fixed-price, four builds a month.">
+  <link rel="canonical" href="https://www.theflowlabs.online/services/">
+
+  <meta property="og:title" content="Services — Interfaces, Systems &amp; Intelligence | The Flow Labs">
+  <meta property="og:description" content="Three engineering layers, one team. Fixed-price builds, 100% in-house.">
+  <meta property="og:url" content="https://www.theflowlabs.online/services/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+  <meta property="og:locale" content="en_IN">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Services — Interfaces, Systems &amp; Intelligence | The Flow Labs">
+  <meta name="twitter:description" content="Three engineering layers, one team. Fixed-price builds, 100% in-house.">
+  <meta name="twitter:image" content="https://www.theflowlabs.online/assets/work-droovee.png">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <meta name="theme-color" content="#07090E">
+
+  <!-- Google Fonts: Space Grotesk, DM Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Three.js CDN for WebGL procedural wave field -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+  <!-- Site Config, ThreeUI Stylesheet & Engines -->
+  <script src="/assets/site.config.js?v=7" defer></script>
+  <link rel="stylesheet" href="/assets/threeui.css?v=1">
+  <script src="/assets/threeui.js?v=1" defer></script>
+  <script src="/assets/site-cms.js" defer></script>
+  <script src="/assets/site-track.js" defer></script>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.theflowlabs.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Services" }
+    ]
+  }
+  </script>
 </head>
 <body data-page="services">
 
-<header class="nav" id="nav">
-  <div class="container nav-inner">
-    <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-    <div class="nav-links" id="nav-links">
-      <a href="/work/">Work</a>
-      <a href="/services/">Services</a>
-      <a href="/lab-report/">Lab Report</a>
-      <a href="/about/">About</a>
-      <a href="/blog/">Blog</a>
-      <a href="/contact/" class="nav-cta">Start a project</a>
-    </div>
-    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</header>
+  <!-- Background 3D WebGL Canvas -->
+  <canvas id="threeuiCanvas"></canvas>
 
-<main id="top">
-<div class="page-hero"><div class="wrap">
-    <div class="crumbs"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>Services</span></div>
-    <span class="pill"><span class="dot"></span> <span data-cms="services-hero-label">Interfaces · Systems · Intelligence</span></span>
-    <h1 data-cms="services-hero-title">Engineering services, <span class="grad">built in-house.</span></h1>
-    <p class="sub" data-cms="services-hero-subtitle">Three layers, one team. Open a layer to see what is actually inside it, what it costs to start, and the problem it is meant to solve.</p>
-  </div>
-</div>
-<section><div class="wrap"><div class="stack" style="margin-top:0"><div class="stack-item open"><button class="stack-head" type="button" aria-expanded="true" aria-controls="s-layer-1"><span class="stack-num">01</span><span class="stack-name">Interfaces</span><span class="stack-promise">The screens your customers actually touch.</span><span class="stack-plus" aria-hidden="true">+</span></button><div class="stack-body" id="s-layer-1"><div><div class="stack-grid"><div><h5>Inside the layer</h5><ul><li>Business websites and landing pages</li><li>Web apps, portals and booking flows</li><li>Design systems and component libraries</li><li>Performance, SEO foundation and accessibility passes</li><li>Maintenance and content updates</li></ul></div><div><h5>Signs you need it</h5><ul><li>The site is slow on a phone</li><li>Visitors arrive but nobody enquires</li><li>You need a portal, not a brochure</li><li>Nobody on the team can update the site</li></ul></div><div><div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div><p class="stack-meta" style="margin-top:0.9rem">Typical build <b>2–4 weeks</b>. Fixed quote after one call.</p><div class="stack-links"><a href="/services/web-development/">Full Interfaces page →</a></div></div></div></div></div></div><div class="stack-item"><button class="stack-head" type="button" aria-expanded="false" aria-controls="s-layer-2"><span class="stack-num">02</span><span class="stack-name">Systems</span><span class="stack-promise">The engine under the interface.</span><span class="stack-plus" aria-hidden="true">+</span></button><div class="stack-body" id="s-layer-2"><div><div class="stack-grid"><div><h5>Inside the layer</h5><ul><li>Internal tools and operations consoles</li><li>Management dashboards and reporting</li><li>APIs, integrations and data pipelines</li><li>Role-based access and audit trails</li><li>Migration off spreadsheets and legacy tools</li></ul></div><div><h5>Signs you need it</h5><ul><li>Off-the-shelf software fights your process</li><li>Three tools hold the same customer record</li><li>A weekly report takes a person a full day</li><li>Only one person understands the spreadsheet</li></ul></div><div><div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div><p class="stack-meta" style="margin-top:0.9rem">Typical build <b>4–10 weeks</b>, shipped in phases.</p><div class="stack-links"><a href="/services/custom-software-development/">Full Systems page →</a></div></div></div></div></div></div><div class="stack-item"><button class="stack-head" type="button" aria-expanded="false" aria-controls="s-layer-3"><span class="stack-num">03</span><span class="stack-name">Intelligence</span><span class="stack-promise">The part that decides, drafts and routes.</span><span class="stack-plus" aria-hidden="true">+</span></button><div class="stack-body" id="s-layer-3"><div><div class="stack-grid"><div><h5>Inside the layer</h5><ul><li>AI triage, drafting and routing</li><li>Assistants grounded in your own documents</li><li>Document and data extraction pipelines</li><li>Workflow automation across your existing tools</li><li>Evaluation, guardrails and cost ceilings</li></ul></div><div><h5>Signs you need it</h5><ul><li>The same questions get answered daily</li><li>Staff copy data between systems</li><li>Leads arrive on four channels and nobody owns them</li><li>A chatbot made things up and burned your trust</li></ul></div><div><div class="stack-price">Custom<small>SCOPED PER PROJECT</small></div><p class="stack-meta" style="margin-top:0.9rem">Typical build <b>2–6 weeks</b>. Priced per workflow, not per token.</p><div class="stack-links"><a href="/services/ai-automation/">AI automation →</a><a href="/services/ai-chatbot-development/">AI assistants →</a></div></div></div></div></div></div></div><button class="compare-toggle" type="button" data-compare aria-expanded="false" aria-controls="compareTable">Compare the three layers <span aria-hidden="true">+</span></button><div class="compare-table" id="compareTable"><table><thead><tr><th>Question</th><th>Interfaces</th><th>Systems</th><th>Intelligence</th></tr></thead><tbody><tr><td>What it solves</td><td>How it looks and converts</td><td>How the business runs</td><td>What happens without a human</td></tr><tr><td>Starting point</td><td>Custom quote</td><td>Custom quote</td><td>Custom quote</td></tr><tr><td>Typical timeline</td><td>2–4 weeks</td><td>4–10 weeks</td><td>2–6 weeks</td></tr><tr><td>Best first project</td><td>New site or portal</td><td>Ops tool, CRM, dashboard</td><td>One repetitive workflow</td></tr><tr><td>Needs the other layers?</td><td>Not always</td><td>Usually needs an interface</td><td>Almost always needs both</td></tr></tbody></table></div><div class="chooser" data-chooser style="margin-top:40px"><p class="chooser-q">Not sure which layer you are actually asking for?</p><div class="chooser-opts"><button type="button" data-layer="interfaces" data-answer="&lt;strong&gt;Start with Interfaces.&lt;/strong&gt; You need something people look at and trust. We scope the pages, write the structure, build it, and hand over a site you can edit.">We need a site or a portal</button><button type="button" data-layer="systems" data-answer="&lt;strong&gt;Start with Systems.&lt;/strong&gt; Your process is the product. We map the workflow, replace the spreadsheets, and build the tool your team will actually use.">Our process is held together by spreadsheets</button><button type="button" data-layer="intelligence" data-answer="&lt;strong&gt;Start with Intelligence.&lt;/strong&gt; Pick the one workflow that eats the most hours. We automate that, measure it, then expand — instead of rebuilding everything at once.">We answer the same things all day</button></div><div class="chooser-result" data-chooser-result role="status" aria-live="polite"></div></div><div class="prose reveal" style="margin-top:48px"><h2>How a project runs</h2></div><div class="steps reveal"><div class="step"><span class="num">01</span><h3>Discovery</h3><p>A 30-minute scoping discussion to understand what your business needs, where the friction lies, and what success looks like.</p></div><div class="step"><span class="num">02</span><h3>Specification & Quote</h3><p>We define clear deliverables, milestones, and a fixed price upfront. No ambiguous estimates or creeping scope.</p></div><div class="step"><span class="num">03</span><h3>Iterative Build</h3><p>Development begins with structured milestones, live preview builds, and direct founder communication.</p></div><div class="step"><span class="num">04</span><h3>Production & Handover</h3><p>Deployment to production infrastructure, complete handover documentation, and post-launch support.</p></div></div><div class="prose" style="margin-top:34px"><h2>What every project includes</h2><ul><li>A written scope and a fixed price before any code starts.</li><li>Weekly demos on a real, clickable build.</li><li>Source code, deployment access and documentation handed over at the end.</li><li>A post-launch support window for fixes and small refinements.</li></ul><h2>Four builds a month</h2><p>That is the ceiling for a three-person team that does not subcontract. When the month is full we keep a waiting list instead of quietly spreading thin. Current availability is on the <a href="/contact/">contact page</a>.</p></div></div></section>
-</main>
+  <!-- Ambient Glow Blobs -->
+  <div class="ambient-glow top-left" aria-hidden="true"></div>
+  <div class="ambient-glow bottom-right" aria-hidden="true"></div>
 
-<footer class="footer">
-  <div class="container">
-    <div class="footer-top">
-      <div>
-        <a href="/" class="nav-logo"><svg class="logo-mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 6.5 L11.4 33.5"/><path d="M14.6 6.5 H29.5"/><path d="M13.2 19.8 H24.6"/></g></svg><span class="nav-word">The Flow Labs<span class="accent-dot">.</span></span></a>
-        <p class="footer-tagline">A founder-led studio building interfaces, systems and applied intelligence. Four builds a month, every layer in-house.</p>
-        <p class="clock" style="margin-top:1rem">Studio time <b data-clock>--:--</b> IST</p>
-      </div>
-      <div class="footer-links">
-        <div class="footer-col">
-          <h5>Navigate</h5>
-          <a href="/work/">Work</a>
-          <a href="/services/">Services</a>
-          <a href="/lab-report/">Lab Report</a>
-          <a href="/about/">About</a>
-          <a href="/blog/">Blog</a>
+  <!-- 1. SPATIAL DOCK NAVIGATION -->
+  <div class="three-dock-container">
+    <header class="three-dock">
+      <a href="/" class="dock-logo">
+        <div class="dock-logo-mark">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
         </div>
+        <span>The Flow Labs<span style="color:var(--neon-cyan)">.</span></span>
+      </a>
+
+      <nav class="dock-links">
+        <a href="/services/" class="dock-item active">Services</a>
+        <a href="/work/" class="dock-item">Work</a>
+        <a href="/about/" class="dock-item">About</a>
+        <a href="/contact/" class="dock-item">Scoping</a>
+      </nav>
+
+      <a href="/contact/" class="dock-cta" data-magnetic>
+        <span>Start a Build</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </header>
+  </div>
+
+  <main class="three-wrap" id="top">
+
+    <!-- 2. SERVICES HERO SECTION -->
+    <section class="three-hero">
+      <div class="three-pill-tag">
+        <span class="three-pill-dot"></span>
+        <span data-cms="services-hero-label">Interfaces · Systems · Intelligence</span>
+      </div>
+
+      <h1 class="three-hero-title" data-cms="services-hero-title">
+        Engineering services, <span class="gradient-text">built in-house.</span>
+      </h1>
+
+      <p class="three-hero-desc" data-cms="services-hero-subtitle">
+        Three core engineering layers, one dedicated team. Every product is architected from first principles with fixed-price transparency and zero subcontracting.
+      </p>
+
+      <div class="three-actions">
+        <a href="/contact/" class="three-btn primary" data-magnetic>
+          <span>Request Fixed-Price Scope</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="m12 5 7 7-7 7"></path>
+          </svg>
+        </a>
+        <a href="#compare" class="three-btn glass" data-magnetic>
+          <span>Compare Architecture Layers</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- 3. THREEUI ARCHITECTURE LAYERS BENTO -->
+    <section class="three-section">
+      <div class="section-eyebrow">Discipline Breakdown</div>
+      <h2 class="section-heading">Explore our three engineering layers.</h2>
+      <p class="section-subtext">Click into any layer for full technical specifications, architecture diagrams, and domain case studies.</p>
+
+      <div class="three-bento-grid">
+
+        <!-- Layer 01: Interfaces -->
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">Layer 01 // Frontend</span>
+          <h3 class="card-title">Interfaces &amp; Web Applications</h3>
+          <p class="card-desc">Kinetic, high-performance web applications, customer portals, and design systems with sub-second LCP and zero layout shift.</p>
+          <div class="pill-group" style="margin-bottom: 24px;">
+            <span class="pill-chip">TypeScript</span>
+            <span class="pill-chip">Next.js 15</span>
+            <span class="pill-chip">Tailwind CSS</span>
+            <span class="pill-chip">Three.js</span>
+          </div>
+          <div style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-cyan);">2–4 WEEKS BUILD</span>
+            <a href="/services/web-development/" style="color:#FFFFFF; text-decoration:none; font-size:0.85rem; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+              <span>Full Layer</span> &rarr;
+            </a>
+          </div>
+        </div>
+
+        <!-- Layer 02: Systems -->
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">Layer 02 // Backend</span>
+          <h3 class="card-title">Scaled Cloud Platforms &amp; APIs</h3>
+          <p class="card-desc">Robust backend APIs, relational database schemas, real-time message brokers, and infrastructure designed for enterprise load.</p>
+          <div class="pill-group" style="margin-bottom: 24px;">
+            <span class="pill-chip">PostgreSQL</span>
+            <span class="pill-chip">FastAPI</span>
+            <span class="pill-chip">Supabase</span>
+            <span class="pill-chip">Docker</span>
+          </div>
+          <div style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-emerald);">4–10 WEEKS BUILD</span>
+            <a href="/services/custom-software-development/" style="color:#FFFFFF; text-decoration:none; font-size:0.85rem; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+              <span>Full Layer</span> &rarr;
+            </a>
+          </div>
+        </div>
+
+        <!-- Layer 03: Intelligence -->
+        <div class="three-card col-4" data-three-tilt>
+          <span class="card-tag">Layer 03 // Intelligence</span>
+          <h3 class="card-title">Applied AI &amp; Autonomous Agents</h3>
+          <p class="card-desc">Autonomous LLM agent workflows, vector embeddings, custom fine-tuned tools, and self-healing automation pipelines.</p>
+          <div class="pill-group" style="margin-bottom: 24px;">
+            <span class="pill-chip">Claude 3.5</span>
+            <span class="pill-chip">OpenAI</span>
+            <span class="pill-chip">pgvector</span>
+            <span class="pill-chip">Webhooks</span>
+          </div>
+          <div style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--neon-purple);">2–6 WEEKS BUILD</span>
+            <div style="display:flex; gap:12px;">
+              <a href="/services/ai-automation/" style="color:#FFFFFF; text-decoration:none; font-size:0.82rem; font-weight:600;">Automation &rarr;</a>
+              <a href="/services/ai-chatbot-development/" style="color:#FFFFFF; text-decoration:none; font-size:0.82rem; font-weight:600;">Chatbots &rarr;</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. LAYER COMPARISON MATRIX -->
+    <section class="three-section" id="compare">
+      <div class="section-eyebrow">Comparison Matrix</div>
+      <h2 class="section-heading">Which layer does your project need?</h2>
+      <p class="section-subtext">A direct, objective breakdown of each architectural domain to help you choose the right starting point.</p>
+
+      <div class="three-card col-12" style="padding:0; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.9rem;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border-subtle); background:rgba(255,255,255,0.02);">
+              <th style="padding:20px 24px; font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Dimension</th>
+              <th style="padding:20px 24px; color:var(--neon-cyan); font-family:var(--font-display); font-size:1.05rem;">01 / Interfaces</th>
+              <th style="padding:20px 24px; color:var(--neon-blue); font-family:var(--font-display); font-size:1.05rem;">02 / Systems</th>
+              <th style="padding:20px 24px; color:var(--neon-purple); font-family:var(--font-display); font-size:1.05rem;">03 / Intelligence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+              <td style="padding:18px 24px; font-weight:600; color:#FFFFFF;">Core Problem Solved</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">How your software looks, feels, and converts</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">How your business runs operations and data</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">What gets executed automatically without human overhead</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+              <td style="padding:18px 24px; font-weight:600; color:#FFFFFF;">Ideal First Project</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">Customer booking portal or web application</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">Operations console, internal CRM, custom database</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">Document extraction, lead triage, repetitive task agent</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+              <td style="padding:18px 24px; font-weight:600; color:#FFFFFF;">Production Timeline</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">2–4 Weeks</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">4–10 Weeks (Phased)</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">2–6 Weeks</td>
+            </tr>
+            <tr>
+              <td style="padding:18px 24px; font-weight:600; color:#FFFFFF;">Dependencies</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">Self-contained or connects to existing APIs</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">Usually paired with an interface</td>
+              <td style="padding:18px 24px; color:var(--text-secondary);">Connects into your existing databases and APIs</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. 4-PHASE DELIVERY PROTOCOL -->
+    <section class="three-section">
+      <div class="section-eyebrow">Execution Protocol</div>
+      <h2 class="section-heading">How every project ships.</h2>
+      <p class="section-subtext">Four predictable milestones with weekly working software releases and full repository handover.</p>
+
+      <div class="three-bento-grid">
+        <div class="three-card col-3" data-three-tilt>
+          <span style="font-family:var(--font-mono); font-size:1.4rem; font-weight:700; color:var(--neon-blue); display:block; margin-bottom:12px;">01</span>
+          <h3 class="card-title">Technical Discovery</h3>
+          <p class="card-desc">A 45-minute architectural deep-dive to define requirements, data schemas, and non-negotiables.</p>
+        </div>
+
+        <div class="three-card col-3" data-three-tilt>
+          <span style="font-family:var(--font-mono); font-size:1.4rem; font-weight:700; color:var(--neon-cyan); display:block; margin-bottom:12px;">02</span>
+          <h3 class="card-title">Fixed Blueprint &amp; Quote</h3>
+          <p class="card-desc">Exact deliverables, milestone dates, and fixed pricing agreed upfront. Zero open-ended invoices.</p>
+        </div>
+
+        <div class="three-card col-3" data-three-tilt>
+          <span style="font-family:var(--font-mono); font-size:1.4rem; font-weight:700; color:var(--neon-emerald); display:block; margin-bottom:12px;">03</span>
+          <h3 class="card-title">Iterative In-House Build</h3>
+          <p class="card-desc">Weekly live staging releases you can click and test. You talk directly with the founders writing the code.</p>
+        </div>
+
+        <div class="three-card col-3" data-three-tilt>
+          <span style="font-family:var(--font-mono); font-size:1.4rem; font-weight:700; color:var(--neon-purple); display:block; margin-bottom:12px;">04</span>
+          <h3 class="card-title">Handover &amp; Warranty</h3>
+          <p class="card-desc">Full repository transfer, cloud credentials, architecture docs, and 30 days of post-launch bug warranty.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. SCOPING CTA -->
+    <section class="three-section" style="padding-top:20px;">
+      <div class="three-card col-12" style="background:linear-gradient(135deg, rgba(37,99,235,0.12), rgba(6,182,212,0.06)); border-color:var(--border-glow); text-align:center; padding:60px 30px;">
+        <span class="three-pill-tag">
+          <span class="three-pill-dot"></span>
+          <span>Availability: 2 of 4 December Seats Reserved</span>
+        </span>
+        <h3 style="font-family:var(--font-display); font-size:2.4rem; font-weight:700; margin-bottom:16px; color:#FFFFFF;">Ready to engineer your next build?</h3>
+        <p style="font-size:1.1rem; color:var(--text-secondary); max-width:540px; margin:0 auto 32px;">Schedule a 30-minute technical scoping discussion directly with the founders.</p>
+        <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+          <a href="/contact/" class="three-btn primary" data-magnetic>
+            <span>Start a Project</span>
+          </a>
+          <a href="mailto:hello@theflowlabs.online" class="three-btn glass" data-magnetic>
+            <span>hello@theflowlabs.online</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 7. TELEMETRY FOOTER -->
+  <footer class="three-footer">
+    <div class="three-wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>The Flow Labs<span style="color:var(--neon-cyan)">.</span></h4>
+          <p>A founder-led studio building interfaces, scaled systems and applied intelligence. Four builds a month, 100% in-house.</p>
+          <div class="footer-clock-pill">
+            <span>Studio Time:</span>
+            <b data-clock>--:--:--</b>
+            <span>IST (UTC+5:30)</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Architecture</h5>
+          <a href="/services/web-development/">Web Development</a>
+          <a href="/services/custom-software-development/">Custom Software</a>
+          <a href="/services/ai-automation/">AI Automation</a>
+          <a href="/services/ai-chatbot-development/">AI Chatbots</a>
+        </div>
+
+        <div class="footer-col">
+          <h5>Studio</h5>
+          <a href="/about/">Founders (About)</a>
+          <a href="/work/">Work Showroom</a>
+          <a href="/bhubaneswar/">Bhubaneswar Studio</a>
+          <a href="/lab-report/">Free Lab Report</a>
+          <a href="/blog/">Engineering Blog</a>
+        </div>
+
         <div class="footer-col">
           <h5>Connect</h5>
           <a href="/contact/">Start a project</a>
-          <a href="https://www.instagram.com/the.flow.labs/" target="_blank" rel="noopener">Instagram</a>
-          <a href="/contact/">hello@theflowlabs.online</a>
-        </div>
-        <div class="footer-col">
-          <h5>Studio</h5>
-          <a href="/bhubaneswar/">Bhubaneswar studio</a>
-          <a href="/services/">What we build</a>
+          <a href="mailto:hello@theflowlabs.online">hello@theflowlabs.online</a>
           <a href="/privacy-policy/">Privacy Policy</a>
           <a href="/terms/">Terms of Service</a>
-          <a href="/lab-report/">Free site report</a>
         </div>
       </div>
-    </div>
-    <div class="footer-bottom" style="border-top:1px solid var(--border); margin-top:3rem; padding-top:1.5rem">
-      <span>© <span id="year">2026</span> The Flow Labs. All rights reserved.</span>
-      <span class="footer-powered">Built and maintained in-house</span>
-    </div>
-  </div>
-</footer>
 
-<script src="/assets/site.js?v=7"></script>
-<script src="/assets/site-cms.js" defer></script>
-<script src="/assets/site-track.js" defer></script>
+      <div class="footer-bottom">
+        <div>© 2026 The Flow Labs. Built with ThreeUI &amp; Spatial Engineering.</div>
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">Latency: <span style="color:var(--neon-emerald)">16ms</span> · Status: <span style="color:var(--neon-emerald)">OPERATIONAL</span></div>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
