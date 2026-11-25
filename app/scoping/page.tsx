@@ -315,7 +315,7 @@ export default function ScopingPage() {
                       >
                         <div className="font-medium text-sm text-white">{d.name}</div>
                         <div className="font-mono text-[11px] text-slate-400 mt-1">
-                          From ₹{(d.basePrice / 1000).toFixed(0)}k ({d.baseWeeks} weeks)
+                          From ₹{(d.basePrice / 1000).toFixed(0)}k ({d.baseWeeks} {d.baseWeeks === 1 ? 'week' : 'weeks'})
                         </div>
                       </button>
                     ))}
@@ -397,11 +397,11 @@ export default function ScopingPage() {
               <div className="font-mono text-[11px] text-slate-400">
                 {scopeMode === 'budget' ? 'Target budget tier' : 'Synthesized fixed estimate'}
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className="font-display text-3xl sm:text-4xl font-normal text-white tracking-tight">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="font-display text-2xl sm:text-3xl font-normal text-white tracking-tight">
                   {scopeMode === 'budget' ? activeBudget.priceDisplay : `₹${calculatedTotal.toLocaleString('en-IN')}`}
                 </span>
-                <span className="font-mono text-xs text-slate-400">
+                <span className="font-mono text-xs text-slate-400 whitespace-nowrap">
                   {scopeMode === 'budget' ? 'budget range' : 'fixed scope'}
                 </span>
               </div>

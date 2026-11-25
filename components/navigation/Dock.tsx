@@ -57,14 +57,14 @@ export function Dock() {
   return (
     <>
       <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-        <header className="pointer-events-auto flex items-center gap-3 bg-[#0D111A]/90 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-sm">
+        <header className="pointer-events-auto flex items-center justify-between gap-2 sm:gap-3 bg-[#0D111A]/90 backdrop-blur-xl border border-white/10 rounded-full px-3.5 sm:px-4 py-2 shadow-sm max-w-[94vw] sm:max-w-none">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 mr-2">
-            <div className="w-6 h-6 rounded-md bg-white/10 border border-white/10 flex items-center justify-center">
+          <Link href="/" className="flex items-center gap-2 mr-1 sm:mr-2 shrink-0">
+            <div className="w-6 h-6 rounded-md bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
               <Code2 className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-display font-medium text-sm text-white tracking-tight">
+            <span className="font-display font-medium text-xs sm:text-sm text-white tracking-tight whitespace-nowrap">
               The Flow Labs<span className="text-cyan-400">.</span>
             </span>
           </Link>
@@ -72,7 +72,7 @@ export function Dock() {
           {/* Mobile menu button (md and below) */}
           <button
             onClick={() => setMobileOpen(true)}
-            className="ml-2 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors md:hidden"
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors md:hidden shrink-0"
             aria-controls="mobile-drawer"
             aria-expanded={mobileOpen}
           >
@@ -92,7 +92,7 @@ export function Dock() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-xs px-3.5 py-1.5 rounded-full transition-colors ${
+                  className={`text-xs px-3.5 py-1.5 rounded-full transition-colors whitespace-nowrap ${
                     isActive
                       ? 'text-white bg-white/10 font-medium'
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -107,7 +107,7 @@ export function Dock() {
           {/* CTA Button */}
           <Link
             href="/scoping"
-            className="ml-2 inline-flex items-center gap-1.5 bg-white text-[#07090E] text-xs font-medium px-4 py-1.5 rounded-full hover:bg-slate-200 transition-colors"
+            className="inline-flex items-center gap-1.5 bg-white text-[#07090E] text-xs font-medium px-3.5 sm:px-4 py-1.5 rounded-full hover:bg-slate-200 transition-colors whitespace-nowrap shrink-0"
           >
             <span>Start a build</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
