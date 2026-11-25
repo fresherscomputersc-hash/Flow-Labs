@@ -26,12 +26,17 @@ import {
   X,
   Check,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Filter,
+  SlidersHorizontal,
+  ChevronRight,
+  TrendingUp,
+  FileCheck
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-// ================= TYPES =================
-interface TeamMember {
+// ================= DATA MODELS =================
+export interface TeamMember {
   id: string;
   name: string;
   email: string;
@@ -40,11 +45,12 @@ interface TeamMember {
   status: 'active' | 'invited';
 }
 
-interface Project {
+export interface Project {
   id: string;
   name: string;
   key: string;
   client: string;
+  clientEmail?: string;
   status: 'planning' | 'active' | 'completed' | 'on_hold';
   progress: number;
   budget: string;
@@ -52,15 +58,7 @@ interface Project {
   modules: string[];
 }
 
-interface Module {
-  id: string;
-  projectId: string;
-  name: string;
-  lead: string;
-  status: 'planning' | 'in_progress' | 'completed';
-}
-
-interface TaskItem {
+export interface TaskItem {
   id: string;
   projectId: string;
   moduleName?: string;
@@ -68,9 +66,10 @@ interface TaskItem {
   status: 'todo' | 'in_progress' | 'review' | 'done';
   priority: 'urgent' | 'high' | 'medium' | 'low';
   assignee: string;
+  notes?: string;
 }
 
-interface ClientAccount {
+export interface ClientAccount {
   id: string;
   name: string;
   company: string;
@@ -81,7 +80,15 @@ interface ClientAccount {
   status: 'active' | 'pending';
 }
 
-interface Lead {
+export interface ActivityLog {
+  id: string;
+  actor: string;
+  action: string;
+  target: string;
+  time: string;
+}
+
+export interface Lead {
   id: string;
   name: string;
   contact: string;
@@ -89,21 +96,33 @@ interface Lead {
   budget: string;
   idea?: string;
   created_at: string;
+  status?: string;
 }
 
-// ================= INITIAL SEED DATA =================
-const INITIAL_TEAM: TeamMember[] = [
-  { id: '1', name: 'Smruti Ranjan', email: 'smruti@theflowlabs.online', role: 'owner', initials: 'SR', status: 'active' },
-  { id: '2', name: 'Biswash', email: 'biswash@theflowlabs.online', role: 'admin', initials: 'BW', status: 'active' },
-  { id: '3', name: 'Arpita', email: 'arpita@theflowlabs.online', role: 'admin', initials: 'AP', status: 'active' },
+export interface DailyStandup {
+  id: string;
+  engineer: string;
+  project: string;
+  shipped: string;
+  blockers: string;
+  hours: number;
+  date: string;
+}
+
+// ================= INITIAL DATA =================
+const DEFAULT_TEAM: TeamMember[] = [
+  { id: 'tm-1', name: 'Smruti Ranjan', email: 'smruti@theflowlabs.online', role: 'owner', initials: 'SR', status: 'active' },
+  { id: 'tm-2', name: 'Biswash', email: 'biswash@theflowlabs.online', role: 'admin', initials: 'BW', status: 'active' },
+  { id: 'tm-3', name: 'Arpita', email: 'arpita@theflowlabs.online', role: 'admin', initials: 'AP', status: 'active' },
 ];
 
-const INITIAL_PROJECTS: Project[] = [
+const DEFAULT_PROJECTS: Project[] = [
   {
     id: 'proj-1',
     name: 'Droovee Chauffeur Platform',
     key: 'DRV',
     client: 'Droovee Mobility',
+    clientEmail: 'rohan@droovee.in',
     status: 'active',
     progress: 75,
     budget: '₹1,20,000',
@@ -115,6 +134,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Drishti Edge Vision AI',
     key: 'DSH',
     client: 'In-House Laboratory',
+    clientEmail: 'lab@theflowlabs.online',
     status: 'active',
     progress: 90,
     budget: '₹85,000',
@@ -126,6 +146,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'FlowOps Studio Monitor',
     key: 'OPS',
     client: 'Internal Tooling',
+    clientEmail: 'ops@theflowlabs.online',
     status: 'completed',
     progress: 100,
     budget: '₹40,000',
@@ -134,7 +155,7 @@ const INITIAL_PROJECTS: Project[] = [
   },
 ];
 
-const INITIAL_TASKS: TaskItem[] = [
+const DEFAULT_TASKS: TaskItem[] = [
   {
     id: 't-1',
     projectId: 'proj-1',
@@ -143,6 +164,7 @@ const INITIAL_TASKS: TaskItem[] = [
     status: 'in_progress',
     priority: 'urgent',
     assignee: 'SR',
+    notes: 'Testing road distances with Mapbox matrix APIs.',
   },
   {
     id: 't-2',
@@ -152,6 +174,7 @@ const INITIAL_TASKS: TaskItem[] = [
     status: 'in_progress',
     priority: 'high',
     assignee: 'BW',
+    notes: 'Quantizing weights to ONNX format.',
   },
   {
     id: 't-3',
@@ -161,6 +184,7 @@ const INITIAL_TASKS: TaskItem[] = [
     status: 'review',
     priority: 'medium',
     assignee: 'AP',
+    notes: 'Accessible keyboard navigation verified.',
   },
   {
     id: 't-4',
@@ -170,10 +194,11 @@ const INITIAL_TASKS: TaskItem[] = [
     status: 'done',
     priority: 'high',
     assignee: 'SR',
+    notes: 'Migration 0002_work.sql policies verified.',
   },
 ];
 
-const INITIAL_CLIENTS: ClientAccount[] = [
+const DEFAULT_CLIENTS: ClientAccount[] = [
   {
     id: 'c-1',
     name: 'Rohan Sharma',
@@ -186,28 +211,37 @@ const INITIAL_CLIENTS: ClientAccount[] = [
   },
 ];
 
+const DEFAULT_ACTIVITY: ActivityLog[] = [
+  { id: 'act-1', actor: 'SR', action: 'moved task to Review', target: 'FLW-04 PostgreSQL RLS Policies', time: '10m ago' },
+  { id: 'act-2', actor: 'BW', action: 'deployed edge container', target: 'Drishti 30 FPS Node', time: '45m ago' },
+  { id: 'act-3', actor: 'AP', action: 'updated design tokens', target: 'Spatial Obsidian Kit', time: '2h ago' },
+  { id: 'act-4', actor: 'SR', action: 'issued portal access', target: 'Rohan Sharma (Droovee)', time: '4h ago' },
+];
+
 export default function FlowHQPage() {
-  // Authentication State
-  const [session, setSession] = useState<{ userEmail: string; userName: string; userRole: string } | null>(null);
+  // Session State
+  const [session, setSession] = useState<{ userEmail: string; userName: string; userRole: string; userInitials: string } | null>(null);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Console Active View
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects' | 'tasks' | 'clients' | 'team' | 'leads'>('dashboard');
+  // Active Navigation Tab
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects' | 'tasks' | 'clients' | 'team' | 'leads' | 'standups'>('dashboard');
 
-  // Application Data States
-  const [team, setTeam] = useState<TeamMember[]>(INITIAL_TEAM);
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
-  const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
-  const [clients, setClients] = useState<ClientAccount[]>(INITIAL_CLIENTS);
+  // Application Data with Local Storage Persistence
+  const [team, setTeam] = useState<TeamMember[]>(DEFAULT_TEAM);
+  const [projects, setProjects] = useState<Project[]>(DEFAULT_PROJECTS);
+  const [tasks, setTasks] = useState<TaskItem[]>(DEFAULT_TASKS);
+  const [clients, setClients] = useState<ClientAccount[]>(DEFAULT_CLIENTS);
+  const [activity, setActivity] = useState<ActivityLog[]>(DEFAULT_ACTIVITY);
+  const [standups, setStandups] = useState<DailyStandup[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
 
-  // Filters
-  const [taskFilterProject, setTaskFilterProject] = useState<string>('all');
-  const [taskFilterAssignee, setTaskFilterAssignee] = useState<string>('all');
+  // View Filter: "All Studio Tasks" vs "My Work"
+  const [filterMyWorkOnly, setFilterMyWorkOnly] = useState<boolean>(false);
+  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('all');
 
   // Modals Open State
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
@@ -215,16 +249,22 @@ export default function FlowHQPage() {
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [showAddTeamModal, setShowAddTeamModal] = useState(false);
+  const [showHandoffModal, setShowHandoffModal] = useState(false);
+  const [showStandupModal, setShowStandupModal] = useState(false);
 
-  // Selected Project for adding module
-  const [selectedProjectForModule, setSelectedProjectForModule] = useState<string>('proj-1');
+  // Context for targeted modals
+  const [targetProjectForModule, setTargetProjectForModule] = useState<string>('proj-1');
+  const [targetTaskForHandoff, setTargetTaskForHandoff] = useState<TaskItem | null>(null);
+  const [handoffTargetUser, setHandoffTargetUser] = useState<string>('BW');
+  const [handoffNotes, setHandoffNotes] = useState<string>('');
 
   // Form States - New Project
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectKey, setNewProjectKey] = useState('');
   const [newProjectClient, setNewProjectClient] = useState('');
-  const [newProjectBudget, setNewProjectBudget] = useState('₹60,000');
-  const [newProjectDue, setNewProjectDue] = useState('4 Weeks');
+  const [newProjectClientEmail, setNewProjectClientEmail] = useState('');
+  const [newProjectBudget, setNewProjectBudget] = useState('₹75,000');
+  const [newProjectDue, setNewProjectDue] = useState('3 Weeks');
 
   // Form States - New Module
   const [newModuleName, setNewModuleName] = useState('');
@@ -237,6 +277,7 @@ export default function FlowHQPage() {
   const [newTaskAssignee, setNewTaskAssignee] = useState('SR');
   const [newTaskPriority, setNewTaskPriority] = useState<'urgent' | 'high' | 'medium' | 'low'>('medium');
   const [newTaskStatus, setNewTaskStatus] = useState<'todo' | 'in_progress' | 'review' | 'done'>('todo');
+  const [newTaskNotes, setNewTaskNotes] = useState('');
 
   // Form States - New Client
   const [newClientName, setNewClientName] = useState('');
@@ -249,17 +290,56 @@ export default function FlowHQPage() {
   const [newTeamEmail, setNewTeamEmail] = useState('');
   const [newTeamRole, setNewTeamRole] = useState<'owner' | 'admin' | 'manager' | 'member'>('member');
 
-  // Check existing session
+  // Form States - Daily Standup
+  const [standupProject, setStandupProject] = useState('proj-1');
+  const [standupShipped, setStandupShipped] = useState('');
+  const [standupBlockers, setStandupBlockers] = useState('None');
+  const [standupHours, setStandupHours] = useState('6');
+
+  // Initialize and load saved state from localStorage
+  useEffect(() => {
+    try {
+      const savedProjects = localStorage.getItem('flow_hq_projects');
+      if (savedProjects) setProjects(JSON.parse(savedProjects));
+
+      const savedTasks = localStorage.getItem('flow_hq_tasks');
+      if (savedTasks) setTasks(JSON.parse(savedTasks));
+
+      const savedClients = localStorage.getItem('flow_hq_clients');
+      if (savedClients) setClients(JSON.parse(savedClients));
+
+      const savedTeam = localStorage.getItem('flow_hq_team');
+      if (savedTeam) setTeam(JSON.parse(savedTeam));
+
+      const savedStandups = localStorage.getItem('flow_hq_standups');
+      if (savedStandups) setStandups(JSON.parse(savedStandups));
+    } catch (err) {
+      console.warn('LocalStorage load notice:', err);
+    }
+  }, []);
+
+  // Save state updates to localStorage
+  const persistState = (key: string, data: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  // Check Supabase Auth session
   useEffect(() => {
     async function checkAuth() {
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
-          const email = data.session.user.email || 'founder@theflowlabs.online';
+          const email = data.session.user.email || 'smruti@theflowlabs.online';
+          const name = email.split('@')[0];
           setSession({
             userEmail: email,
-            userName: email.split('@')[0],
+            userName: name.charAt(0).toUpperCase() + name.slice(1),
             userRole: 'Owner',
+            userInitials: name.slice(0, 2).toUpperCase(),
           });
         }
       } catch (err) {
@@ -269,7 +349,7 @@ export default function FlowHQPage() {
     checkAuth();
   }, []);
 
-  // Load Leads from Supabase
+  // Load Inbound Leads from Supabase
   const loadLeads = async () => {
     setLoadingLeads(true);
     try {
@@ -295,43 +375,57 @@ export default function FlowHQPage() {
     }
   }, [session]);
 
-  // Handle Login
+  // Log activity event
+  const logActivityEvent = (actor: string, action: string, target: string) => {
+    const newLog: ActivityLog = {
+      id: `act-${Date.now()}`,
+      actor,
+      action,
+      target,
+      time: 'Just now',
+    };
+    setActivity((prev) => [newLog, ...prev.slice(0, 9)]);
+  };
+
+  // Handle Sign In
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
     setAuthError('');
 
     try {
-      // Attempt Supabase Auth login
       const { data, error } = await supabase.auth.signInWithPassword({
         email: authEmail,
         password: authPassword,
       });
 
       if (error) {
-        // Fallback for founder access if running locally or demo account
         if (
           authEmail.toLowerCase().includes('theflowlabs') ||
           authEmail.toLowerCase() === 'theflowlabs01@gmail.com' ||
           authPassword === 'flowlabs2026'
         ) {
+          const name = authEmail.split('@')[0];
           setSession({
             userEmail: authEmail,
-            userName: 'Founder',
+            userName: name.charAt(0).toUpperCase() + name.slice(1),
             userRole: 'Owner',
+            userInitials: name.slice(0, 2).toUpperCase(),
           });
         } else {
           setAuthError(error.message || 'Invalid credentials. Please verify your email and password.');
         }
       } else if (data?.session) {
+        const email = data.session.user.email || authEmail;
+        const name = data.session.user.user_metadata?.full_name || email.split('@')[0];
         setSession({
-          userEmail: data.session.user.email || authEmail,
-          userName: data.session.user.user_metadata?.full_name || authEmail.split('@')[0],
+          userEmail: email,
+          userName: name,
           userRole: 'Admin',
+          userInitials: name.slice(0, 2).toUpperCase(),
         });
       }
     } catch (err: any) {
-      // Local fallback for founder testing
       if (
         authEmail.toLowerCase().includes('theflowlabs') ||
         authEmail.toLowerCase() === 'theflowlabs01@gmail.com' ||
@@ -341,6 +435,7 @@ export default function FlowHQPage() {
           userEmail: authEmail,
           userName: 'Founder',
           userRole: 'Owner',
+          userInitials: 'SR',
         });
       } else {
         setAuthError(err.message || 'Sign in encountered an error.');
@@ -350,12 +445,13 @@ export default function FlowHQPage() {
     }
   };
 
-  // Founder Bypass Quick Sign In
-  const handleFounderQuickLogin = (email: string, role: string, name: string) => {
+  // Quick Founder Preset Login
+  const handleFounderQuickLogin = (email: string, role: string, name: string, initials: string) => {
     setSession({
       userEmail: email,
       userName: name,
       userRole: role,
+      userInitials: initials,
     });
   };
 
@@ -374,23 +470,47 @@ export default function FlowHQPage() {
     e.preventDefault();
     if (!newProjectName.trim()) return;
 
+    const newKey = newProjectKey.trim().toUpperCase() || 'FLW';
     const newProj: Project = {
       id: `proj-${Date.now()}`,
       name: newProjectName.trim(),
-      key: newProjectKey.trim().toUpperCase() || 'FLW',
+      key: newKey,
       client: newProjectClient.trim() || 'Direct Client',
+      clientEmail: newProjectClientEmail.trim() || undefined,
       status: 'active',
       progress: 0,
-      budget: newProjectBudget.trim() || '₹60,000',
+      budget: newProjectBudget.trim() || '₹75,000',
       dueDate: newProjectDue.trim() || '3 Weeks',
-      modules: ['Core Architecture'],
+      modules: ['Core Architecture', 'Frontend Interface', 'Cloud API'],
     };
 
-    setProjects((prev) => [newProj, ...prev]);
+    const updated = [newProj, ...projects];
+    setProjects(updated);
+    persistState('flow_hq_projects', updated);
+
+    // If client email was provided, auto-create client portal account
+    if (newProjectClientEmail.trim()) {
+      const newCli: ClientAccount = {
+        id: `c-${Date.now()}`,
+        name: newProjectClient.trim() || 'Client Lead',
+        company: newProjectClient.trim(),
+        email: newProjectClientEmail.trim().toLowerCase(),
+        projectId: newProj.id,
+        projectName: newProj.name,
+        accessKey: `${newKey}-CLIENT-${Math.floor(1000 + Math.random() * 9000)}`,
+        status: 'active',
+      };
+      const updatedClients = [newCli, ...clients];
+      setClients(updatedClients);
+      persistState('flow_hq_clients', updatedClients);
+    }
+
+    logActivityEvent(session?.userInitials || 'SR', 'created new project', `${newProj.name} (${newKey})`);
     setShowAddProjectModal(false);
     setNewProjectName('');
     setNewProjectKey('');
     setNewProjectClient('');
+    setNewProjectClientEmail('');
   };
 
   // Add Module
@@ -398,14 +518,15 @@ export default function FlowHQPage() {
     e.preventDefault();
     if (!newModuleName.trim()) return;
 
-    setProjects((prev) =>
-      prev.map((p) =>
-        p.id === selectedProjectForModule
-          ? { ...p, modules: [...p.modules, newModuleName.trim()] }
-          : p
-      )
+    const updated = projects.map((p) =>
+      p.id === targetProjectForModule
+        ? { ...p, modules: [...p.modules, newModuleName.trim()] }
+        : p
     );
+    setProjects(updated);
+    persistState('flow_hq_projects', updated);
 
+    logActivityEvent(session?.userInitials || 'SR', 'added module', `${newModuleName.trim()}`);
     setShowAddModuleModal(false);
     setNewModuleName('');
   };
@@ -425,11 +546,59 @@ export default function FlowHQPage() {
       status: newTaskStatus,
       priority: newTaskPriority,
       assignee: newTaskAssignee,
+      notes: newTaskNotes.trim() || undefined,
     };
 
-    setTasks((prev) => [newTask, ...prev]);
+    const updated = [newTask, ...tasks];
+    setTasks(updated);
+    persistState('flow_hq_tasks', updated);
+
+    logActivityEvent(session?.userInitials || 'SR', 'created task', `${newTask.title} &rarr; ${newTask.assignee}`);
     setShowAddTaskModal(false);
     setNewTaskTitle('');
+    setNewTaskNotes('');
+  };
+
+  // Move Task Status
+  const handleMoveTaskStatus = (taskId: string, newStatus: TaskItem['status']) => {
+    const updated = tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t));
+    setTasks(updated);
+    persistState('flow_hq_tasks', updated);
+
+    const target = tasks.find((t) => t.id === taskId);
+    if (target) {
+      logActivityEvent(session?.userInitials || 'SR', `moved task to ${newStatus}`, target.title);
+    }
+  };
+
+  // Task Handoff
+  const handleExecuteHandoff = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetTaskForHandoff) return;
+
+    const updated = tasks.map((t) =>
+      t.id === targetTaskForHandoff.id
+        ? {
+            ...t,
+            assignee: handoffTargetUser,
+            notes: handoffNotes.trim()
+              ? `${t.notes ? t.notes + ' | ' : ''}Handoff Note: ${handoffNotes.trim()}`
+              : t.notes,
+          }
+        : t
+    );
+    setTasks(updated);
+    persistState('flow_hq_tasks', updated);
+
+    logActivityEvent(
+      session?.userInitials || 'SR',
+      `handed off task to ${handoffTargetUser}`,
+      targetTaskForHandoff.title
+    );
+
+    setShowHandoffModal(false);
+    setTargetTaskForHandoff(null);
+    setHandoffNotes('');
   };
 
   // Add Client
@@ -438,19 +607,24 @@ export default function FlowHQPage() {
     if (!newClientName.trim() || !newClientEmail.trim()) return;
 
     const proj = projects.find((p) => p.id === newClientProject);
+    const projKey = proj?.key || 'FLW';
 
     const newCli: ClientAccount = {
       id: `c-${Date.now()}`,
       name: newClientName.trim(),
-      company: newClientCompany.trim() || 'Client Company',
+      company: newClientCompany.trim() || 'Client Organization',
       email: newClientEmail.trim().toLowerCase(),
       projectId: newClientProject,
-      projectName: proj?.name || 'Assigned Project',
-      accessKey: `${proj?.key || 'FLW'}-CLIENT-${Math.floor(1000 + Math.random() * 9000)}`,
+      projectName: proj?.name || 'Assigned Build',
+      accessKey: `${projKey}-CLIENT-${Math.floor(1000 + Math.random() * 9000)}`,
       status: 'active',
     };
 
-    setClients((prev) => [newCli, ...prev]);
+    const updated = [newCli, ...clients];
+    setClients(updated);
+    persistState('flow_hq_clients', updated);
+
+    logActivityEvent(session?.userInitials || 'SR', 'provisioned client portal', `${newCli.name} (${newCli.accessKey})`);
     setShowAddClientModal(false);
     setNewClientName('');
     setNewClientCompany('');
@@ -476,20 +650,59 @@ export default function FlowHQPage() {
       status: 'active',
     };
 
-    setTeam((prev) => [...prev, newMember]);
+    const updated = [...team, newMember];
+    setTeam(updated);
+    persistState('flow_hq_team', updated);
+
+    logActivityEvent(session?.userInitials || 'SR', 'added team member', `${newMember.name} (${newMember.role})`);
     setShowAddTeamModal(false);
     setNewTeamName('');
     setNewTeamEmail('');
   };
 
-  // Move Task Status
-  const handleMoveTaskStatus = (taskId: string, newStatus: TaskItem['status']) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
-    );
+  // Submit Daily Standup
+  const handleSubmitStandup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!standupShipped.trim()) return;
+
+    const proj = projects.find((p) => p.id === standupProject);
+    const newEntry: DailyStandup = {
+      id: `std-${Date.now()}`,
+      engineer: session?.userName || 'Founder',
+      project: proj?.name || 'Studio Architecture',
+      shipped: standupShipped.trim(),
+      blockers: standupBlockers.trim() || 'None',
+      hours: Number(standupHours) || 6,
+      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+    };
+
+    const updated = [newEntry, ...standups];
+    setStandups(updated);
+    persistState('flow_hq_standups', updated);
+
+    logActivityEvent(session?.userInitials || 'SR', 'logged daily standup', `${newEntry.hours}h on ${newEntry.project}`);
+    setShowStandupModal(false);
+    setStandupShipped('');
+    setStandupBlockers('None');
   };
 
-  // ================= VIEW: LOGIN SCREEN (IF NOT AUTHENTICATED) =================
+  // Filtered Tasks for current view
+  const currentFilteredTasks = tasks.filter((t) => {
+    if (filterMyWorkOnly && session?.userInitials) {
+      if (t.assignee !== session.userInitials) return false;
+    }
+    if (selectedProjectFilter !== 'all') {
+      if (t.projectId !== selectedProjectFilter) return false;
+    }
+    return true;
+  });
+
+  // Calculate Totals
+  const activeProjectsCount = projects.filter((p) => p.status === 'active').length;
+  const openTasksCount = tasks.filter((t) => t.status !== 'done').length;
+  const urgentTasksCount = tasks.filter((t) => t.priority === 'urgent' && t.status !== 'done').length;
+
+  // ================= 1. VIEW: LOGIN SCREEN (UNAUTHENTICATED) =================
   if (!session) {
     return (
       <div className="min-h-[85vh] flex items-center justify-center px-4 py-16">
@@ -501,7 +714,7 @@ export default function FlowHQPage() {
             </div>
             <h1 className="font-display text-2xl font-normal text-white">Flow HQ Console</h1>
             <p className="text-slate-400 text-xs">
-              Founder operations, task matrix, client portal and CRM pipeline
+              Founder operations, task matrix, client portal, and CRM pipeline
             </p>
           </div>
 
@@ -562,21 +775,21 @@ export default function FlowHQPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => handleFounderQuickLogin('smruti@theflowlabs.online', 'Owner', 'Smruti Ranjan')}
+                onClick={() => handleFounderQuickLogin('smruti@theflowlabs.online', 'Owner', 'Smruti Ranjan', 'SR')}
                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors"
               >
                 Smruti (SR)
               </button>
               <button
                 type="button"
-                onClick={() => handleFounderQuickLogin('biswash@theflowlabs.online', 'Admin', 'Biswash')}
+                onClick={() => handleFounderQuickLogin('biswash@theflowlabs.online', 'Admin', 'Biswash', 'BW')}
                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors"
               >
                 Biswash (BW)
               </button>
               <button
                 type="button"
-                onClick={() => handleFounderQuickLogin('arpita@theflowlabs.online', 'Admin', 'Arpita')}
+                onClick={() => handleFounderQuickLogin('arpita@theflowlabs.online', 'Admin', 'Arpita', 'AP')}
                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors"
               >
                 Arpita (AP)
@@ -598,35 +811,35 @@ export default function FlowHQPage() {
     );
   }
 
-  // ================= VIEW: LOGGED IN FLOW HQ APPLICATION =================
+  // ================= 2. VIEW: AUTHENTICATED STUDIO OS APPLICATION =================
   return (
-    <div className="pt-6 sm:pt-10 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
+    <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
       
       {/* ================= TOP CONSOLE HEADER ================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/10">
         
-        {/* Brand & User Info */}
+        {/* Brand & User Active Context */}
         <div className="flex items-center gap-3.5">
           <Link
             href="/"
-            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs transition-colors shrink-0"
+            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs transition-colors shrink-0"
             title="Return to public site"
           >
             HQ
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-lg font-normal text-white">Flow HQ Console</h1>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px]">
+              <h1 className="font-display text-lg font-normal text-white">Flow HQ Studio OS</h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[11px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>Active session: {session.userName} ({session.userRole})</span>
+                <span>{session.userName} ({session.userRole})</span>
               </span>
             </div>
-            <p className="text-slate-400 text-xs mt-0.5">Projects, task matrix, client portal and CRM pipeline</p>
+            <p className="text-slate-400 text-xs mt-0.5">Projects, task matrix, client portal, and CRM pipeline</p>
           </div>
         </div>
 
-        {/* Console Navigation Tabs & User Controls */}
+        {/* Global Navigation Tabs & Actions */}
         <div className="flex flex-wrap items-center gap-2">
           
           <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/10 overflow-x-auto text-xs font-mono">
@@ -652,7 +865,7 @@ export default function FlowHQPage() {
                 activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Task Matrix ({tasks.length})
+              Tasks ({tasks.length})
             </button>
             <button
               onClick={() => setActiveTab('clients')}
@@ -671,16 +884,23 @@ export default function FlowHQPage() {
               Team ({team.length})
             </button>
             <button
+              onClick={() => setActiveTab('standups')}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                activeTab === 'standups' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Standups ({standups.length})
+            </button>
+            <button
               onClick={() => setActiveTab('leads')}
               className={`px-3 py-1.5 rounded-lg transition-colors ${
                 activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Leads CRM ({leads.length})
+              Leads ({leads.length})
             </button>
           </div>
 
-          {/* Action Links */}
           <div className="flex items-center gap-1.5">
             <Link
               href="/client"
@@ -702,47 +922,74 @@ export default function FlowHQPage() {
 
       </div>
 
-      {/* ================= TAB 1: DASHBOARD ================= */}
+      {/* ================= TAB 1: EXECUTIVE DASHBOARD ================= */}
       {activeTab === 'dashboard' && (
-        <div className="space-y-6">
+        <div className="space-y-7">
           
-          {/* Key Metrics Grid */}
+          {/* Key Studio Telemetry Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
-              <span className="font-mono text-xs text-slate-400">Active projects</span>
-              <div className="font-display text-2xl font-normal text-white">{projects.length} builds</div>
-              <div className="text-[11px] font-mono text-emerald-400">{projects.filter(p => p.status === 'active').length} in active development</div>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
-              <span className="font-mono text-xs text-slate-400">Tasks in queue</span>
-              <div className="font-display text-2xl font-normal text-white">
-                {tasks.filter((t) => t.status !== 'done').length} open
+            
+            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
+              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                <span>Active sprint capacity</span>
+                <span className="text-emerald-400">{activeProjectsCount} / 4 slots</span>
               </div>
-              <div className="text-[11px] font-mono text-amber-400">
-                {tasks.filter((t) => t.priority === 'urgent').length} urgent sprint priority
+              <div className="font-display text-3xl font-normal text-white">
+                {activeProjectsCount} Builds
+              </div>
+              <div className="text-[11px] font-mono text-slate-400">
+                Fixed monthly intake ceiling
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
-              <span className="font-mono text-xs text-slate-400">Active clients</span>
-              <div className="font-display text-2xl font-normal text-white">{clients.length} accounts</div>
-              <div className="text-[11px] font-mono text-slate-400">Connected to client portal</div>
+            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
+              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                <span>Open task queue</span>
+                <span className="text-amber-400">{urgentTasksCount} urgent</span>
+              </div>
+              <div className="font-display text-3xl font-normal text-white">
+                {openTasksCount} Tasks
+              </div>
+              <div className="text-[11px] font-mono text-slate-400">
+                Across {projects.length} studio builds
+              </div>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
-              <span className="font-mono text-xs text-slate-400">Website leads</span>
-              <div className="font-display text-2xl font-normal text-white">{leads.length || '3'} submissions</div>
-              <div className="text-[11px] font-mono text-slate-400">From scoping cockpit</div>
+            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
+              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                <span>Active clients</span>
+                <span className="text-emerald-400">Active SLA</span>
+              </div>
+              <div className="font-display text-3xl font-normal text-white">
+                {clients.length} Accounts
+              </div>
+              <div className="text-[11px] font-mono text-slate-400">
+                Provisioned portal access
+              </div>
             </div>
+
+            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
+              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                <span>Inbound leads</span>
+                <span className="text-white font-medium">{leads.length || '3'} new</span>
+              </div>
+              <div className="font-display text-3xl font-normal text-white">
+                {leads.length || '3'} Inquiries
+              </div>
+              <div className="text-[11px] font-mono text-slate-400">
+                From project scoping cockpit
+              </div>
+            </div>
+
           </div>
 
-          {/* Quick Actions Bar */}
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-wrap items-center justify-between gap-3">
+          {/* Quick Creator Bar */}
+          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="font-display text-base font-normal text-white">Workspace actions</h3>
-              <p className="text-slate-400 text-xs">Create and manage your projects, tasks, clients, and team members</p>
+              <h2 className="font-display text-base font-normal text-white">Studio operations bar</h2>
+              <p className="text-slate-400 text-xs">Create projects, modules, tasks, onboard clients, or log standup</p>
             </div>
+            
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setShowAddProjectModal(true)}
@@ -772,53 +1019,93 @@ export default function FlowHQPage() {
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add member</span>
               </button>
+              <button
+                onClick={() => setShowStandupModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono text-xs border border-emerald-500/20 transition-colors"
+              >
+                <FileCheck className="w-3.5 h-3.5" />
+                <span>Log standup</span>
+              </button>
             </div>
           </div>
 
-          {/* Active Projects Overview */}
-          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div>
-                <h3 className="font-display text-base font-normal text-white">Active sprint deployments</h3>
-                <p className="text-slate-400 text-xs">Live projects under development by founding engineers</p>
+          {/* Active Builds & Recent Activity Split */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {/* Active Projects (7 cols) */}
+            <div className="lg:col-span-7 p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div>
+                  <h3 className="font-display text-base font-normal text-white">Active sprint deployments</h3>
+                  <p className="text-slate-400 text-xs">Direct builds running under founder supervision</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('projects')}
+                  className="text-xs font-mono text-slate-300 hover:text-white"
+                >
+                  View all &rarr;
+                </button>
               </div>
-              <button
-                onClick={() => setActiveTab('projects')}
-                className="text-xs font-mono text-slate-300 hover:text-white"
-              >
-                View all projects &rarr;
-              </button>
+
+              <div className="space-y-3">
+                {projects.map((p) => (
+                  <div key={p.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs text-white px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                          {p.key}
+                        </span>
+                        <h4 className="font-medium text-white text-sm">{p.name}</h4>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 border border-white/10 text-slate-300">
+                        {p.status}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px] font-mono text-slate-400">
+                        <span>Sprint milestone progress</span>
+                        <span className="text-white font-medium">{p.progress}%</span>
+                      </div>
+                      <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-white h-full rounded-full" style={{ width: `${p.progress}%` }}></div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+                      <span>Client: {p.client}</span>
+                      <span>Target: {p.dueDate}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {projects.map((p) => (
-                <div key={p.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs text-slate-400">{p.key}</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 border border-white/10 text-slate-300">
-                      {p.status}
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-white text-sm">{p.name}</h4>
-                    <div className="text-xs text-slate-400">{p.client}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-mono text-slate-400">
-                      <span>Progress</span>
-                      <span className="text-white">{p.progress}%</span>
-                    </div>
-                    <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-white h-full rounded-full" style={{ width: `${p.progress}%` }}></div>
-                    </div>
-                  </div>
-                  <div className="flex justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-white/5">
-                    <span>Due: {p.dueDate}</span>
-                    <span>{p.budget}</span>
-                  </div>
+            {/* Live Studio Activity Feed (5 cols) */}
+            <div className="lg:col-span-5 p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  <h3 className="font-display text-base font-normal text-white">Live studio audit feed</h3>
                 </div>
-              ))}
+                <span className="font-mono text-[10px] text-slate-500">Realtime</span>
+              </div>
+
+              <div className="space-y-3">
+                {activity.map((act) => (
+                  <div key={act.id} className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="font-mono font-medium text-white">{act.actor}</span>
+                      <span className="font-mono text-[10px] text-slate-500">{act.time}</span>
+                    </div>
+                    <p className="text-slate-300 text-xs">
+                      {act.action}: <strong className="text-white font-normal">{act.target}</strong>
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
+
           </div>
 
         </div>
@@ -830,7 +1117,7 @@ export default function FlowHQPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
             <div>
               <h2 className="font-display text-xl font-normal text-white">Projects and architectural modules</h2>
-              <p className="text-slate-400 text-xs">Manage studio builds, milestones, and technical modules</p>
+              <p className="text-slate-400 text-xs">Studio sprint builds, milestone roadmaps, and technical modules</p>
             </div>
             <button
               onClick={() => setShowAddProjectModal(true)}
@@ -846,29 +1133,35 @@ export default function FlowHQPage() {
               <div key={proj.id} className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-5">
                 
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-xs text-white">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className="px-2.5 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-xs text-white">
                         {proj.key}
                       </span>
                       <h3 className="font-display text-xl font-normal text-white">{proj.name}</h3>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                        {proj.status}
+                      </span>
                     </div>
-                    <p className="text-slate-400 text-xs">Client: <strong className="text-white">{proj.client}</strong></p>
+                    <p className="text-slate-400 text-xs">
+                      Client: <strong className="text-white">{proj.client}</strong>
+                      {proj.clientEmail && ` (${proj.clientEmail})`}
+                    </p>
                   </div>
 
-                  <div className="flex items-center gap-2 font-mono text-xs">
-                    <span className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
+                  <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                    <span className="px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
                       Budget: {proj.budget}
                     </span>
-                    <span className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
-                      Deadline: {proj.dueDate}
+                    <span className="px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
+                      Delivery: {proj.dueDate}
                     </span>
                     <button
                       onClick={() => {
-                        setSelectedProjectForModule(proj.id);
+                        setTargetProjectForModule(proj.id);
                         setShowAddModuleModal(true);
                       }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white text-[#07090E] font-medium hover:bg-slate-200"
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded bg-white text-[#07090E] font-medium hover:bg-slate-200 transition-colors"
                     >
                       <Plus className="w-3 h-3" />
                       <span>Add module</span>
@@ -877,12 +1170,12 @@ export default function FlowHQPage() {
                 </div>
 
                 {/* Modules breakdown */}
-                <div className="space-y-2">
-                  <div className="font-mono text-xs text-slate-400">Architectural modules ({proj.modules.length}):</div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="space-y-2.5">
+                  <div className="font-mono text-xs text-slate-400">Technical modules ({proj.modules.length}):</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {proj.modules.map((mod, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs">
-                        <span className="text-slate-200">{mod}</span>
+                      <div key={idx} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs">
+                        <span className="text-slate-200 font-medium">{mod}</span>
                         <span className="font-mono text-[10px] text-slate-500">M0{idx+1}</span>
                       </div>
                     ))}
@@ -895,41 +1188,84 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= TAB 3: TASK MATRIX (KANBAN) ================= */}
+      {/* ================= TAB 3: TASK MATRIX & MY WORK (KANBAN) ================= */}
       {activeTab === 'tasks' && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+          
+          {/* Header & Controls Bar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/10">
             <div>
               <h2 className="font-display text-xl font-normal text-white">Collaborative task matrix</h2>
-              <p className="text-slate-400 text-xs">Real-time sprint tasks across projects and founding engineers</p>
+              <p className="text-slate-400 text-xs">Sprint tasks with role delegation, priority tags, and status transitions</p>
             </div>
-            <button
-              onClick={() => setShowAddTaskModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors w-fit"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Create new task</span>
-            </button>
+
+            {/* Filter Controls & Create Button */}
+            <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono">
+              
+              {/* My Work Toggle */}
+              <button
+                onClick={() => setFilterMyWorkOnly(!filterMyWorkOnly)}
+                className={`px-3 py-1.5 rounded-lg border transition-colors ${
+                  filterMyWorkOnly
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 font-medium'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                }`}
+              >
+                {filterMyWorkOnly ? 'Showing: My Work Only' : 'Filter: My Work'}
+              </button>
+
+              {/* Project Filter */}
+              <select
+                value={selectedProjectFilter}
+                onChange={(e) => setSelectedProjectFilter(e.target.value)}
+                className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+              >
+                <option value="all" className="bg-[#0E1424]">All projects</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-[#0E1424]">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => setShowAddTaskModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create task</span>
+              </button>
+            </div>
           </div>
 
           {/* Kanban Columns */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
             
-            {/* Column: To Do */}
+            {/* Column 1: To Do */}
             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
               <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-white/10">
                 <span className="text-slate-300 font-medium">To do</span>
-                <span className="text-slate-500">{tasks.filter((t) => t.status === 'todo').length}</span>
+                <span className="text-slate-500">{currentFilteredTasks.filter((t) => t.status === 'todo').length}</span>
               </div>
               <div className="space-y-2.5">
-                {tasks.filter((t) => t.status === 'todo').map((t) => (
+                {currentFilteredTasks.filter((t) => t.status === 'todo').map((t) => (
                   <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 space-y-2 text-xs">
                     <div className="font-medium text-white">{t.title}</div>
+                    {t.notes && <p className="text-slate-400 text-[11px] leading-relaxed">{t.notes}</p>}
                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
-                      <span>{t.priority}</span>
+                      <span className={t.priority === 'urgent' ? 'text-amber-400 font-semibold' : ''}>{t.priority}</span>
                       <span>Assignee: {t.assignee}</span>
                     </div>
-                    <div className="pt-2 border-t border-white/5 flex justify-end">
+                    <div className="pt-2 border-t border-white/5 flex justify-between items-center">
+                      <button
+                        onClick={() => {
+                          setTargetTaskForHandoff(t);
+                          setShowHandoffModal(true);
+                        }}
+                        className="text-[10px] font-mono text-slate-400 hover:text-white"
+                      >
+                        Hand off
+                      </button>
                       <button
                         onClick={() => handleMoveTaskStatus(t.id, 'in_progress')}
                         className="text-[10px] font-mono text-slate-300 hover:text-white"
@@ -942,26 +1278,36 @@ export default function FlowHQPage() {
               </div>
             </div>
 
-            {/* Column: In Progress */}
+            {/* Column 2: In Progress */}
             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
               <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-white/10">
                 <span className="text-white font-medium">In progress</span>
-                <span className="text-emerald-400 font-semibold">{tasks.filter((t) => t.status === 'in_progress').length}</span>
+                <span className="text-emerald-400 font-semibold">{currentFilteredTasks.filter((t) => t.status === 'in_progress').length}</span>
               </div>
               <div className="space-y-2.5">
-                {tasks.filter((t) => t.status === 'in_progress').map((t) => (
+                {currentFilteredTasks.filter((t) => t.status === 'in_progress').map((t) => (
                   <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 space-y-2 text-xs">
                     <div className="font-medium text-white">{t.title}</div>
+                    {t.notes && <p className="text-slate-400 text-[11px] leading-relaxed">{t.notes}</p>}
                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
                       <span className="text-amber-400">{t.priority}</span>
                       <span>Assignee: {t.assignee}</span>
                     </div>
-                    <div className="pt-2 border-t border-white/5 flex justify-end gap-2">
+                    <div className="pt-2 border-t border-white/5 flex justify-between items-center">
+                      <button
+                        onClick={() => {
+                          setTargetTaskForHandoff(t);
+                          setShowHandoffModal(true);
+                        }}
+                        className="text-[10px] font-mono text-slate-400 hover:text-white"
+                      >
+                        Hand off
+                      </button>
                       <button
                         onClick={() => handleMoveTaskStatus(t.id, 'review')}
                         className="text-[10px] font-mono text-slate-300 hover:text-white"
                       >
-                        Ready for review &rarr;
+                        Review &rarr;
                       </button>
                     </div>
                   </div>
@@ -969,16 +1315,17 @@ export default function FlowHQPage() {
               </div>
             </div>
 
-            {/* Column: Review */}
+            {/* Column 3: Review */}
             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
               <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-white/10">
                 <span className="text-slate-300 font-medium">Review</span>
-                <span className="text-slate-500">{tasks.filter((t) => t.status === 'review').length}</span>
+                <span className="text-slate-500">{currentFilteredTasks.filter((t) => t.status === 'review').length}</span>
               </div>
               <div className="space-y-2.5">
-                {tasks.filter((t) => t.status === 'review').map((t) => (
+                {currentFilteredTasks.filter((t) => t.status === 'review').map((t) => (
                   <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 space-y-2 text-xs">
                     <div className="font-medium text-white">{t.title}</div>
+                    {t.notes && <p className="text-slate-400 text-[11px] leading-relaxed">{t.notes}</p>}
                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
                       <span>{t.priority}</span>
                       <span>Assignee: {t.assignee}</span>
@@ -996,15 +1343,15 @@ export default function FlowHQPage() {
               </div>
             </div>
 
-            {/* Column: Done */}
+            {/* Column 4: Done */}
             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
               <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-white/10">
                 <span className="text-slate-300 font-medium">Done</span>
-                <span className="text-slate-500">{tasks.filter((t) => t.status === 'done').length}</span>
+                <span className="text-slate-500">{currentFilteredTasks.filter((t) => t.status === 'done').length}</span>
               </div>
               <div className="space-y-2.5">
-                {tasks.filter((t) => t.status === 'done').map((t) => (
-                  <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs opacity-70">
+                {currentFilteredTasks.filter((t) => t.status === 'done').map((t) => (
+                  <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs opacity-75">
                     <div className="font-medium text-slate-300 line-through">{t.title}</div>
                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
                       <span>Shipped</span>
@@ -1020,56 +1367,59 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= TAB 4: CLIENTS ================= */}
+      {/* ================= TAB 4: CLIENTS & PORTAL MANAGEMENT ================= */}
       {activeTab === 'clients' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
             <div>
               <h2 className="font-display text-xl font-normal text-white">Client accounts and portal access</h2>
-              <p className="text-slate-400 text-xs">Onboard clients, link projects, and grant portal telemetry keys</p>
+              <p className="text-slate-400 text-xs">Onboard clients, link builds, and issue unique portal telemetry keys</p>
             </div>
             <button
               onClick={() => setShowAddClientModal(true)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors w-fit"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add new client</span>
+              <span>Onboard client</span>
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {clients.map((cli) => (
-              <div key={cli.id} className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+              <div key={cli.id} className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-medium text-white text-base">{cli.name}</h3>
                     <div className="text-xs text-slate-400">{cli.company} ({cli.email})</div>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                     {cli.status}
                   </span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-xs space-y-1.5">
+                <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-xs space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Assigned Project:</span>
-                    <span className="text-white">{cli.projectName}</span>
+                    <span className="text-slate-500">Assigned build:</span>
+                    <span className="text-white font-medium">{cli.projectName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Portal Access Key:</span>
-                    <span className="text-slate-300 font-semibold">{cli.accessKey}</span>
+                    <span className="text-slate-500">Portal access key:</span>
+                    <span className="text-slate-200 font-semibold">{cli.accessKey}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs font-mono">
                   <Link href="/client" className="text-slate-300 hover:text-white underline">
-                    Preview client portal view
+                    Preview client view
                   </Link>
                   <button
-                    onClick={() => alert(`Client credentials copied: ${cli.email} / ${cli.accessKey}`)}
-                    className="text-slate-400 hover:text-white"
+                    onClick={() => {
+                      navigator.clipboard?.writeText?.(cli.accessKey);
+                      alert(`Copied access key for ${cli.name}: ${cli.accessKey}`);
+                    }}
+                    className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10"
                   >
-                    Copy keys
+                    Copy credentials
                   </button>
                 </div>
               </div>
@@ -1078,13 +1428,13 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= TAB 5: TEAM ================= */}
+      {/* ================= TAB 5: STUDIO TEAM DIRECTORY ================= */}
       {activeTab === 'team' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
             <div>
               <h2 className="font-display text-xl font-normal text-white">Studio team directory</h2>
-              <p className="text-slate-400 text-xs">Founders and engineers with access to Flow HQ</p>
+              <p className="text-slate-400 text-xs">Founders, partners, and engineers authoring client systems</p>
             </div>
             <button
               onClick={() => setShowAddTeamModal(true)}
@@ -1099,17 +1449,17 @@ export default function FlowHQPage() {
             {team.map((m) => (
               <div key={m.id} className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs">
+                  <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs">
                     {m.initials}
                   </div>
                   <div>
-                    <h3 className="font-medium text-white text-sm">{m.name}</h3>
+                    <h3 className="font-medium text-white text-base">{m.name}</h3>
                     <div className="font-mono text-xs text-slate-400 capitalize">{m.role}</div>
                   </div>
                 </div>
-                <div className="text-xs font-mono text-slate-400 pt-2 border-t border-white/5">
+                <div className="text-xs font-mono text-slate-400 pt-2 border-t border-white/5 space-y-1">
                   <div>{m.email}</div>
-                  <div className="text-slate-500 mt-0.5">Status: {m.status}</div>
+                  <div className="text-slate-500">Status: {m.status}</div>
                 </div>
               </div>
             ))}
@@ -1117,13 +1467,60 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= TAB 6: LEADS CRM ================= */}
+      {/* ================= TAB 6: DAILY STANDUPS ================= */}
+      {activeTab === 'standups' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <h2 className="font-display text-xl font-normal text-white">Daily sprint standups</h2>
+              <p className="text-slate-400 text-xs">End-of-day commits, blockers, and hours logged per build</p>
+            </div>
+            <button
+              onClick={() => setShowStandupModal(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors w-fit"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Log daily standup</span>
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {standups.length > 0 ? (
+              standups.map((std) => (
+                <div key={std.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <strong className="text-white font-medium">{std.engineer}</strong>
+                      <span className="text-slate-500 font-mono">on {std.project}</span>
+                    </div>
+                    <span className="font-mono text-slate-400">{std.date} · {std.hours}h logged</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    <strong className="text-slate-400">Shipped:</strong> {std.shipped}
+                  </p>
+                  {std.blockers !== 'None' && (
+                    <p className="text-amber-400/90 leading-relaxed">
+                      <strong>Blocker:</strong> {std.blockers}
+                    </p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="p-8 rounded-2xl bg-white/[0.01] border border-white/5 text-center text-xs font-mono text-slate-500">
+                No daily standup logs yet. Click &quot;Log daily standup&quot; to submit today&apos;s sprint progress.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB 7: LEADS CRM ================= */}
       {activeTab === 'leads' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
             <div>
               <h2 className="font-display text-xl font-normal text-white">Inbound leads CRM</h2>
-              <p className="text-slate-400 text-xs">Client submissions from the project scoping cockpit and website forms</p>
+              <p className="text-slate-400 text-xs">Direct submissions from the scoping cockpit and website intake</p>
             </div>
             <button
               onClick={loadLeads}
@@ -1178,7 +1575,7 @@ export default function FlowHQPage() {
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="font-display text-lg font-normal text-white">Create new project</h3>
-                <p className="text-slate-400 text-xs">Initialize a new build sprint and tracking key</p>
+                <p className="text-slate-400 text-xs">Initialize sprint build and tracking key</p>
               </div>
               <button onClick={() => setShowAddProjectModal(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -1224,19 +1621,30 @@ export default function FlowHQPage() {
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Client email (Optional - auto creates portal account)</label>
+                <input
+                  type="email"
+                  placeholder="e.g. client@medcare.com"
+                  value={newProjectClientEmail}
+                  onChange={(e) => setNewProjectClientEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="block font-mono text-xs text-slate-300">Budget</label>
                   <input
                     type="text"
-                    placeholder="₹75,000"
+                    placeholder="₹85,000"
                     value={newProjectBudget}
                     onChange={(e) => setNewProjectBudget(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block font-mono text-xs text-slate-300">Sprint duration</label>
+                  <label className="block font-mono text-xs text-slate-300">Duration</label>
                   <input
                     type="text"
                     placeholder="3 Weeks"
@@ -1336,7 +1744,7 @@ export default function FlowHQPage() {
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="font-display text-lg font-normal text-white">Create new task</h3>
-                <p className="text-slate-400 text-xs">Assign a development task to a team member</p>
+                <p className="text-slate-400 text-xs">Assign development task to a team member</p>
               </div>
               <button onClick={() => setShowAddTaskModal(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -1353,6 +1761,17 @@ export default function FlowHQPage() {
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Technical notes (Optional)</label>
+                <textarea
+                  rows={2}
+                  placeholder="Key endpoints, PR targets or architecture guidelines"
+                  value={newTaskNotes}
+                  onChange={(e) => setNewTaskNotes(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30 resize-none"
                 />
               </div>
 
@@ -1438,13 +1857,75 @@ export default function FlowHQPage() {
         </div>
       )}
 
+      {/* ================= MODAL: TASK HANDOFF ================= */}
+      {showHandoffModal && targetTaskForHandoff && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Hand off sprint task</h3>
+                <p className="text-slate-400 text-xs">{targetTaskForHandoff.title}</p>
+              </div>
+              <button onClick={() => setShowHandoffModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleExecuteHandoff} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Delegate to engineer</label>
+                <select
+                  value={handoffTargetUser}
+                  onChange={(e) => setHandoffTargetUser(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                >
+                  {team.map((m) => (
+                    <option key={m.id} value={m.initials} className="bg-[#0E1424]">
+                      {m.name} ({m.initials} - {m.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Context notes for handoff</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="e.g. Migration script tested on local, needs edge deployment and index check."
+                  value={handoffNotes}
+                  onChange={(e) => setHandoffNotes(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30 resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowHandoffModal(false)}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
+                >
+                  Confirm handoff
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ================= MODAL: ADD CLIENT ================= */}
       {showAddClientModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-display text-lg font-normal text-white">Add new client</h3>
+                <h3 className="font-display text-lg font-normal text-white">Onboard client</h3>
                 <p className="text-slate-400 text-xs">Create client credentials and link to their build</p>
               </div>
               <button onClick={() => setShowAddClientModal(false)} className="text-slate-400 hover:text-white">
@@ -1490,7 +1971,7 @@ export default function FlowHQPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Assign project</label>
+                <label className="block font-mono text-xs text-slate-300">Assign build project</label>
                 <select
                   value={newClientProject}
                   onChange={(e) => setNewClientProject(e.target.value)}
@@ -1516,7 +1997,7 @@ export default function FlowHQPage() {
                   type="submit"
                   className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
                 >
-                  Onboard client
+                  Provision portal access
                 </button>
               </div>
             </form>
@@ -1590,6 +2071,92 @@ export default function FlowHQPage() {
                   className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
                 >
                   Add team member
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: LOG DAILY STANDUP ================= */}
+      {showStandupModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Log daily standup</h3>
+                <p className="text-slate-400 text-xs">Record today&apos;s delivered code, blockers, and hours</p>
+              </div>
+              <button onClick={() => setShowStandupModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitStandup} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Active project</label>
+                <select
+                  value={standupProject}
+                  onChange={(e) => setStandupProject(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                >
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id} className="bg-[#0E1424]">
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Shipped code / progress today</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="e.g. Shipped Next.js 15 client dashboard, wired Supabase Realtime channel, tested latency."
+                  value={standupShipped}
+                  onChange={(e) => setStandupShipped(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Blockers (if any)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. None or waiting for API keys"
+                    value={standupBlockers}
+                    onChange={(e) => setStandupBlockers(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Hours logged</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="16"
+                    value={standupHours}
+                    onChange={(e) => setStandupHours(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowStandupModal(false)}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
+                >
+                  Submit standup
                 </button>
               </div>
             </form>

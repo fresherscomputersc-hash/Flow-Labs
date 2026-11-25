@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ExternalLink,
@@ -14,7 +14,11 @@ import {
   LogOut,
   Key,
   Check,
-  AlertCircle
+  AlertCircle,
+  Activity,
+  Layers,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 
 interface ClientSession {
@@ -22,16 +26,97 @@ interface ClientSession {
   clientName: string;
   companyName: string;
   projectName: string;
+  projectKey: string;
   accessKey: string;
+  progress: number;
+  activePhase: string;
+  assignedFounders: string;
+  stagingUrl: string;
 }
 
-const DEMO_CLIENTS: ClientSession[] = [
+interface ClientUpdate {
+  id: string;
+  title: string;
+  date: string;
+  summary: string;
+  badge: string;
+}
+
+interface Deliverable {
+  name: string;
+  type: string;
+  size: string;
+  date: string;
+  status: string;
+}
+
+const DEFAULT_CLIENTS: ClientSession[] = [
   {
     clientEmail: 'rohan@droovee.in',
     clientName: 'Rohan Sharma',
     companyName: 'Droovee Mobility',
-    projectName: 'Droovee: Fleet Dispatch and Driver Matrix',
+    projectName: 'Droovee Chauffeur Platform',
+    projectKey: 'DRV',
     accessKey: 'DRV-CLIENT-9842',
+    progress: 75,
+    activePhase: 'Driver Matrix Sync & Database RLS',
+    assignedFounders: 'Smruti Ranjan, Biswash',
+    stagingUrl: 'https://droovee.in',
+  },
+];
+
+const DEFAULT_UPDATES: ClientUpdate[] = [
+  {
+    id: 'up-1',
+    title: 'Sprint 3 Staging Deployed & P95 Latency Verified',
+    date: '24 Nov 2026',
+    summary: 'The dynamic chauffeur distance calculation engine has been deployed to the staging environment. Mapbox routing calls are executing under 120ms P95.',
+    badge: 'Staging release',
+  },
+  {
+    id: 'up-2',
+    title: 'PostgreSQL Row-Level Security Policies Hardened',
+    date: '22 Nov 2026',
+    summary: 'Multi-tenant database isolation policies compiled. Customer and driver profiles are strictly segregated at the database engine level.',
+    badge: 'Security milestone',
+  },
+  {
+    id: 'up-3',
+    title: 'Razorpay Webhooks & Automated GST Tax Engine Live',
+    date: '19 Nov 2026',
+    summary: 'Integrated automated billing with instant PDF invoice generation and verified HSN codes dispatched via Twilio WhatsApp API.',
+    badge: 'Payment rails',
+  },
+];
+
+const DEFAULT_DELIVERABLES: Deliverable[] = [
+  {
+    name: 'Architecture Blueprint & Database ERD (v1.2)',
+    type: 'PDF Specification',
+    size: '2.4 MB',
+    date: '21 Nov 2026',
+    status: 'Verified',
+  },
+  {
+    name: 'API Schema Contract & Postman Collection',
+    type: 'OpenAPI JSON',
+    size: '480 KB',
+    date: '22 Nov 2026',
+    status: 'Active',
+  },
+  {
+    name: 'Staging Environment Credentials & Vault Access Keys',
+    type: 'Encrypted Key',
+    size: 'Vault Key',
+    date: '24 Nov 2026',
+    status: 'Secured',
+  },
+  {
+    name: 'Automated GST Invoice Reconciliation Engine',
+    type: 'Module Build',
+    size: '1.1 MB',
+    date: '24 Nov 2026',
+    status: 'Ready',
   },
 ];
 
@@ -41,40 +126,105 @@ export default function ClientPortalPage() {
   const [keyInput, setKeyInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [updates, setUpdates] = useState<ClientUpdate[]>(DEFAULT_UPDATES);
+  const [deliverables, setDeliverables] = useState<Deliverable[]>(DEFAULT_DELIVERABLES);
+
+  // Sync with client accounts created in Flow HQ via localStorage
+  useEffect(() => {
+    try {
+      const savedSession = localStorage.getItem('flow_active_client_session');
+      if (savedSession) {
+        setSession(JSON.parse(savedSession));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
 
-    const matched = DEMO_CLIENTS.find(
+    // Check localStorage for newly created clients from Flow HQ
+    let allClients = [...DEFAULT_CLIENTS];
+    try {
+      const stored = localStorage.getItem('flow_hq_clients');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        parsed.forEach((c: any) => {
+          allClients.push({
+            clientEmail: c.email,
+            clientName: c.name,
+            companyName: c.company,
+            projectName: c.projectName,
+            projectKey: c.projectName.slice(0, 3).toUpperCase(),
+            accessKey: c.accessKey,
+            progress: 65,
+            activePhase: 'Core Module Engineering',
+            assignedFounders: 'Smruti Ranjan, Arpita',
+            stagingUrl: 'https://staging.theflowlabs.online',
+          });
+        });
+      }
+    } catch (err) {
+      // ignore
+    }
+
+    const matched = allClients.find(
       (c) =>
         c.clientEmail.toLowerCase() === emailInput.trim().toLowerCase() ||
         c.accessKey.toUpperCase() === keyInput.trim().toUpperCase()
     );
 
-    if (matched || emailInput.trim().length > 3) {
-      setSession(
-        matched || {
-          clientEmail: emailInput.trim(),
-          clientName: emailInput.split('@')[0],
-          companyName: 'Client Workspace',
-          projectName: 'Custom Engineering Sprint',
-          accessKey: keyInput.trim() || 'FLW-PORTAL-KEY',
-        }
-      );
+    if (matched) {
+      setSession(matched);
+      try {
+        localStorage.setItem('flow_active_client_session', JSON.stringify(matched));
+      } catch (e) {
+        // ignore
+      }
+    } else if (emailInput.trim().length > 3) {
+      const customSession: ClientSession = {
+        clientEmail: emailInput.trim(),
+        clientName: emailInput.split('@')[0],
+        companyName: 'Client Workspace',
+        projectName: 'Custom Sprint Build',
+        projectKey: 'FLW',
+        accessKey: keyInput.trim() || 'FLW-PORTAL-KEY',
+        progress: 50,
+        activePhase: 'Architecture Design & Interface Prototyping',
+        assignedFounders: 'Smruti Ranjan, Biswash',
+        stagingUrl: 'https://staging.theflowlabs.online',
+      };
+      setSession(customSession);
+      try {
+        localStorage.setItem('flow_active_client_session', JSON.stringify(customSession));
+      } catch (e) {
+        // ignore
+      }
     } else {
-      setErrorMsg('Invalid client email or portal access key. Please verify credentials with your studio lead.');
+      setErrorMsg('Invalid client credentials. Please enter a valid work email or portal access key.');
     }
     setLoading(false);
   };
 
   const handleQuickLogin = (client: ClientSession) => {
     setSession(client);
+    try {
+      localStorage.setItem('flow_active_client_session', JSON.stringify(client));
+    } catch (e) {
+      // ignore
+    }
   };
 
   const handleSignOut = () => {
     setSession(null);
+    try {
+      localStorage.removeItem('flow_active_client_session');
+    } catch (e) {
+      // ignore
+    }
   };
 
   // ================= VIEW: CLIENT LOGIN SCREEN =================
@@ -146,7 +296,7 @@ export default function ClientPortalPage() {
             <div className="text-[11px] font-mono text-slate-400">Sample client credentials:</div>
             <button
               type="button"
-              onClick={() => handleQuickLogin(DEMO_CLIENTS[0])}
+              onClick={() => handleQuickLogin(DEFAULT_CLIENTS[0])}
               className="w-full p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:text-white transition-colors"
             >
               <span>Droovee Client (Rohan Sharma)</span>
@@ -170,10 +320,10 @@ export default function ClientPortalPage() {
 
   // ================= VIEW: AUTHENTICATED CLIENT DASHBOARD =================
   return (
-    <div className="pt-6 sm:pt-10 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-10">
+    <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-6xl mx-auto space-y-10">
       
       {/* Top Bar Navigation */}
-      <div className="flex items-center justify-between max-w-4xl mx-auto pb-4 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between max-w-4xl mx-auto pb-4 border-b border-white/10 gap-3">
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -182,18 +332,21 @@ export default function ClientPortalPage() {
             <span>&larr; Exit to website</span>
           </Link>
           <span className="text-slate-600">/</span>
-          <span className="font-mono text-xs text-slate-300">
+          <span className="font-mono text-xs text-white font-medium">
             {session.companyName}
+          </span>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 border border-white/10 text-slate-400">
+            {session.projectKey}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3.5">
           <span className="font-mono text-xs text-slate-400">
-            {session.clientName}
+            Client: <strong className="text-white font-normal">{session.clientName}</strong>
           </span>
           <button
             onClick={handleSignOut}
-            className="inline-flex items-center gap-1 text-xs font-mono text-slate-400 hover:text-red-400 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-red-400 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign out</span>
@@ -207,7 +360,7 @@ export default function ClientPortalPage() {
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
           Active sprint telemetry
         </div>
-        <h1 className="font-display text-3xl sm:text-4xl font-normal text-white tracking-tight">
+        <h1 className="font-display text-3xl sm:text-5xl font-normal text-white tracking-tight leading-[1.1]">
           {session.projectName}
         </h1>
         <p className="text-slate-400 text-sm leading-relaxed">
@@ -216,103 +369,140 @@ export default function ClientPortalPage() {
       </section>
 
       {/* Main Telemetry Bento */}
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Active Project Hero Card */}
-        <div className="p-7 sm:p-8 rounded-2xl bg-white/[0.02] border border-white/10 space-y-5">
+        <div className="p-7 sm:p-9 rounded-2xl bg-white/[0.02] border border-white/10 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <span className="font-mono text-xs text-slate-400">Active sprint build</span>
+              <span className="font-mono text-xs text-slate-400">Build telemetry</span>
               <h2 className="font-display text-2xl font-normal text-white mt-0.5">
-                {session.projectName}
+                Sprint status and milestone progress
               </h2>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono w-fit">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono w-fit">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
               Sprint 3 of 4 (On schedule)
             </span>
           </div>
 
           {/* Progress Bar */}
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <div className="flex justify-between text-xs font-mono">
-              <span className="text-slate-400">Sprint Progress</span>
-              <span className="text-white font-medium">75% Completed</span>
+              <span className="text-slate-400">Sprint completion</span>
+              <span className="text-white font-medium">{session.progress}% completed</span>
             </div>
-            <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-white h-full rounded-full w-3/4"></div>
+            <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+              <div className="bg-white h-full rounded-full transition-all duration-500" style={{ width: `${session.progress}%` }}></div>
             </div>
           </div>
 
           {/* Milestone Telemetry */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-white/5 font-mono text-xs">
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="text-slate-500 text-[10px]">Active phase</div>
-              <div className="text-white font-medium mt-0.5">Driver Matrix Sync</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-3 border-t border-white/5 font-mono text-xs">
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+              <div className="text-slate-500 text-[10px]">Active sprint phase</div>
+              <div className="text-white font-medium">{session.activePhase}</div>
             </div>
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="text-slate-500 text-[10px]">Next deploy</div>
-              <div className="text-white font-medium mt-0.5">Staging Review (Thu)</div>
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+              <div className="text-slate-500 text-[10px]">Next deploy checkpoint</div>
+              <div className="text-white font-medium">Staging review (Thursday)</div>
             </div>
-            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="text-slate-500 text-[10px]">Engineers assigned</div>
-              <div className="text-white font-medium mt-0.5">SR, BW (Founders)</div>
+            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+              <div className="text-slate-500 text-[10px]">Assigned founding engineers</div>
+              <div className="text-white font-medium">{session.assignedFounders}</div>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex flex-wrap items-center gap-3 pt-1">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <a
-              href="https://droovee.in"
+              href={session.stagingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white text-[#07090E] font-medium text-xs px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors"
+              className="inline-flex items-center gap-2 bg-white text-[#07090E] font-medium text-xs px-5 py-2.5 rounded-lg hover:bg-slate-200 transition-colors"
             >
               <span>Open live staging app</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <a
-              href="https://wa.me/918249681534?text=Hi%20The%20Flow%20Labs,%20I'm%20checking%20my%20sprint%20progress"
+              href={`https://wa.me/918249681534?text=Hi%20The%20Flow%20Labs,%20I'm%20checking%20progress%20on%20${encodeURIComponent(session.projectName)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white font-mono text-xs px-4 py-2 rounded-lg border border-white/10 transition-colors"
+              className="inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-white font-mono text-xs px-4 py-2.5 rounded-lg border border-white/10 transition-colors"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Direct founder chat (WhatsApp)</span>
+              <span>Direct founder hotline (WhatsApp)</span>
             </a>
           </div>
         </div>
 
-        {/* Deliverables Vault */}
-        <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+        {/* Sprint Changelog & Published Updates */}
+        <div className="p-7 sm:p-8 rounded-2xl bg-white/[0.02] border border-white/10 space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <h3 className="font-display text-base font-normal text-white">Sprint deliverables vault</h3>
-            <span className="font-mono text-xs text-slate-500">Encrypted</span>
+            <div>
+              <h3 className="font-display text-lg font-normal text-white">Sprint changelog and published updates</h3>
+              <p className="text-slate-400 text-xs">Verified technical milestones published by founding engineers</p>
+            </div>
+            <span className="font-mono text-xs text-slate-500">Live feed</span>
           </div>
 
-          <div className="space-y-2">
-            {[
-              { name: 'Architecture Blueprint & Database ERD (v1.2)', size: '2.4 MB (PDF)', date: '21 Nov 2026' },
-              { name: 'API Schema Contract & Postman Collection', size: '480 KB (JSON)', date: '22 Nov 2026' },
-              { name: 'Production Staging Build & Environment Access Keys', size: 'Vault Key', date: '24 Nov 2026' },
-            ].map((doc, idx) => (
+          <div className="space-y-3.5">
+            {updates.map((up) => (
+              <div key={up.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-white text-sm">{up.title}</h4>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 border border-white/10 text-slate-300">
+                      {up.badge}
+                    </span>
+                  </div>
+                  <span className="font-mono text-[11px] text-slate-500">{up.date}</span>
+                </div>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  {up.summary}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Deliverables Vault */}
+        <div className="p-7 sm:p-8 rounded-2xl bg-white/[0.02] border border-white/10 space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div>
+              <h3 className="font-display text-lg font-normal text-white">Sprint deliverables vault</h3>
+              <p className="text-slate-400 text-xs">Architectural contracts, database schemas, and staging access</p>
+            </div>
+            <span className="font-mono text-xs text-emerald-400 flex items-center gap-1">
+              <Shield className="w-3.5 h-3.5" />
+              <span>End-to-end encrypted</span>
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {deliverables.map((doc, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between gap-4"
+                className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
-                <div className="flex items-center gap-2.5">
-                  <FileText className="w-4 h-4 text-slate-400" />
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4 text-slate-400" />
+                  </div>
                   <div>
                     <div className="text-xs font-medium text-white">{doc.name}</div>
-                    <div className="text-[10px] font-mono text-slate-500">{doc.size}, Uploaded {doc.date}</div>
+                    <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                      {doc.type} · {doc.size} · Uploaded {doc.date}
+                    </div>
                   </div>
                 </div>
+
                 <button
-                  onClick={() => alert(`Deliverable ${doc.name} copied to clipboard.`)}
-                  className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-300 border border-white/10 flex items-center gap-1"
+                  onClick={() => alert(`Downloading verified deliverable: ${doc.name}`)}
+                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 border border-white/10 flex items-center gap-1.5 w-fit transition-colors"
                 >
-                  <Download className="w-3 h-3" />
-                  <span>Access</span>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download asset</span>
                 </button>
               </div>
             ))}
