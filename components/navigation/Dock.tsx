@@ -123,64 +123,64 @@ export function Dock() {
           <ArrowUpRight className="w-3.5 h-3.5" />
         </Link>
       </header>
-    </div>
 
-    {/* Mobile drawer (only on small screens) */}
-    {window.innerWidth < 768 && mobileOpen && (
-      <div
-        ref={drawerRef}
-        id="mobile-drawer"
-        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-        aria-modal="true"
-        role="dialog"
-      >
-        <div className="bg-white/10 border border-white/20 rounded-xl p-6 w-full max-w-md space-y-6">
-          {/* Close button */}
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="absolute top-3 right-3 text-white/60 hover:text-white flex items-center gap-1"
-            aria-label="Close menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
+      {/* Mobile drawer (only on small screens) */}
+      {window.innerWidth < 768 && mobileOpen && (
+        <div
+          ref={drawerRef}
+          id="mobile-drawer"
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          aria-modal="true"
+          role="dialog"
+        >
+          <div className="bg-white/10 border border-white/20 rounded-xl p-6 w-full max-w-md space-y-6">
+            {/* Close button */}
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="absolute top-3 right-3 text-white/60 hover:text-white flex items-center gap-1"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-          {/* Logo */}
-          <div className="text-center mb-4">
-            <Code2 className="w-8 h-8 rounded-md bg-white/10 border border-white/10 mx-auto my-2 flex items-center justify-center" />
-            <span className="font-display font-medium text-sm text-white tracking-tight">
-              The Flow Labs<span className="text-cyan-400">.</span>
-            </span>
+            {/* Logo */}
+            <div className="text-center mb-4">
+              <Code2 className="w-8 h-8 rounded-md bg-white/10 border border-white/10 mx-auto my-2 flex items-center justify-center" />
+              <span className="font-display font-medium text-sm text-white tracking-tight">
+                The Flow Labs<span className="text-cyan-400">.</span>
+              </span>
+            </div>
+
+            {/* Navigation links */}
+            <nav className="space-y-2">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`block px-4 py-2 rounded-md text-white hover:bg-white/10 transition-colors ${
+                    pathname === link.href || pathname?.startsWith(link.href + '/')
+                      ? 'font-medium'
+                      : ''
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
+
+            {/* CTA */}
+            <Link
+              href="/scoping"
+              onClick={() => setMobileOpen(false)}
+              className="w-full inline-flex items-center gap-2 bg-white text-[#07090E] font-medium px-4 py-2 rounded-full hover:bg-slate-200 transition-colors"
+            >
+              <span>Start a build</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-
-          {/* Navigation links */}
-          <nav className="space-y-2">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`block px-4 py-2 rounded-md text-white hover:bg-white/10 transition-colors ${
-                  pathname === link.href || pathname?.startsWith(link.href + '/')
-                    ? 'font-medium'
-                    : ''
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-          </nav>
-
-          {/* CTA */}
-          <Link
-            href="/scoping"
-            onClick={() => setMobileOpen(false)}
-            className="w-full inline-flex items-center gap-2 bg-white text-[#07090E] font-medium px-4 py-2 rounded-full hover:bg-slate-200 transition-colors"
-          >
-            <span>Start a build</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
         </div>
-      </div>
-    )}
+      )}
+    </div>
   );
 }
