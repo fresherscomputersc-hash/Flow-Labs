@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearch } from 'next/navigation';
-import { ArrowUpRight, Menu, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { ArrowUpRight, Menu, X, Code2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 const NAV_LINKS = [
   { name: 'Services', href: '/services' },
@@ -16,6 +16,7 @@ const NAV_LINKS = [
 export function Dock() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   // Hide public navigation dock on internal consoles, admin panels, and client portals
   const isInternalPortal =
@@ -25,32 +26,16 @@ export function Dock() {
     pathname?.startsWith('/dashboard') ||
     pathname?.startsWith('/portal');
 
-  if (isInternalPortal) {
-    return null;
-  }
-
-  // Focus trap state
-  const [focusedElementRef, setFocusedElementRef] = useState<HTMLElement | null>(null);
-  const drawerRef = useRef<HTMLDivElement>(null);
-
   // Close mobile menu on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setMobileOpen(false);
-        if (drawerRef.current) drawerRef.current.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Track first focus for trap
-  useEffect(() => {
-    if (mobileOpen) {
-      setFocusedElementRef(drawerRef.current);
-    }
-  }, [mobileOpen]);
 
   // Close on outside click
   useEffect(() => {
@@ -59,9 +44,15 @@ export function Dock() {
         setMobileOpen(false);
       }
     };
-    window.addEventListener('mousedown', handleClickOutside);
+    if (mobileOpen) {
+      window.addEventListener('mousedown', handleClickOutside);
+    }
     return () => window.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [mobileOpen]);
+
+  if (isInternalPortal) {
+    return null;
+  }
 
   return (
     <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
@@ -77,21 +68,19 @@ export function Dock() {
           </span>
         </Link>
 
-        {/* Mobile menu button (only shows below md) */}
-        {window.innerWidth < 768 && (
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="ml-2 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors"
-            aria-controls="mobile-drawer"
-            aria-expanded={mobileOpen}
-          >
-            <Menu className="w-4 h-4" />
-            <span className="sr-only">Menu</span>
-          </button>
-        )}
+        {/* Mobile menu button (md and below) */}
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="ml-2 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors md:hidden"
+          aria-controls="mobile-drawer"
+          aria-expanded={mobileOpen}
+        >
+          <Menu className="w-4 h-4" />
+          <span className="sr-only">Menu</span>
+        </button>
 
-        {/* Desktop navigation (always visible) */}
-        <nav className="flex items-center gap-1 hidden md:block">
+        {/* Desktop navigation */}
+        <nav className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map((link) => {
             const isActive =
               link.href === '/'
@@ -114,7 +103,7 @@ export function Dock() {
           })}
         </nav>
 
-        {/* CTA Button (always visible) */}
+        {/* CTA Button */}
         <Link
           href="/scoping"
           className="ml-2 inline-flex items-center gap-1.5 bg-white text-[#07090E] text-xs font-medium px-4 py-1.5 rounded-full hover:bg-slate-200 transition-colors"
@@ -124,8 +113,8 @@ export function Dock() {
         </Link>
       </header>
 
-      {/* Mobile drawer (only on small screens) */}
-      {window.innerWidth < 768 && mobileOpen && (
+      {/* Mobile drawer */}
+      {mobileOpen && (
         <div
           ref={drawerRef}
           id="mobile-drawer"
@@ -133,11 +122,11 @@ export function Dock() {
           aria-modal="true"
           role="dialog"
         >
-          <div className="bg-white/10 border border-white/20 rounded-xl p-6 w-full max-w-md space-y-6">
+          <div className="bg-[#0D111A] border border-white/20 rounded-xl p-6 w-full max-w-sm space-y-6 relative">
             {/* Close button */}
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-3 right-3 text-white/60 hover:text-white flex items-center gap-1"
+              className="absolute top-3 right-3 text-white/60 hover:text-white"
               aria-label="Close menu"
             >
               <X className="w-5 h-5" />
@@ -145,7 +134,9 @@ export function Dock() {
 
             {/* Logo */}
             <div className="text-center mb-4">
-              <Code2 className="w-8 h-8 rounded-md bg-white/10 border border-white/10 mx-auto my-2 flex items-center justify-center" />
+              <div className="w-8 h-8 rounded-md bg-white/10 border border-white/10 mx-auto mb-2 flex items-center justify-center">
+                <Code2 className="w-5 h-5 text-white" />
+              </div>
               <span className="font-display font-medium text-sm text-white tracking-tight">
                 The Flow Labs<span className="text-cyan-400">.</span>
               </span>
@@ -160,7 +151,7 @@ export function Dock() {
                   onClick={() => setMobileOpen(false)}
                   className={`block px-4 py-2 rounded-md text-white hover:bg-white/10 transition-colors ${
                     pathname === link.href || pathname?.startsWith(link.href + '/')
-                      ? 'font-medium'
+                      ? 'font-medium bg-white/5'
                       : ''
                   }`}
                 >
@@ -173,7 +164,7 @@ export function Dock() {
             <Link
               href="/scoping"
               onClick={() => setMobileOpen(false)}
-              className="w-full inline-flex items-center gap-2 bg-white text-[#07090E] font-medium px-4 py-2 rounded-full hover:bg-slate-200 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium px-4 py-2 rounded-full hover:bg-slate-200 transition-colors"
             >
               <span>Start a build</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
