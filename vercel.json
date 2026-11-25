@@ -27,13 +27,13 @@
       ]
     },
     {
-      "source": "/flow-hq/(.*)",
+      "source": "/flow-hq(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
       ]
     },
     {
-      "source": "/client/(.*)",
+      "source": "/client(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }
       ]
@@ -48,22 +48,6 @@
   ],
   "rewrites": [
     {
-      "source": "/estimator",
-      "destination": "/scoping/index.html"
-    },
-    {
-      "source": "/estimator/:path*",
-      "destination": "/scoping/index.html"
-    },
-    {
-      "source": "/api/platform",
-      "destination": "/api/platform/[...path].js"
-    },
-    {
-      "source": "/api/platform/:path*",
-      "destination": "/api/platform/[...path].js"
-    },
-    {
       "source": "/qr",
       "destination": "https://qr-sooty-phi.vercel.app/qr"
     },
@@ -74,75 +58,63 @@
   ],
   "redirects": [
     {
-      "source": "/qr/",
-      "destination": "/qr",
-      "permanent": false
-    },
-    {
-      "source": "/cdn-cgi/l/email-protection",
-      "destination": "/contact/",
-      "permanent": false
-    },
-    {
-      "source": "/(.*)",
-      "has": [{ "type": "host", "value": "the-flow-labs.vercel.app" }],
-      "destination": "https://www.theflowlabs.online/$1",
+      "source": "/estimator",
+      "destination": "/scoping",
       "permanent": true
     },
     {
-      "source": "/(.*)",
-      "has": [{ "type": "host", "value": "flow-labs.vercel.app" }],
-      "destination": "https://www.theflowlabs.online/$1",
+      "source": "/estimator/:path*",
+      "destination": "/scoping",
       "permanent": true
     },
     {
-      "source": "/flow-hq",
-      "destination": "/flow-hq/",
-      "permanent": false
+      "source": "/contact",
+      "destination": "/scoping",
+      "permanent": true
     },
     {
-      "source": "/client",
-      "destination": "/client/",
-      "permanent": false
+      "source": "/contact/:path*",
+      "destination": "/scoping",
+      "permanent": true
     },
     {
       "source": "/services/ai-automation-bhubaneswar",
-      "destination": "/bhubaneswar/",
+      "destination": "/bhubaneswar",
       "permanent": true
     },
     {
       "source": "/services/ai-automation-bhubaneswar/:path*",
-      "destination": "/bhubaneswar/",
+      "destination": "/bhubaneswar",
       "permanent": true
     },
     {
       "source": "/services/web-development-bhubaneswar",
-      "destination": "/bhubaneswar/",
+      "destination": "/bhubaneswar",
       "permanent": true
     },
     {
       "source": "/services/web-development-bhubaneswar/:path*",
-      "destination": "/bhubaneswar/",
+      "destination": "/bhubaneswar",
       "permanent": true
     },
     {
       "source": "/services/custom-software-development-bhubaneswar",
-      "destination": "/bhubaneswar/",
+      "destination": "/bhubaneswar",
       "permanent": true
     },
     {
       "source": "/services/custom-software-development-bhubaneswar/:path*",
-      "destination": "/bhubaneswar/",
+      "destination": "/bhubaneswar",
       "permanent": true
     },
     {
       "source": "/blog/ai-automation-for-bhubaneswar-businesses",
-      "destination": "/blog/ai-automation-for-small-businesses/",
+      "destination": "/blog/ai-automation-for-small-businesses",
       "permanent": true
     },
     {
       "source": "/blog/ai-automation-for-bhubaneswar-businesses/:path*",
-      "destination": "/blog/ai-automation-for-small-businesses/:path*",
+      "destination": "/blog/ai-automation-for-small-businesses",
       "permanent": true
     }
   ]
