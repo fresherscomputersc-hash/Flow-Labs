@@ -241,8 +241,8 @@ export default function FlowHQPage() {
                     <div className="space-y-0.5">
                       <div className="text-xs font-medium text-white">{t.title}</div>
                       <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
-                        <span className="text-[10px] uppercase">{t.priority}</span>
-                        <span>·</span>
+                        <span className="text-[10px]">{t.priority}</span>
+                        <span className="text-slate-600">/</span>
                         <span>Assignee: {t.assignee}</span>
                       </div>
                     </div>
@@ -443,9 +443,9 @@ export default function FlowHQPage() {
       {activeTab === 'team' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
-            { initials: 'SR', name: 'Smruti Ranjan', role: 'Owner · Lead Architect', email: 'smruti@theflowlabs.online' },
-            { initials: 'BW', name: 'Biswash', role: 'Co-Founder · Cloud Systems', email: 'biswash@theflowlabs.online' },
-            { initials: 'AP', name: 'Arpita', role: 'Co-Founder · Interfaces & UX', email: 'arpita@theflowlabs.online' },
+            { initials: 'SR', name: 'Smruti Ranjan', role: 'Owner, Lead Architect', email: 'smruti@theflowlabs.online' },
+            { initials: 'BW', name: 'Biswash', role: 'Co-Founder, Cloud Systems', email: 'biswash@theflowlabs.online' },
+            { initials: 'AP', name: 'Arpita', role: 'Co-Founder, Interfaces and UX', email: 'arpita@theflowlabs.online' },
           ].map((m) => (
             <div key={m.name} className="p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
               <div className="flex items-center justify-between">

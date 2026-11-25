@@ -59,7 +59,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] text-white">
               {post.author.avatar}
             </div>
-            <span>{post.author.name} · {post.author.role}</span>
+            <span>{post.author.name}, {post.author.role}</span>
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="w-3 h-3 text-slate-500" />

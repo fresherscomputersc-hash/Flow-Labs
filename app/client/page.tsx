@@ -13,8 +13,8 @@ export default function ClientPortalPage() {
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
           Active build telemetry
         </div>
-        <h1 className="font-display text-4xl sm:text-5xl font-medium text-white tracking-tight leading-[1.1]">
-          Client Portal <span className="text-slate-400">Telemetry</span>
+        <h1 className="font-display text-4xl sm:text-5xl font-normal text-white tracking-tight leading-[1.1]">
+          Client portal telemetry
         </h1>
         <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
           Real-time sprint progress, staging previews, and production deliverables for our active studio builds.
@@ -29,13 +29,13 @@ export default function ClientPortalPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <span className="font-mono text-xs text-slate-400">Active sprint build</span>
-              <h2 className="font-display text-2xl font-medium text-white mt-0.5">
-                Droovee — Fleet Dispatch &amp; Driver Matrix
+              <h2 className="font-display text-2xl font-normal text-white mt-0.5">
+                Droovee: Fleet Dispatch and Driver Matrix
               </h2>
             </div>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono w-fit">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              Sprint 3 / 4 · On schedule
+              Sprint 3 of 4 (On schedule)
             </span>
           </div>
 
@@ -53,15 +53,15 @@ export default function ClientPortalPage() {
           {/* Milestone Telemetry */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-white/5 font-mono text-xs">
             <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="text-slate-500 text-[10px] uppercase">Active Phase</div>
+              <div className="text-slate-500 text-[10px]">Active phase</div>
               <div className="text-white font-medium mt-0.5">Driver Matrix Sync</div>
             </div>
             <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="text-slate-500 text-[10px] uppercase">Next Deploy</div>
+              <div className="text-slate-500 text-[10px]">Next deploy</div>
               <div className="text-white font-medium mt-0.5">Staging Review (Thu)</div>
             </div>
             <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="text-slate-500 text-[10px] uppercase">Engineers Assigned</div>
+              <div className="text-slate-500 text-[10px]">Engineers assigned</div>
               <div className="text-white font-medium mt-0.5">SR, BW (Founders)</div>
             </div>
           </div>
@@ -98,8 +98,8 @@ export default function ClientPortalPage() {
 
           <div className="space-y-2">
             {[
-              { name: 'Architecture Blueprint & Database ERD (v1.2)', size: '2.4 MB · PDF', date: '21 Nov 2026' },
-              { name: 'API Schema Contract & Postman Collection', size: '480 KB · JSON', date: '22 Nov 2026' },
+              { name: 'Architecture Blueprint & Database ERD (v1.2)', size: '2.4 MB (PDF)', date: '21 Nov 2026' },
+              { name: 'API Schema Contract & Postman Collection', size: '480 KB (JSON)', date: '22 Nov 2026' },
               { name: 'Production Staging Build & Environment Access Keys', size: 'Vault Key', date: '24 Nov 2026' },
             ].map((doc, idx) => (
               <div
@@ -110,7 +110,7 @@ export default function ClientPortalPage() {
                   <FileText className="w-4 h-4 text-slate-400" />
                   <div>
                     <div className="text-xs font-medium text-white">{doc.name}</div>
-                    <div className="text-[10px] font-mono text-slate-500">{doc.size} · Uploaded {doc.date}</div>
+                    <div className="text-[10px] font-mono text-slate-500">{doc.size}, Uploaded {doc.date}</div>
                   </div>
                 </div>
                 <button

@@ -31,7 +31,7 @@ export function Footer() {
             The Flow Labs<span className="text-cyan-400">.</span>
           </div>
           <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-            Interfaces, Scaled Systems &amp; Applied Intelligence.<br />
+            Interfaces, Scaled Systems, and Applied Intelligence.<br />
             Founder-led digital engineering studio in Bhubaneswar. Four builds a month, 100% in-house.
           </p>
           <div className="inline-flex items-center gap-2 bg-white/[0.03] border border-white/10 rounded-full px-3 py-1 text-xs font-mono text-slate-300">
@@ -42,35 +42,35 @@ export function Footer() {
 
         {/* Architecture */}
         <div className="space-y-2.5">
-          <h4 className="font-mono text-xs uppercase tracking-wider text-slate-300">Architecture</h4>
+          <div className="font-mono text-xs text-slate-300">Architecture</div>
           <ul className="space-y-1.5 text-xs">
-            <li><Link href="/services#frontend" className="hover:text-white transition-colors">Interfaces (Frontend)</Link></li>
-            <li><Link href="/services#backend" className="hover:text-white transition-colors">Systems (Cloud &amp; Backend)</Link></li>
-            <li><Link href="/services#ai" className="hover:text-white transition-colors">Applied Intelligence</Link></li>
-            <li><Link href="/work#droovee" className="hover:text-white transition-colors">Droovee Mobility</Link></li>
-            <li><Link href="/work#drishti" className="hover:text-white transition-colors">Drishti Vision AI</Link></li>
+            <li><Link href="/services#frontend" className="hover:text-white transition-colors">Interfaces</Link></li>
+            <li><Link href="/services#backend" className="hover:text-white transition-colors">Cloud and backend systems</Link></li>
+            <li><Link href="/services#ai" className="hover:text-white transition-colors">Applied intelligence</Link></li>
+            <li><Link href="/work#droovee" className="hover:text-white transition-colors">Droovee mobility</Link></li>
+            <li><Link href="/work#drishti" className="hover:text-white transition-colors">Drishti vision AI</Link></li>
           </ul>
         </div>
 
         {/* Studio */}
         <div className="space-y-2.5">
-          <h4 className="font-mono text-xs uppercase tracking-wider text-slate-300">Studio</h4>
+          <div className="font-mono text-xs text-slate-300">Studio</div>
           <ul className="space-y-1.5 text-xs">
-            <li><Link href="/about" className="hover:text-white transition-colors">Founders &amp; Manifesto</Link></li>
-            <li><Link href="/scoping" className="hover:text-white transition-colors">Project Scoping Cockpit</Link></li>
-            <li><Link href="/flow-hq" className="hover:text-white transition-colors">Flow HQ Console</Link></li>
-            <li><Link href="/client" className="hover:text-white transition-colors">Client Portal</Link></li>
-            <li><Link href="/bhubaneswar" className="hover:text-white transition-colors">Bhubaneswar Studio</Link></li>
+            <li><Link href="/about" className="hover:text-white transition-colors">Founders and manifesto</Link></li>
+            <li><Link href="/scoping" className="hover:text-white transition-colors">Project scoping cockpit</Link></li>
+            <li><Link href="/flow-hq" className="hover:text-white transition-colors">Flow HQ console</Link></li>
+            <li><Link href="/client" className="hover:text-white transition-colors">Client portal</Link></li>
+            <li><Link href="/bhubaneswar" className="hover:text-white transition-colors">Bhubaneswar studio</Link></li>
           </ul>
         </div>
 
-        {/* Legal & Perspectives */}
+        {/* Perspectives */}
         <div className="space-y-2.5">
-          <h4 className="font-mono text-xs uppercase tracking-wider text-slate-300">Perspectives</h4>
+          <div className="font-mono text-xs text-slate-300">Perspectives</div>
           <ul className="space-y-1.5 text-xs">
-            <li><Link href="/blog" className="hover:text-white transition-colors">Engineering Blog</Link></li>
-            <li><Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-            <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+            <li><Link href="/blog" className="hover:text-white transition-colors">Engineering articles</Link></li>
+            <li><Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy policy</Link></li>
+            <li><Link href="/terms" className="hover:text-white transition-colors">Terms of service</Link></li>
             <li><a href="https://github.com/fresherscomputersc-hash/Flow-Labs" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a></li>
           </ul>
         </div>
@@ -81,7 +81,6 @@ export function Footer() {
         <div>&copy; {new Date().getFullYear()} The Flow Labs. All rights reserved.</div>
         <div className="flex items-center gap-4">
           <span>Latency: 16ms</span>
-          <span>·</span>
           <span>Status: Operational</span>
         </div>
       </div>
