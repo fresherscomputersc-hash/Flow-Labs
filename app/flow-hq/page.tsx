@@ -74,6 +74,7 @@ export interface Project {
   key: string;
   client: string;
   clientEmail?: string;
+  summary?: string;
   status: 'planning' | 'active' | 'completed' | 'on_hold';
   progress: number;
   budget: string;
@@ -319,14 +320,35 @@ export default function FlowHQPage() {
   const [onboardSuccessMsg, setOnboardSuccessMsg] = useState('');
   const [onboardErrorMsg, setOnboardErrorMsg] = useState('');
 
+  // Project Filtering (Active vs Completed vs All)
+  const [projectFilterTab, setProjectFilterTab] = useState<'active' | 'completed' | 'all'>('active');
+
   // Project Actions: Manage & Delete
   const [projectToManage, setProjectToManage] = useState<Project | null>(null);
+  const [manageName, setManageName] = useState('');
+  const [manageSummary, setManageSummary] = useState('');
   const [manageBudget, setManageBudget] = useState('');
   const [manageDue, setManageDue] = useState('');
   const [manageStatus, setManageStatus] = useState<string>('active');
   const [manageClient, setManageClient] = useState('');
+  const [manageClientEmail, setManageClientEmail] = useState('');
+  const [manageModules, setManageModules] = useState<string[]>([]);
+  const [newModuleInput, setNewModuleInput] = useState('');
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  // Team Member Management: Edit & Delete
+  const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
+  const [editMemberName, setEditMemberName] = useState('');
+  const [editMemberRole, setEditMemberRole] = useState<'owner' | 'admin' | 'manager' | 'member'>('member');
+  const [editMemberStatus, setEditMemberStatus] = useState<string>('active');
+  const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
+
+  // Client Management: Delete
+  const [clientToDelete, setClientToDelete] = useState<ClientAccount | null>(null);
+
+  // Task Scope Filter ('active' sprint tasks vs 'all' vs 'done')
+  const [taskScopeFilter, setTaskScopeFilter] = useState<'active' | 'all' | 'done'>('active');
 
   // Form States - Daily Standup
   const [standupProject, setStandupProject] = useState('proj-1');
@@ -705,10 +727,29 @@ export default function FlowHQPage() {
   // Manage Project
   const openManageModal = (proj: Project) => {
     setProjectToManage(proj);
+    setManageName(proj.name);
+    setManageSummary(proj.summary || '');
     setManageBudget(proj.budget);
     setManageDue(proj.dueDate);
     setManageStatus(proj.status);
     setManageClient(proj.client);
+    setManageClientEmail(proj.clientEmail || '');
+    setManageModules([...proj.modules]);
+    setNewModuleInput('');
+  };
+
+  const handleAddModuleToManage = () => {
+    if (!newModuleInput.trim()) return;
+    setManageModules((prev) => [...prev, newModuleInput.trim()]);
+    setNewModuleInput('');
+  };
+
+  const handleRemoveModule = (idx: number) => {
+    setManageModules((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleEditModuleTitle = (idx: number, newTitle: string) => {
+    setManageModules((prev) => prev.map((m, i) => (i === idx ? newTitle : m)));
   };
 
   const saveManageProject = async (e: React.FormEvent) => {
@@ -719,10 +760,14 @@ export default function FlowHQPage() {
       p.id === projectToManage.id
         ? {
             ...p,
+            name: manageName.trim() || p.name,
+            summary: manageSummary.trim() || p.summary,
             budget: manageBudget.trim() || p.budget,
             dueDate: manageDue.trim() || p.dueDate,
             status: manageStatus as any,
             client: manageClient.trim() || p.client,
+            clientEmail: manageClientEmail.trim() || p.clientEmail,
+            modules: manageModules,
             progress: manageStatus === 'completed' ? 100 : p.progress,
           }
         : p
@@ -735,8 +780,10 @@ export default function FlowHQPage() {
         await supabase
           .from('projects')
           .update({
+            name: manageName.trim() || projectToManage.name,
+            summary: manageSummary.trim() || manageClient.trim(),
             status: manageStatus,
-            summary: manageClient.trim(),
+            due_date: manageDue.trim() || null,
           })
           .eq('id', projectToManage.id);
       } catch (e) {
@@ -744,7 +791,7 @@ export default function FlowHQPage() {
       }
     }
 
-    logActivityEvent(session?.userInitials || 'SR', 'updated project settings', projectToManage.name);
+    logActivityEvent(session?.userInitials || 'SR', 'updated project settings', manageName || projectToManage.name);
     setProjectToManage(null);
   };
 
@@ -771,6 +818,108 @@ export default function FlowHQPage() {
     logActivityEvent(session?.userInitials || 'SR', 'deleted project', projectToDelete.name);
     setProjectToDelete(null);
     setDeleteConfirmText('');
+  };
+
+  // Edit Team Member
+  const openEditMemberModal = (member: TeamMember) => {
+    setMemberToEdit(member);
+    setEditMemberName(member.name);
+    setEditMemberRole(member.role);
+    setEditMemberStatus(member.status || 'active');
+  };
+
+  const handleSaveEditMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!memberToEdit) return;
+
+    const updated = team.map((m) =>
+      m.id === memberToEdit.id
+        ? {
+            ...m,
+            name: editMemberName.trim() || m.name,
+            role: editMemberRole,
+            status: editMemberStatus as any,
+          }
+        : m
+    );
+    setTeam(updated);
+    persistState('flow_hq_team', updated);
+
+    if (/^[0-9a-f-]{36}$/i.test(memberToEdit.id)) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        await fetch(`/api/platform/team/${memberToEdit.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            full_name: editMemberName.trim(),
+            role: editMemberRole,
+            status: editMemberStatus,
+          }),
+        });
+      } catch (e) {
+        console.warn('Team member update notice:', e);
+      }
+    }
+
+    logActivityEvent(session?.userInitials || 'SR', 'updated team member', `${editMemberName} (${editMemberRole})`);
+    setMemberToEdit(null);
+  };
+
+  const confirmDeleteMember = async () => {
+    if (!memberToDelete) return;
+    const memberId = memberToDelete.id;
+
+    const updated = team.filter((m) => m.id !== memberId);
+    setTeam(updated);
+    persistState('flow_hq_team', updated);
+
+    if (/^[0-9a-f-]{36}$/i.test(memberId)) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        await fetch(`/api/platform/team/${memberId}`, {
+          method: 'DELETE',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+      } catch (e) {
+        console.warn('Team member delete notice:', e);
+      }
+    }
+
+    logActivityEvent(session?.userInitials || 'SR', 'removed team member', memberToDelete.name);
+    setMemberToDelete(null);
+  };
+
+  // Delete Client
+  const confirmDeleteClient = async () => {
+    if (!clientToDelete) return;
+    const clientId = clientToDelete.id;
+
+    const updated = clients.filter((c) => c.id !== clientId);
+    setClients(updated);
+    persistState('flow_hq_clients', updated);
+
+    if (/^[0-9a-f-]{36}$/i.test(clientId)) {
+      try {
+        await supabase.from('project_clients').delete().eq('user_id', clientId);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        await fetch(`/api/platform/team/${clientId}`, {
+          method: 'DELETE',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+      } catch (e) {
+        console.warn('Client delete notice:', e);
+      }
+    }
+
+    logActivityEvent(session?.userInitials || 'SR', 'removed client account', clientToDelete.name);
+    setClientToDelete(null);
   };
 
   // Provision User / Onboard Client with ID + Password
@@ -804,9 +953,16 @@ export default function FlowHQPage() {
         }),
       });
 
-      const resData = await res.json();
+      let resData: any = {};
+      const resText = await res.text();
+      try {
+        resData = JSON.parse(resText);
+      } catch {
+        throw new Error(resText.slice(0, 100) || 'Server returned an invalid response.');
+      }
+
       if (!res.ok) {
-        throw new Error(resData.error || 'Failed to provision account.');
+        throw new Error(resData.error || resData.message || 'Failed to provision account.');
       }
 
       setOnboardSuccessMsg(`Account created for ${newTeamEmail}! Welcome email dispatched.`);
@@ -1032,13 +1188,6 @@ export default function FlowHQPage() {
 
         {/* Global Quick Actions */}
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Link
-            href="/client"
-            className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white font-mono text-xs border border-white/10 transition-colors whitespace-nowrap"
-            title="Open Client Portal View"
-          >
-            Client View
-          </Link>
           <button
             onClick={handleSignOut}
             className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-red-400 border border-white/10 transition-colors"
@@ -1368,17 +1517,60 @@ export default function FlowHQPage() {
               <h2 className="font-display text-xl font-normal text-white">Projects and architectural modules</h2>
               <p className="text-slate-400 text-xs">Studio sprint builds, milestone roadmaps, and technical modules</p>
             </div>
+            {isFounder && (
+              <button
+                onClick={() => setShowAddProjectModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors w-fit"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create project</span>
+              </button>
+            )}
+          </div>
+
+          {/* Project View Filter Strip (Active vs Completed) */}
+          <div className="flex items-center gap-2 font-mono text-xs overflow-x-auto scrollbar-none pb-1">
             <button
-              onClick={() => setShowAddProjectModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors w-fit"
+              onClick={() => setProjectFilterTab('active')}
+              className={`px-3 py-1.5 rounded-lg border transition-colors ${
+                projectFilterTab === 'active'
+                  ? 'bg-white/10 border-white/20 text-white font-medium'
+                  : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+              }`}
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Create project</span>
+              Active Builds ({projects.filter((p) => p.status !== 'completed').length})
+            </button>
+            <button
+              onClick={() => setProjectFilterTab('completed')}
+              className={`px-3 py-1.5 rounded-lg border transition-colors flex items-center gap-1.5 ${
+                projectFilterTab === 'completed'
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 font-medium'
+                  : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+              }`}
+            >
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Completed Projects ({projects.filter((p) => p.status === 'completed').length})</span>
+            </button>
+            <button
+              onClick={() => setProjectFilterTab('all')}
+              className={`px-3 py-1.5 rounded-lg border transition-colors ${
+                projectFilterTab === 'all'
+                  ? 'bg-white/10 border-white/20 text-white font-medium'
+                  : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+              }`}
+            >
+              All Builds ({projects.length})
             </button>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
-            {projects.map((proj) => (
+            {projects
+              .filter((p) => {
+                if (projectFilterTab === 'active') return p.status !== 'completed';
+                if (projectFilterTab === 'completed') return p.status === 'completed';
+                return true;
+              })
+              .map((proj) => (
               <div key={proj.id} className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-5">
                 
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -1464,16 +1656,79 @@ export default function FlowHQPage() {
 
                 {/* Modules breakdown */}
                 <div className="space-y-2.5">
-                  <div className="font-mono text-xs text-slate-400">Technical modules ({proj.modules.length}):</div>
+                  <div className="flex items-center justify-between font-mono text-xs text-slate-400">
+                    <span>Technical modules ({proj.modules.length}):</span>
+                    {isFounder && (
+                      <button
+                        onClick={() => openManageModal(proj)}
+                        className="text-slate-400 hover:text-white underline text-[11px]"
+                      >
+                        Manage &amp; reorder modules
+                      </button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {proj.modules.map((mod, idx) => (
-                      <div key={idx} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs">
-                        <span className="text-slate-200 font-medium">{mod}</span>
-                        <span className="font-mono text-[10px] text-slate-500">M0{idx+1}</span>
+                      <div key={idx} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs group">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] text-slate-500">M0{idx+1}</span>
+                          <span className="text-slate-200 font-medium">{mod}</span>
+                        </div>
+                        {isFounder && (
+                          <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => openManageModal(proj)}
+                              className="p-1 rounded text-slate-400 hover:text-white"
+                              title="Edit module"
+                            >
+                              <SlidersHorizontal className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const updatedModules = proj.modules.filter((_, i) => i !== idx);
+                                const updatedProjs = projects.map((p) => p.id === proj.id ? { ...p, modules: updatedModules } : p);
+                                setProjects(updatedProjs);
+                                persistState('flow_hq_projects', updatedProjs);
+                              }}
+                              className="p-1 rounded text-slate-400 hover:text-rose-400"
+                              title="Delete module"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
+
+                {/* Completed Project Delivered Tasks & Artifacts */}
+                {proj.status === 'completed' && (
+                  <div className="p-4 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/20 space-y-3">
+                    <div className="flex items-center justify-between font-mono text-xs">
+                      <span className="text-emerald-400 font-medium flex items-center gap-1.5">
+                        <Check className="w-4 h-4" />
+                        <span>Completed Project Tasks ({tasks.filter((t) => t.projectId === proj.id && t.status === 'done').length})</span>
+                      </span>
+                      <span className="text-slate-400">Shipped &amp; Archived</span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {tasks.filter((t) => t.projectId === proj.id && t.status === 'done').length > 0 ? (
+                        tasks.filter((t) => t.projectId === proj.id && t.status === 'done').map((t) => (
+                          <div key={t.id} className="flex items-center justify-between text-xs p-2 rounded-lg bg-white/[0.02] border border-white/5 font-mono">
+                            <span className="text-slate-200">✓ {t.title}</span>
+                            <span className="text-slate-500 text-[11px]">{t.assignee}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-slate-500 text-xs font-mono py-1">
+                          All project tasks and modules shipped.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
               </div>
             ))}
@@ -1495,6 +1750,32 @@ export default function FlowHQPage() {
             {/* Filter Controls & Create Button */}
             <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono">
               
+              {/* Task Scope: Active vs All */}
+              <div className="flex items-center gap-1 font-mono text-xs">
+                <button
+                  onClick={() => setTaskScopeFilter('active')}
+                  className={`px-3 py-1.5 rounded-lg border transition-colors ${
+                    taskScopeFilter === 'active'
+                      ? 'bg-white/10 border-white/20 text-white font-medium'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                  title="Show active sprint tasks only (Done tasks are in Completed Projects)"
+                >
+                  Active Sprint ({currentFilteredTasks.filter((t) => t.status !== 'done').length})
+                </button>
+                <button
+                  onClick={() => setTaskScopeFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg border transition-colors ${
+                    taskScopeFilter === 'all'
+                      ? 'bg-white/10 border-white/20 text-white font-medium'
+                      : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                  title="Show all status columns including Done"
+                >
+                  All Columns ({currentFilteredTasks.length})
+                </button>
+              </div>
+
               {/* My Work Toggle */}
               <button
                 onClick={() => setFilterMyWorkOnly(!filterMyWorkOnly)}
@@ -1532,7 +1813,7 @@ export default function FlowHQPage() {
           </div>
 
           {/* Kanban Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+          <div className={`grid grid-cols-1 ${taskScopeFilter === 'all' ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4 items-start`}>
             
             {/* Column 1: To Do */}
             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
@@ -1636,24 +1917,26 @@ export default function FlowHQPage() {
               </div>
             </div>
 
-            {/* Column 4: Done */}
-            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
-              <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-white/10">
-                <span className="text-slate-300 font-medium">Done</span>
-                <span className="text-slate-500">{currentFilteredTasks.filter((t) => t.status === 'done').length}</span>
-              </div>
-              <div className="space-y-2.5">
-                {currentFilteredTasks.filter((t) => t.status === 'done').map((t) => (
-                  <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs opacity-75">
-                    <div className="font-medium text-slate-300 line-through">{t.title}</div>
-                    <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
-                      <span>Shipped</span>
-                      <span>{t.assignee}</span>
+            {/* Column 4: Done (Archived to Completed Projects in default sprint mode) */}
+            {taskScopeFilter === 'all' && (
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                <div className="flex justify-between items-center text-xs font-mono pb-2 border-b border-white/10">
+                  <span className="text-slate-300 font-medium">Done (Shipped)</span>
+                  <span className="text-slate-500">{currentFilteredTasks.filter((t) => t.status === 'done').length}</span>
+                </div>
+                <div className="space-y-2.5">
+                  {currentFilteredTasks.filter((t) => t.status === 'done').map((t) => (
+                    <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs opacity-75">
+                      <div className="font-medium text-slate-300 line-through">{t.title}</div>
+                      <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
+                        <span>Shipped</span>
+                        <span>{t.assignee}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
           </div>
 
@@ -1710,9 +1993,6 @@ export default function FlowHQPage() {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs font-mono">
-                  <Link href="/client" className="text-slate-300 hover:text-white underline">
-                    Preview client view
-                  </Link>
                   <button
                     onClick={() => {
                       const creds = `Login ID: ${cli.email} | Portal: https://www.theflowlabs.online/client`;
@@ -1723,6 +2003,16 @@ export default function FlowHQPage() {
                   >
                     Copy credentials
                   </button>
+                  {isFounder && (
+                    <button
+                      onClick={() => setClientToDelete(cli)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors"
+                      title="Delete client account"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -1761,7 +2051,26 @@ export default function FlowHQPage() {
                 </div>
                 <div className="text-xs font-mono text-slate-400 pt-2 border-t border-white/5 space-y-1">
                   <div>{m.email}</div>
-                  <div className="text-slate-500">Status: {m.status}</div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-slate-500">Status: {m.status}</span>
+                    {isFounder && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => openEditMemberModal(m)}
+                          className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setMemberToDelete(m)}
+                          className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors"
+                          title="Remove member"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -2388,54 +2697,45 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= MODAL: MANAGE PROJECT ================= */}
+      {/* ================= MODAL: MANAGE & EDIT PROJECT ================= */}
       {projectToManage && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="max-w-lg w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5 my-8">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-display text-lg font-normal text-white">Manage Project</h3>
-                <p className="text-slate-400 text-xs">{projectToManage.name} ({projectToManage.key})</p>
+                <h3 className="font-display text-lg font-normal text-white">Edit Project &amp; Modules</h3>
+                <p className="text-slate-400 text-xs">{projectToManage.key} · Architectural specifications</p>
               </div>
               <button onClick={() => setProjectToManage(null)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={saveManageProject} className="space-y-3.5">
+            <form onSubmit={saveManageProject} className="space-y-4">
               <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Project Status</label>
-                <select
-                  value={manageStatus}
-                  onChange={(e) => setManageStatus(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
-                >
-                  <option value="active" className="bg-[#0E1424]">Active (In Sprint)</option>
-                  <option value="planning" className="bg-[#0E1424]">Planning (Scoping)</option>
-                  <option value="completed" className="bg-[#0E1424]">Completed (Shipped)</option>
-                  <option value="on_hold" className="bg-[#0E1424]">On Hold</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Client / Company Name</label>
+                <label className="block font-mono text-xs text-slate-300">Project Name</label>
                 <input
                   type="text"
-                  value={manageClient}
-                  onChange={(e) => setManageClient(e.target.value)}
+                  required
+                  value={manageName}
+                  onChange={(e) => setManageName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="block font-mono text-xs text-slate-300">Budget / Value</label>
-                  <input
-                    type="text"
-                    value={manageBudget}
-                    onChange={(e) => setManageBudget(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
-                  />
+                  <label className="block font-mono text-xs text-slate-300">Project Status</label>
+                  <select
+                    value={manageStatus}
+                    onChange={(e) => setManageStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                  >
+                    <option value="active" className="bg-[#0E1424]">Active (In Sprint)</option>
+                    <option value="planning" className="bg-[#0E1424]">Planning (Scoping)</option>
+                    <option value="completed" className="bg-[#0E1424]">Completed (Shipped)</option>
+                    <option value="on_hold" className="bg-[#0E1424]">On Hold</option>
+                  </select>
                 </div>
                 <div className="space-y-1">
                   <label className="block font-mono text-xs text-slate-300">Delivery Due Date</label>
@@ -2445,6 +2745,103 @@ export default function FlowHQPage() {
                     onChange={(e) => setManageDue(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Client Organization</label>
+                  <input
+                    type="text"
+                    value={manageClient}
+                    onChange={(e) => setManageClient(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Budget / Value</label>
+                  <input
+                    type="text"
+                    value={manageBudget}
+                    onChange={(e) => setManageBudget(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Client Work Email</label>
+                <input
+                  type="email"
+                  value={manageClientEmail}
+                  onChange={(e) => setManageClientEmail(e.target.value)}
+                  placeholder="client@company.com"
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Project Architecture Summary</label>
+                <textarea
+                  rows={2}
+                  value={manageSummary}
+                  onChange={(e) => setManageSummary(e.target.value)}
+                  placeholder="Key architecture components and delivery milestones"
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30 resize-none"
+                />
+              </div>
+
+              {/* Technical Modules Manager */}
+              <div className="space-y-2 pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between font-mono text-xs">
+                  <span className="text-slate-300">Technical Modules ({manageModules.length})</span>
+                  <span className="text-slate-500 text-[11px]">Edit or remove</span>
+                </div>
+
+                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  {manageModules.map((mod, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] text-slate-500 w-7 shrink-0">M0{idx + 1}</span>
+                      <input
+                        type="text"
+                        value={mod}
+                        onChange={(e) => handleEditModuleTitle(idx, e.target.value)}
+                        className="flex-1 px-2.5 py-1 rounded bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-white/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveModule(idx)}
+                        className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
+                        title="Remove module"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add new module input */}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newModuleInput}
+                    onChange={(e) => setNewModuleInput(e.target.value)}
+                    placeholder="New module title (e.g. Stripe Billing Engine)"
+                    className="flex-1 px-2.5 py-1.5 rounded bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-white/30"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddModuleToManage();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddModuleToManage}
+                    className="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white font-mono text-xs border border-white/10 transition-colors"
+                  >
+                    Add
+                  </button>
                 </div>
               </div>
 
@@ -2458,7 +2855,7 @@ export default function FlowHQPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
+                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors"
                 >
                   Save Changes
                 </button>
@@ -2499,6 +2896,152 @@ export default function FlowHQPage() {
                 className="px-4 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-medium text-xs font-mono transition-colors"
               >
                 Yes, Delete Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: DELETE CLIENT CONFIRMATION ================= */}
+      {clientToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-rose-500/30 shadow-2xl space-y-5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Delete Client Account</h3>
+                <p className="text-slate-400 text-xs mt-1">
+                  Are you sure you want to delete <strong className="text-white">{clientToDelete.name}</strong> ({clientToDelete.company})?
+                  This will revoke their portal access and unlink them from {clientToDelete.projectName}.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setClientToDelete(null)}
+                className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteClient}
+                className="px-4 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-medium text-xs font-mono transition-colors"
+              >
+                Yes, Delete Client
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: EDIT TEAM MEMBER ================= */}
+      {memberToEdit && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Edit Team Member</h3>
+                <p className="text-slate-400 text-xs">{memberToEdit.email}</p>
+              </div>
+              <button onClick={() => setMemberToEdit(null)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditMember} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editMemberName}
+                  onChange={(e) => setEditMemberName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Access Role</label>
+                <select
+                  value={editMemberRole}
+                  onChange={(e: any) => setEditMemberRole(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                >
+                  <option value="member" className="bg-[#0E1424]">Member (Task execution)</option>
+                  <option value="manager" className="bg-[#0E1424]">Manager (Sprint delegation)</option>
+                  <option value="admin" className="bg-[#0E1424]">Admin (Full control)</option>
+                  <option value="owner" className="bg-[#0E1424]">Owner (Studio leadership)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Status</label>
+                <select
+                  value={editMemberStatus}
+                  onChange={(e) => setEditMemberStatus(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                >
+                  <option value="active" className="bg-[#0E1424]">Active</option>
+                  <option value="suspended" className="bg-[#0E1424]">Suspended</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setMemberToEdit(null)}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: DELETE TEAM MEMBER CONFIRMATION ================= */}
+      {memberToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-rose-500/30 shadow-2xl space-y-5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Remove Team Member</h3>
+                <p className="text-slate-400 text-xs mt-1">
+                  Are you sure you want to remove <strong className="text-white">{memberToDelete.name}</strong> ({memberToDelete.email})?
+                  They will lose access to Flow HQ.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setMemberToDelete(null)}
+                className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteMember}
+                className="px-4 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-medium text-xs font-mono transition-colors"
+              >
+                Yes, Remove Member
               </button>
             </div>
           </div>

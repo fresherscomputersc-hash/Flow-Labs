@@ -59,6 +59,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/platform/:path*",
+      "destination": "/api/platform"
+    },
+    {
       "source": "/qr",
       "destination": "https://qr-sooty-phi.vercel.app/qr"
     },

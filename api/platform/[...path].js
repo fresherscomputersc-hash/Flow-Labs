@@ -540,9 +540,10 @@ const handle = async (req, res, segments) => {
 
 const parseSegments = (req) => {
   // Vercel does not always populate req.query.path for a nested
-  // catch-all, so read the path straight off the request URL and fall
+  // catch-all, so read the path straight off the request URL or rewrite headers and fall
   // back to the query object.
-  const pathname = String(req.url || '').split('?')[0];
+  const rawUrl = req.headers['x-matched-path'] || req.headers['x-forwarded-uri'] || req.url || '';
+  const pathname = String(rawUrl).split('?')[0];
   const marker = '/api/platform';
   const at = pathname.indexOf(marker);
   let rest = at === -1 ? pathname : pathname.slice(at + marker.length);
