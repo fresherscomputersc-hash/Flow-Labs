@@ -55,78 +55,80 @@ export function Dock() {
   }
 
   return (
-    <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-      <header className="pointer-events-auto flex items-center gap-3 bg-[#0D111A]/90 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-sm">
-        
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 mr-2">
-          <div className="w-6 h-6 rounded-md bg-white/10 border border-white/10 flex items-center justify-center">
-            <Code2 className="w-3.5 h-3.5 text-white" />
-          </div>
-          <span className="font-display font-medium text-sm text-white tracking-tight">
-            The Flow Labs<span className="text-cyan-400">.</span>
-          </span>
-        </Link>
+    <>
+      <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+        <header className="pointer-events-auto flex items-center gap-3 bg-[#0D111A]/90 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-sm">
+          
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 mr-2">
+            <div className="w-6 h-6 rounded-md bg-white/10 border border-white/10 flex items-center justify-center">
+              <Code2 className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-display font-medium text-sm text-white tracking-tight">
+              The Flow Labs<span className="text-cyan-400">.</span>
+            </span>
+          </Link>
 
-        {/* Mobile menu button (md and below) */}
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="ml-2 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors md:hidden"
-          aria-controls="mobile-drawer"
-          aria-expanded={mobileOpen}
-        >
-          <Menu className="w-4 h-4" />
-          <span className="sr-only">Menu</span>
-        </button>
+          {/* Mobile menu button (md and below) */}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="ml-2 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors md:hidden"
+            aria-controls="mobile-drawer"
+            aria-expanded={mobileOpen}
+          >
+            <Menu className="w-4 h-4" />
+            <span className="sr-only">Menu</span>
+          </button>
 
-        {/* Desktop navigation */}
-        <nav className="hidden md:flex items-center gap-1">
-          {NAV_LINKS.map((link) => {
-            const isActive =
-              link.href === '/'
-                ? pathname === '/'
-                : pathname === link.href || pathname?.startsWith(link.href + '/');
+          {/* Desktop navigation (direct dedicated page links) */}
+          <nav className="hidden md:flex items-center gap-1">
+            {NAV_LINKS.map((link) => {
+              const isActive =
+                link.href === '/'
+                  ? pathname === '/'
+                  : pathname === link.href || pathname?.startsWith(link.href + '/');
 
-            return (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`text-xs px-3.5 py-1.5 rounded-full transition-colors ${
-                  isActive
-                    ? 'text-white bg-white/10 font-medium'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
-        </nav>
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`text-xs px-3.5 py-1.5 rounded-full transition-colors ${
+                    isActive
+                      ? 'text-white bg-white/10 font-medium'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* CTA Button */}
-        <Link
-          href="/scoping"
-          className="ml-2 inline-flex items-center gap-1.5 bg-white text-[#07090E] text-xs font-medium px-4 py-1.5 rounded-full hover:bg-slate-200 transition-colors"
-        >
-          <span>Start a build</span>
-          <ArrowUpRight className="w-3.5 h-3.5" />
-        </Link>
-      </header>
+          {/* CTA Button */}
+          <Link
+            href="/scoping"
+            className="ml-2 inline-flex items-center gap-1.5 bg-white text-[#07090E] text-xs font-medium px-4 py-1.5 rounded-full hover:bg-slate-200 transition-colors"
+          >
+            <span>Start a build</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
+        </header>
+      </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (standalone top-level overlay with full pointer events) */}
       {mobileOpen && (
         <div
           ref={drawerRef}
           id="mobile-drawer"
-          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto"
           aria-modal="true"
           role="dialog"
         >
-          <div className="bg-[#0D111A] border border-white/20 rounded-xl p-6 w-full max-w-sm space-y-6 relative">
+          <div className="bg-[#0D111A] border border-white/20 rounded-2xl p-6 w-full max-w-sm space-y-6 relative shadow-2xl pointer-events-auto">
             {/* Close button */}
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-3 right-3 text-white/60 hover:text-white"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               aria-label="Close menu"
             >
               <X className="w-5 h-5" />
@@ -142,16 +144,16 @@ export function Dock() {
               </span>
             </div>
 
-            {/* Navigation links */}
+            {/* Navigation links (direct dedicated page navigation) */}
             <nav className="space-y-2">
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`block px-4 py-2 rounded-md text-white hover:bg-white/10 transition-colors ${
+                  className={`block px-4 py-2.5 rounded-xl text-sm text-slate-200 hover:text-white hover:bg-white/10 transition-colors ${
                     pathname === link.href || pathname?.startsWith(link.href + '/')
-                      ? 'font-medium bg-white/5'
+                      ? 'font-medium bg-white/10 text-white'
                       : ''
                   }`}
                 >
@@ -164,14 +166,14 @@ export function Dock() {
             <Link
               href="/scoping"
               onClick={() => setMobileOpen(false)}
-              className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium px-4 py-2 rounded-full hover:bg-slate-200 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium text-sm px-4 py-2.5 rounded-xl hover:bg-slate-200 transition-colors"
             >
               <span>Start a build</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
+              <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
