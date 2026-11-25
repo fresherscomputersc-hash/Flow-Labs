@@ -847,15 +847,11 @@ export default function FlowHQPage() {
 
     if (/^[0-9a-f-]{36}$/i.test(memberToEdit.id)) {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
-        await fetch(`/api/platform/team/${memberToEdit.id}`, {
+        await fetch('/api/onboard', {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            id: memberToEdit.id,
             full_name: editMemberName.trim(),
             role: editMemberRole,
             status: editMemberStatus,
@@ -880,11 +876,10 @@ export default function FlowHQPage() {
 
     if (/^[0-9a-f-]{36}$/i.test(memberId)) {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
-        await fetch(`/api/platform/team/${memberId}`, {
+        await fetch('/api/onboard', {
           method: 'DELETE',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: memberId }),
         });
       } catch (e) {
         console.warn('Team member delete notice:', e);
@@ -907,11 +902,10 @@ export default function FlowHQPage() {
     if (/^[0-9a-f-]{36}$/i.test(clientId)) {
       try {
         await supabase.from('project_clients').delete().eq('user_id', clientId);
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
-        await fetch(`/api/platform/team/${clientId}`, {
+        await fetch('/api/onboard', {
           method: 'DELETE',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: clientId }),
         });
       } catch (e) {
         console.warn('Client delete notice:', e);
@@ -938,7 +932,7 @@ export default function FlowHQPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
 
-      const res = await fetch('/api/platform/team/invite', {
+      const res = await fetch('/api/onboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
