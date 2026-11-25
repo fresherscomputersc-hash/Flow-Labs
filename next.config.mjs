@@ -1,28 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   reactStrictMode: true,
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-      },
-    ],
+    unoptimized: true,
   },
-  async redirects() {
-    return [
-      {
-        source: '/estimator',
-        destination: '/scoping',
-        permanent: true,
-      },
-      {
-        source: '/contact',
-        destination: '/scoping',
-        permanent: true,
-      },
-    ];
-  },
+  trailingSlash: false,
 };
 
 export default nextConfig;
