@@ -129,17 +129,9 @@ export default function ClientPortalPage() {
   const [updates, setUpdates] = useState<ClientUpdate[]>(DEFAULT_UPDATES);
   const [deliverables, setDeliverables] = useState<Deliverable[]>(DEFAULT_DELIVERABLES);
 
-  // Sync with client accounts created in Flow HQ via localStorage
-  useEffect(() => {
-    try {
-      const savedSession = localStorage.getItem('flow_active_client_session');
-      if (savedSession) {
-        setSession(JSON.parse(savedSession));
-      }
-    } catch (e) {
-      // ignore
-    }
-  }, []);
+  // No client session persistence. Real sessions must come from
+  // server-issued authentication (Supabase) / authenticated access keys.
+  //
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,51 +163,27 @@ export default function ClientPortalPage() {
       // ignore
     }
 
+    const email = emailInput.trim().toLowerCase();
+    const key = keyInput.trim().toUpperCase();
+
+    if (!email || !key) {
+      setErrorMsg('Enter both your client work email and portal access key.');
+      setLoading(false);
+      return;
+    }
+
     const matched = allClients.find(
       (c) =>
-        c.clientEmail.toLowerCase() === emailInput.trim().toLowerCase() ||
-        c.accessKey.toUpperCase() === keyInput.trim().toUpperCase()
+        c.clientEmail.toLowerCase() === email &&
+        c.accessKey.toUpperCase() === key
     );
 
     if (matched) {
       setSession(matched);
-      try {
-        localStorage.setItem('flow_active_client_session', JSON.stringify(matched));
-      } catch (e) {
-        // ignore
-      }
-    } else if (emailInput.trim().length > 3) {
-      const customSession: ClientSession = {
-        clientEmail: emailInput.trim(),
-        clientName: emailInput.split('@')[0],
-        companyName: 'Client Workspace',
-        projectName: 'Custom Sprint Build',
-        projectKey: 'FLW',
-        accessKey: keyInput.trim() || 'FLW-PORTAL-KEY',
-        progress: 50,
-        activePhase: 'Architecture Design & Interface Prototyping',
-        assignedFounders: 'Smruti Ranjan, Biswash',
-        stagingUrl: 'https://staging.theflowlabs.online',
-      };
-      setSession(customSession);
-      try {
-        localStorage.setItem('flow_active_client_session', JSON.stringify(customSession));
-      } catch (e) {
-        // ignore
-      }
     } else {
-      setErrorMsg('Invalid client credentials. Please enter a valid work email or portal access key.');
+      setErrorMsg('Invalid client credentials. Please enter a valid work email and portal access key.');
     }
     setLoading(false);
-  };
-
-  const handleQuickLogin = (client: ClientSession) => {
-    setSession(client);
-    try {
-      localStorage.setItem('flow_active_client_session', JSON.stringify(client));
-    } catch (e) {
-      // ignore
-    }
   };
 
   const handleSignOut = () => {
@@ -227,34 +195,11 @@ export default function ClientPortalPage() {
     }
   };
 
-  const handleDownloadAsset = (doc: Deliverable) => {
-    const content = `# The Flow Labs Deliverable Asset
-Project: ${session?.projectName || 'Studio Build'}
-Asset: ${doc.name}
-Type: ${doc.type}
-Verification Status: ${doc.status}
-Size: ${doc.size}
-Release Date: ${doc.date}
-Client: ${session?.clientName || 'Authorized Client'} (${session?.companyName || 'Enterprise Partner'})
-Assigned Founding Engineers: ${session?.assignedFounders || 'Smruti Ranjan, Biswash'}
-Timestamp: ${new Date().toISOString()}
-
-==================================================
-CONFIDENTIAL & ENCRYPTED DELIVERABLE SPECIFICATION
-THE FLOW LABS STUDIO DELIVERY OS - HIGH ASSURANCE
-==================================================
-This verified deliverable confirms technical milestone completion for ${session?.projectName || 'this build sprint'}. All schemas, contracts, and deployment artifacts have been validated against our staging environment.
-`;
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    const safeFilename = doc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    link.setAttribute('download', `${safeFilename}.md`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  // Deliverable downloads are served from signed Storage URLs once the
+  // portal is wired to Supabase (Phase 1). Until then downloads are disabled
+  // rather than generating a fabricated "verified" certificate client-side.
+  const handleDownloadAsset = (_doc: Deliverable) => {
+    setErrorMsg('Deliverable downloads are not yet provisioned for this project.');
   };
 
   // ================= VIEW: CLIENT LOGIN SCREEN =================
@@ -320,19 +265,6 @@ This verified deliverable confirms technical milestone completion for ${session?
               )}
             </button>
           </form>
-
-          {/* Quick Demo Access */}
-          <div className="pt-4 border-t border-white/10 space-y-2">
-            <div className="text-[11px] font-mono text-slate-400">Sample client credentials:</div>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin(DEFAULT_CLIENTS[0])}
-              className="w-full p-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-left flex items-center justify-between text-xs font-mono text-slate-300 hover:text-white transition-colors"
-            >
-              <span>Droovee Client (Rohan Sharma)</span>
-              <span className="text-emerald-400">DRV-CLIENT-9842 &rarr;</span>
-            </button>
-          </div>
 
           <div className="text-center pt-2">
             <Link

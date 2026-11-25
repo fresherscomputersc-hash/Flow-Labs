@@ -363,20 +363,35 @@ export default function FlowHQPage() {
     }
   };
 
-  // Check Supabase Auth session
+  // Check Supabase Auth session; derive role from server profiles, never hard-code
   useEffect(() => {
     async function checkAuth() {
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.user) {
-          const email = data.session.user.email || 'smruti@theflowlabs.online';
+          const email = data.session.user.email || '';
           const name = email.split('@')[0];
-          setSession({
-            userEmail: email,
-            userName: name.charAt(0).toUpperCase() + name.slice(1),
-            userRole: 'Owner',
-            userInitials: name.slice(0, 2).toUpperCase(),
-          });
+          let role = 'member';
+          try {
+            const { data: prof } = await supabase
+              .from('profiles')
+              .select('role, status')
+              .eq('id', data.session.user.id)
+              .single();
+            if (prof?.status === 'active') {
+              role = prof.role || 'member';
+            }
+          } catch {}
+          if (role === 'owner' || role === 'admin') {
+            setSession({
+              userEmail: email,
+              userName: name.charAt(0).toUpperCase() + name.slice(1),
+              userRole: role,
+              userInitials: name.slice(0, 2).toUpperCase(),
+            });
+          } else {
+            setAuthError('You do not have access to Flow HQ.');
+          }
         }
       } catch (err) {
         console.warn('Auth session check notice:', err);
@@ -437,59 +452,15 @@ export default function FlowHQPage() {
       });
 
       if (error) {
-        if (
-          authEmail.toLowerCase().includes('theflowlabs') ||
-          authEmail.toLowerCase() === 'theflowlabs01@gmail.com' ||
-          authPassword === 'flowlabs2026'
-        ) {
-          const name = authEmail.split('@')[0];
-          setSession({
-            userEmail: authEmail,
-            userName: name.charAt(0).toUpperCase() + name.slice(1),
-            userRole: 'Owner',
-            userInitials: name.slice(0, 2).toUpperCase(),
-          });
-        } else {
-          setAuthError(error.message || 'Invalid credentials. Please verify your email and password.');
-        }
+        setAuthError(error.message || 'Invalid credentials. Please verify your email and password.');
       } else if (data?.session) {
-        const email = data.session.user.email || authEmail;
-        const name = data.session.user.user_metadata?.full_name || email.split('@')[0];
-        setSession({
-          userEmail: email,
-          userName: name,
-          userRole: 'Admin',
-          userInitials: name.slice(0, 2).toUpperCase(),
-        });
+        await checkAuth();
       }
     } catch (err: any) {
-      if (
-        authEmail.toLowerCase().includes('theflowlabs') ||
-        authEmail.toLowerCase() === 'theflowlabs01@gmail.com' ||
-        authPassword === 'flowlabs2026'
-      ) {
-        setSession({
-          userEmail: authEmail,
-          userName: 'Founder',
-          userRole: 'Owner',
-          userInitials: 'SR',
-        });
-      } else {
-        setAuthError(err.message || 'Sign in encountered an error.');
-      }
+      setAuthError(err.message || 'Sign in encountered an error.');
     } finally {
       setAuthLoading(false);
     }
-  };
-
-  // Quick Founder Preset Login
-  const handleFounderQuickLogin = (email: string, role: string, name: string, initials: string) => {
-    setSession({
-      userEmail: email,
-      userName: name,
-      userRole: role,
-      userInitials: initials,
-    });
   };
 
   // Sign out
@@ -802,37 +773,6 @@ export default function FlowHQPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Founder Access Panel */}
-          <div className="pt-4 border-t border-white/10 space-y-3">
-            <div className="flex justify-between items-center text-[11px] font-mono text-slate-400">
-              <span>Quick founder access</span>
-              <span>Founder credentials</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleFounderQuickLogin('smruti@theflowlabs.online', 'Owner', 'Smruti Ranjan', 'SR')}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors"
-              >
-                Smruti (SR)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFounderQuickLogin('biswash@theflowlabs.online', 'Admin', 'Biswash', 'BW')}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors"
-              >
-                Biswash (BW)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFounderQuickLogin('arpita@theflowlabs.online', 'Admin', 'Arpita', 'AP')}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors"
-              >
-                Arpita (AP)
-              </button>
-            </div>
-          </div>
 
           <div className="text-center pt-2">
             <Link

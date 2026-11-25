@@ -421,21 +421,23 @@ const handle = async (req, res, segments) => {
     return json(res, 200, { ok: true, events: rows || [] });
   }
 
-  // POST /notify - Send email alert for task / mention / milestone
+  // POST /notify - Send email alert for task / mention / milestone (admin only)
   if (route === 'notify' && method === 'POST') {
+    requireAdmin(profile);
     const b = await readBody(req);
     const to = b.to || process.env.NOTIFY_TO || process.env.SMTP_USER;
-    const subject = b.subject || ('[Flow HQ] ' + (b.title || 'Notification'));
-    const bodyText = b.body || b.text || '';
-    const link = b.link ? ('\n\nView details: ' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://theflowlabs.online') + b.link) : '';
 
     const host = process.env.SMTP_HOST;
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
     if (!host || !user || !pass || !to) {
-      return json(res, 200, { ok: true, sent: false, note: 'SMTP not configured or recipient missing' });
+      return json(res, 503, { ok: false, error: 'SMTP not configured or recipient missing' });
     }
+
+    const subject = b.subject || ('[Flow HQ] ' + (b.title || 'Notification'));
+    const bodyText = b.body || b.text || '';
+    const link = b.link ? ('\n\nView details: ' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://theflowlabs.online') + b.link) : '';
 
     try {
       const nodemailer = require('nodemailer');
@@ -514,7 +516,7 @@ const parseSegments = (req) => {
 };
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://www.theflowlabs.online');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

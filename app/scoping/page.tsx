@@ -37,6 +37,7 @@ export default function ScopingPage() {
   const [idea, setIdea] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const currentDomain = DOMAINS.find((d) => d.id === domainId) || DOMAINS[0];
   const featuresTotal = selectedFeatures.reduce((sum, fId) => {
@@ -55,6 +56,7 @@ export default function ScopingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSubmitError('');
 
     try {
       const payload = {
@@ -70,11 +72,17 @@ export default function ScopingPage() {
       const { error } = await supabase.from('site_leads').insert([payload]);
       if (error) {
         console.warn('Supabase lead submit notice:', error);
+        setSubmitError(
+          'We could not save your brief. Please try again, or email hello@theflowlabs.online / WhatsApp +91 82496 81534.'
+        );
+        return;
       }
       setSubmitted(true);
     } catch (err: any) {
       console.error('Lead submission fallback:', err);
-      setSubmitted(true);
+      setSubmitError(
+        'We could not save your brief. Please try again, or email hello@theflowlabs.online / WhatsApp +91 82496 81534.'
+      );
     } finally {
       setLoading(false);
     }
@@ -183,16 +191,21 @@ export default function ScopingPage() {
             {/* Step 3: Duration Slider */}
             <div className="space-y-3">
               <div className="flex justify-between items-center text-xs font-mono">
+                <label htmlFor="duration-slider" className="sr-only">
+                  Sprint duration in weeks
+                </label>
                 <span className="text-slate-300">3. Sprint duration</span>
                 <span className="text-white font-medium">{weeks} Weeks</span>
               </div>
               <input
+                id="duration-slider"
                 type="range"
                 min={1}
                 max={8}
                 value={weeks}
                 onChange={(e) => setWeeks(Number(e.target.value))}
                 className="w-full accent-white cursor-pointer bg-white/10 rounded-lg h-1.5"
+                aria-valuetext={`${weeks} week${weeks > 1 ? 's' : ''}`}
               />
               <div className="flex justify-between font-mono text-[10px] text-slate-500">
                 <span>1 Week (MVP)</span>
@@ -226,7 +239,9 @@ export default function ScopingPage() {
             {!submitted ? (
               <form onSubmit={handleSubmit} className="space-y-3 pt-1">
                 <div>
+                  <label htmlFor="lead-name" className="sr-only">Your name</label>
                   <input
+                    id="lead-name"
                     type="text"
                     required
                     placeholder="Your name"
@@ -236,7 +251,9 @@ export default function ScopingPage() {
                   />
                 </div>
                 <div>
+                  <label htmlFor="lead-contact" className="sr-only">Work email or WhatsApp</label>
                   <input
+                    id="lead-contact"
                     type="text"
                     required
                     placeholder="Work email or WhatsApp"
@@ -246,7 +263,9 @@ export default function ScopingPage() {
                   />
                 </div>
                 <div>
+                  <label htmlFor="lead-idea" className="sr-only">Brief outline of your product or requirements</label>
                   <textarea
+                    id="lead-idea"
                     rows={2}
                     placeholder="Brief outline of your product or requirements..."
                     value={idea}
@@ -269,6 +288,12 @@ export default function ScopingPage() {
                     </>
                   )}
                 </button>
+
+                {submitError && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs leading-relaxed">
+                    {submitError}
+                  </div>
+                )}
               </form>
             ) : (
               <div className="p-5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-3">

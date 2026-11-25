@@ -71,7 +71,7 @@ const readRawBody = async (req) => {
 };
 
 const verifySignature = (rawBody, signature, secret) => {
-  if (!secret) return true; // development fallback
+  if (!secret) return false; // fail closed: reject if no secret configured
   if (!signature) return false;
 
   const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
@@ -99,9 +99,9 @@ module.exports = async (req, res) => {
 
   const rawBody = await readRawBody(req);
 
-  // 1. Signature check
-  if (secret && !verifySignature(rawBody, signature, secret)) {
-    return json(res, 401, { ok: false, error: 'Invalid webhook signature' });
+  // 1. Signature check — fail closed if secret not set or invalid
+  if (!secret || !verifySignature(rawBody, signature, secret)) {
+    return json(res, 401, { ok: false, error: 'Invalid or missing webhook signature' });
   }
 
   let payload = {};
