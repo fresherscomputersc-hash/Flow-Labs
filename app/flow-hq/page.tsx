@@ -2,6 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+
+// Auth check helper: verifies Supabase session and profile status
+// for Flow HQ access. Replaces the missing checkAuth() call.
+const checkAuth = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    // No session - user not logged in; redirect to login
+    // Note: redirect cannot be done in client component without next/router
+    // The caller should handle redirect or auth state
+    return false;
+  }
+  // Check that the user has an active profile (SEC-013 hardening)
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role, status')
+    .eq('id', session.user.id)
+    .single();
+  if (error || !profile || profile.status !== 'active') {
+    // Profile not active - user should not have access
+    return false;
+  }
+  return true;
+};
 import {
   LayoutDashboard,
   CheckSquare,
