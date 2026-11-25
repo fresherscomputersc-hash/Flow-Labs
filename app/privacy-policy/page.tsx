@@ -1,6 +1,9 @@
 export const metadata = {
   title: 'Privacy Policy | The Flow Labs',
   description: 'Privacy Policy for The Flow Labs. Zero tracking cookies, zero analytics surveillance.',
+  alternates: {
+    canonical: '/privacy-policy',
+  },
 };
 
 export default function PrivacyPage() {

@@ -228,32 +228,38 @@ export default function ClientPortalPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="block font-mono text-xs text-slate-300">Client work email</label>
+              <label htmlFor="client-email" className="block font-mono text-xs text-slate-300">
+                Client work email <span className="text-rose-400">*</span>
+              </label>
               <input
+                id="client-email"
                 type="email"
                 required
                 placeholder="e.g. rohan@droovee.in"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block font-mono text-xs text-slate-300">Portal access key</label>
+              <label htmlFor="client-key" className="block font-mono text-xs text-slate-300">
+                Portal access key
+              </label>
               <input
+                id="client-key"
                 type="text"
                 placeholder="e.g. DRV-CLIENT-9842"
                 value={keyInput}
                 onChange={(e) => setKeyInput(e.target.value.toUpperCase())}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono placeholder:normal-case placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 uppercase"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono placeholder:normal-case placeholder-slate-400 text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors uppercase"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium text-sm py-2.5 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium text-sm py-2.5 rounded-lg hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 transition-colors disabled:opacity-50"
             >
               {loading ? (
                 <span>Verifying key...</span>

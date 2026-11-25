@@ -10,7 +10,6 @@
 
 -- Fix the handle_new_user() trigger: always set role='member',
 -- never read it from raw_user_meta_data.
-drop function if exists public.handle_new_user() cascade;
 create or replace function public.handle_new_user()
   returns trigger
   language plpgsql
@@ -21,19 +20,20 @@ create or replace function public.handle_new_user()
     -- Always set role to member; client-supplied role in
     -- raw_user_meta_data is ignored to prevent self-promotion.
     -- The role can only be changed by an admin RPC afterwards.
-    new.role := 'member'::public.app_role;
-
     insert into public.profiles (id, email, full_name, role, status)
     values (
       new.id,
       lower(new.email),
       coalesce(new.raw_user_meta_data ->> 'full_name', ''),
-      new.role,
+      'member'::public.app_role,
       case when new.email_confirmed_at is null
           then 'invited'::public.member_status
           else 'active'::public.member_status
       end
-    );
+    )
+    on conflict (id) do update
+      set email     = excluded.email,
+          full_name = coalesce(nullif(excluded.full_name, ''), public.profiles.full_name);
     return new;
   end;
 $$;

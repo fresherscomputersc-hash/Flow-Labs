@@ -91,7 +91,7 @@ export function Footer() {
 
       </div>
 
-      <div className="border-t border-white/5 py-6 px-6 max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-slate-500">
+      <div className="border-t border-white/5 py-6 px-6 max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-slate-400">
         <div>&copy; {new Date().getFullYear()} The Flow Labs. All rights reserved.</div>
         <div className="flex items-center gap-4">
           <span>Latency: 16ms</span>

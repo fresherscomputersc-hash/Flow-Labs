@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /flow-hq
+Disallow: /client
 
 Sitemap: https://www.theflowlabs.online/sitemap.xml

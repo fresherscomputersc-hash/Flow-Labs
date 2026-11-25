@@ -21,6 +21,9 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${post.title} | The Flow Labs Engineering Blog`,
     description: post.description,
+    alternates: {
+      canonical: `/blog/${slug}`,
+    },
   };
 }
 

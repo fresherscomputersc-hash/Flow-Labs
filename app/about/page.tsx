@@ -4,6 +4,9 @@ import { ArrowRight, MapPin, Check, Terminal, Shield, Cpu, Code2 } from 'lucide-
 export const metadata = {
   title: 'About — Founders & Studio Principles | The Flow Labs',
   description: 'Meet The Flow Labs founders: Smruti Ranjan, Biswash, and Arpita. A founder-led engineering studio building interfaces, systems, and AI in-house. Capped at four builds a month.',
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 export default function AboutPage() {

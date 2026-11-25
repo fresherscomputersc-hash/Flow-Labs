@@ -104,7 +104,7 @@ export default function HomePage() {
                   </div>
                   <h3 className="font-display text-lg font-medium text-white">Interfaces &amp; Design Systems</h3>
                 </div>
-                <span className="font-mono text-xs text-slate-500">Next.js 15, Three.js</span>
+                <span className="font-mono text-xs text-slate-400">Next.js 15, Three.js</span>
               </div>
               <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
                 Tactile web applications built with micro-interactions, responsive typography, and sub-second paint times. No template bloat.
@@ -120,7 +120,7 @@ export default function HomePage() {
                   </div>
                   <h3 className="font-display text-lg font-medium text-white">Cloud Platforms &amp; Relational Schemas</h3>
                 </div>
-                <span className="font-mono text-xs text-slate-500">PostgreSQL, Supabase RLS</span>
+                <span className="font-mono text-xs text-slate-400">PostgreSQL, Supabase RLS</span>
               </div>
               <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
                 Normalized database schemas, row-level security boundaries, background queue workers, and automated GST billing pipelines.
@@ -136,7 +136,7 @@ export default function HomePage() {
                   </div>
                   <h3 className="font-display text-lg font-medium text-white">Applied Intelligence &amp; Autonomous Flows</h3>
                 </div>
-                <span className="font-mono text-xs text-slate-500">Claude 3.5, pgvector</span>
+                <span className="font-mono text-xs text-slate-400">Claude 3.5, pgvector</span>
               </div>
               <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
                 Contextual RAG engines, vector search, Meta WhatsApp Cloud bots, and self-healing backend cron automation.
@@ -186,19 +186,19 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-xs">
             <div>
-              <span className="text-slate-500 block text-[11px]">Role</span>
+              <span className="text-slate-400 block text-[11px]">Role</span>
               <strong className="text-white text-xs">Full Architecture</strong>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px]">Latency</span>
+              <span className="text-slate-400 block text-[11px]">Latency</span>
               <strong className="text-slate-300 text-xs">&lt; 120ms P95</strong>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px]">Database</span>
+              <span className="text-slate-400 block text-[11px]">Database</span>
               <strong className="text-white text-xs">PostgreSQL + RLS</strong>
             </div>
             <div>
-              <span className="text-slate-500 block text-[11px]">Stack</span>
+              <span className="text-slate-400 block text-[11px]">Stack</span>
               <strong className="text-slate-300 text-xs">Next.js 15, Supabase</strong>
             </div>
           </div>

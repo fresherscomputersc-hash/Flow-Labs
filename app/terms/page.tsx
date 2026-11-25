@@ -1,6 +1,9 @@
 export const metadata = {
   title: 'Terms of Service | The Flow Labs',
   description: 'Terms of Service for The Flow Labs software engineering studio.',
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 export default function TermsPage() {

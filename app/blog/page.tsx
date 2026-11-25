@@ -5,6 +5,9 @@ import { BLOG_POSTS } from '@/lib/posts';
 export const metadata = {
   title: 'Blog — Engineering Perspectives & Code | The Flow Labs',
   description: 'Practical articles on AI automation, software architecture, websites, and custom engineering. Written by the founders from production experience.',
+  alternates: {
+    canonical: '/blog',
+  },
 };
 
 export default function BlogPage() {

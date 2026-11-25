@@ -6,7 +6,6 @@
 -- ============================================================
 
 -- 1. can_access_project: add status check for project_members
-drop function if exists public.can_access_project(uuid);
 create or replace function public.can_access_project(p_project uuid)
   returns boolean
   language sql
@@ -29,7 +28,6 @@ create or replace function public.can_access_project(p_project uuid)
   $$;
 
 -- 2. can_manage_project: add status check for project_members
-drop function if exists public.can_manage_project(uuid);
 create or replace function public.can_manage_project(p_project uuid)
   returns boolean
   language sql
@@ -44,7 +42,7 @@ create or replace function public.can_manage_project(p_project uuid)
             and m.user_id = auth.uid()
             and exists (select 1 from public.profiles p
                         where p.id = auth.uid() and p.status = 'active')
-            and m.role in ('manager', 'admin')
+            and m.role = 'manager'
         );
   $$;
 
@@ -63,7 +61,6 @@ create policy "can_access_task"
   using (public.can_access_task(id));
 
 -- 5. project_progress: already calls can_access_project, which is now fixed.
-drop function if exists public.project_progress(uuid);
 create or replace function public.project_progress(p_project uuid)
   returns jsonb
   language plpgsql

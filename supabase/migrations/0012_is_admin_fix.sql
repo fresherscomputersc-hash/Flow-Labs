@@ -7,7 +7,6 @@
 -- it will be cleaned up in a later migration once the seed is verified.
 -- ============================================================
 
-drop function if exists public.is_admin() cascade;
 create or replace function public.is_admin()
   returns boolean
   language sql

@@ -241,38 +241,7 @@ const DEFAULT_ACTIVITY: ActivityLog[] = [
   { id: 'act-4', actor: 'SR', action: 'issued portal access', target: 'Rohan Sharma (Droovee)', time: '4h ago' },
 ];
 
-const DEFAULT_LEADS: Lead[] = [
-  {
-    id: 'lead-1',
-    name: 'Vikramaditya Patnaik',
-    contact: 'vikram@odishalogistics.in',
-    project_type: 'Fleet Dispatch & Telemetry IoT',
-    budget: '₹1,80,000',
-    idea: 'Need a real-time GPS fleet tracking system with automated driver trip allocation, fuel consumption analytics, and instant WhatsApp billing.',
-    created_at: '2026-11-24T16:30:00Z',
-    status: 'new'
-  },
-  {
-    id: 'lead-2',
-    name: 'Dr. Ananya Mohanty',
-    contact: 'ananya@medixcare.org',
-    project_type: 'Healthcare Patient Portal & EMR',
-    budget: '₹95,000',
-    idea: 'Telemedicine consultation workflow with automated calendar invites, encrypted prescription uploads, and Razorpay OPD fee collection.',
-    created_at: '2026-11-23T11:15:00Z',
-    status: 'contacted'
-  },
-  {
-    id: 'lead-3',
-    name: 'Rahul Senapati',
-    contact: 'rahul@urbanmart.co',
-    project_type: 'Quick-Commerce Hyperlocal Catalog',
-    budget: '₹1,40,000',
-    idea: '15,000 SKU catalog with sub-second Elasticsearch indexing, real-time store inventory sync, and Mapbox courier routing.',
-    created_at: '2026-11-21T09:40:00Z',
-    status: 'qualified'
-  }
-];
+const DEFAULT_LEADS: Lead[] = [];
 
 export default function FlowHQPage() {
   // Session State
@@ -758,33 +727,39 @@ export default function FlowHQPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="block font-mono text-xs text-slate-300">Work email</label>
+              <label htmlFor="hq-email" className="block font-mono text-xs text-slate-300">
+                Work email <span className="text-rose-400">*</span>
+              </label>
               <input
+                id="hq-email"
                 type="email"
                 required
                 placeholder="smruti@theflowlabs.online"
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block font-mono text-xs text-slate-300">Password</label>
+              <label htmlFor="hq-password" className="block font-mono text-xs text-slate-300">
+                Password <span className="text-rose-400">*</span>
+              </label>
               <input
+                id="hq-password"
                 type="password"
                 required
                 placeholder="••••••••••••"
                 value={authPassword}
                 onChange={(e) => setAuthPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-400 text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors"
               />
             </div>
 
             <button
               type="submit"
               disabled={authLoading}
-              className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium text-sm py-2.5 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium text-sm py-2.5 rounded-lg hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 transition-colors disabled:opacity-50"
             >
               {authLoading ? (
                 <span>Authenticating...</span>

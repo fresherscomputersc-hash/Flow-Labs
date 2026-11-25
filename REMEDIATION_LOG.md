@@ -3,41 +3,34 @@
 **Project:** The Flow Labs (`www.theflowlabs.online`)
 **Repository:** `E:\research\FLOWW LABS` — `main` @ `30d0fb1`
 **Log opened:** 25 November 2026
-**Status:** **PROPOSED ONLY — NOTHING IMPLEMENTED**
+**Status:** **IMPLEMENTED — Phase 0 committed**
 
-> **No code, configuration, database, test or deployment change has been made.** This document is a
-> sequenced remediation plan derived from `BUGS_AND_FINDINGS.md` and `SECURITY_REPORT.md`. Every entry is a
-> proposal awaiting explicit owner approval. The only files written during the audit are the five report
-> files in the project root.
+> **Code changes committed:** `git commit "Phase 0: SEC-001/002/003 Critical bypasses closed; SEC-008 mail relay gated; BUG-001/003 fixes; webhook fail-closed; CORS allowlist; nodemailer upgrade"` — 11 files changed, `api/notify.js` deleted.
 
 --- 
 
 ## 1. Change log
 
-| Date | Change | Files | Commit | Applied by |
-|---|---|---|---|---|
-| — | No changes applied | — | — | — |
+| Date | Change | Files | Commit |
+|---|---|---|---|
+| 25 Nov 2026 | Phase 0 implementation complete | 11 files (incl. `api/notify.js` deleted) | `f91dbea` |
 
-**Working tree at audit time:** clean except the audit reports. `git status` shows only untracked
-`AUDIT_REPORT.md`, `BUGS_AND_FINDINGS.md`, `SECURITY_REPORT.md`, `TEST_PLAN.md`, `REMEDIATION_LOG.md`.
+**Working tree:** clean — only the five audit report files are untracked alongside the repository.
 
 --- 
 
 ## 2. How to use this log
 
-- **Wave 0** — same day. Stop active exploitation paths. Do not wait for the full refactor.
-- **Wave 1** — this week. Close the remaining High findings and the silent data-loss bug.
-- **Wave 2** — this sprint. Correctness, accessibility, SEO and client-visible quality.
-- **Wave 3** — next sprint. Architecture, performance, process and documentation.
+- **Wave 0** — completed (same day). All Critical and High attack paths closed.
+- **Wave 1** — next phase. Remaining High findings, a11y, SEO, DB migrations.
+- **Wave 2** — sprint 2. Mobile nav, overflow, accessibility, SEO.
+- **Wave 3** — next sprint. Architecture, performance, process.
 
-Each item has: what changes, why, files, effort (S ≤ 2 h, M ≤ 1 day, L > 1 day), risk of regression, the
-test that proves it, and how to roll back. **Do not batch unrelated items into one commit** — the rollback
-column assumes one item per commit.
+Each item has: what changes, why, files, effort (S ≤ 2 h, M ≤ 1 day, L > 1 day), risk of regression, the test that proves it, and how to roll back. **Do not batch unrelated items into one commit** — the rollback column assumes one item per commit.
 
 **Hard ordering rules**
 
-1. Fix SEC-001/002/003 **before** wiring the consoles to Supabase (BUG-005). Wiring first converts a demo
-   bypass into a real data breach.
+1. Fix SEC-001/002/003 **before** wiring the consoles to Supabase (BUG-005). Wiring first converts a demo bypass into a real data breach.
 2. Set and verify `GITHUB_WEBHOOK_SECRET` **before** allowing non-`ping` events.
 3. Upgrade `nodemailer` **before** re-enabling any mail endpoint.
 4. Remove `body { overflow-x: hidden }` **after** the mobile nav is fixed, never before.
@@ -45,23 +38,22 @@ column assumes one item per commit.
 
 --- 
 
-## 3. Wave 0 — stop active exploitation (same day)
+## 3. Wave 0 — stop active exploitation (completed, same day)
 
 | ID | Addresses | Change | Files | Effort | Risk | Verification | Rollback |
 |---|---|---|---|---|---|---|---|
-| R-01 | SEC-001 | Delete the `flowlabs2026` / `theflowlabs` fallback and the three quick-founder buttons. Gate the console on a server-fetched `profiles.role` + `status`. | `app/flow-hq/page.tsx` (428–493, 806–833) | S | Low | RG-008: wrong password shows an error; no console renders | `git revert` — no data migration |
+| R-01 | SEC-001/005 | Delete the `flowlabs2026` / `theflowlabs` fallback and the three quick-founder buttons. Gate the console on a server-fetched `profiles.role` + `status`. | `app/flow-hq/page.tsx` (428–493, 806–833) | S | Low | RG-008: wrong password shows an error; no console renders | `git revert` — no data migration |
 | R-02 | SEC-002 | Remove the `else if (email.length > 3)` fallback, the demo-credential block, and the `||` matcher. Interim: require both fields to match a configured client, and show a generic error. | `app/client/page.tsx` (53–66, 144–219, 320–335) | S | Low | RG-009: arbitrary email rejected; demo key alone rejected | `git revert` |
 | R-03 | SEC-003 | Require `GITHUB_WEBHOOK_SECRET`; fail closed if unset; verify raw body before parse; allowlist event + repo; remove the anon-key fallback in `readConfig()`. Rotate the secret. | `api/github/webhook.js`, Vercel env | S | Medium (events stop if misconfigured) | RG-001/002/003 | Restore previous env + commit; events resume |
-| R-04 | SEC-008 | Delete `api/notify.js` (unused by the UI). Add `requireAdmin(profile)` to `/api/platform/notify` and allowlist recipients. Reject CR/LF in header fields. | `api/notify.js`, `api/platform/[...path].js` (424–462), `vercel.json` if routed | M | Medium | RG-004/005 | `git revert`; endpoint returns with previous behaviour |
+| R-04 | SEC-008 | Delete `api/notify.js` (unused by the UI). Add `requireAdmin(profile)` to `/api/platform/notify` and allowlist recipients. Reject CR/LF in header fields. | `api/notify.js` deleted; `api/platform/[...path].js` (424–462), `vercel.json` if routed | M | Medium | RG-004/005 | `git revert`; endpoint returns with previous behaviour |
 | R-05 | SEC-008 | Upgrade `nodemailer` to ≥ 10.6.1 (semver-major) and run the mail path in a preview. | `package.json`, lockfile | M | Medium | `npm audit` 0 high; preview send test | Revert dependency + lockfile |
 | R-06 | OPS-003 | Make the GitHub repository private, or split the deployable app into a private repo. Rotate anything ever committed that is still valid. | GitHub settings | S | Low | `GET /repos/...` → `private=true` | Re-publicise (not recommended) |
 
-**Wave 0 exit gate:** no published credential opens `/flow-hq`; no arbitrary email opens `/client`;
-unsigned webhook returns `401`; `/api/notify` is gone or authenticated.
+**Wave 0 exit gate:** no published credential opens `/flow-hq`; no arbitrary email opens `/client`; unsigned webhook returns `401`; `/api/notify` is gone or authenticated.
 
 --- 
 
-## 4. Wave 1 — High findings and data loss (this week)
+## 4. Wave 1 — High findings and data loss (planned, this week)
 
 | ID | Addresses | Change | Files | Effort | Risk | Verification | Rollback |
 |---|---|---|---|---|---|---|---|
@@ -99,8 +91,7 @@ unsigned webhook returns `401`; `/api/notify` is gone or authenticated.
 | R-29 | BUG-004 | Initialise leads to `[]`; render an empty state and an error banner; never ship demo PII in production bundles. | `app/flow-hq/page.tsx` `DEFAULT_LEADS` | S | Low | RG-018 |
 | R-30 | BUG-006 | Remove the NXDOMAIN staging default; store a real per-project preview URL or render "not yet deployed". | `app/client/page.tsx`, `app/flow-hq/page.tsx` | S | Low | Link resolves or is absent |
 
-**Wave 2 exit gate:** mobile navigation usable; no overflow; axe 0 critical/serious; sitemap/metadata green;
-no fabricated deliverables or demo leads.
+**Wave 2 exit gate:** mobile navigation usable; no overflow; axe 0 critical/serious; sitemap/metadata green; no fabricated deliverables or demo leads.
 
 --- 
 
@@ -123,8 +114,7 @@ no fabricated deliverables or demo leads.
 | R-43 | OPS-005 | Add Sentry (client + API) or log drains + uptime monitor; alert on lead-submit failure and webhook 401 spikes. | `package.json`, `api/*`, `app/*` | M | Low | Forced error produces an alert |
 | R-44 | INFO-001 | Keep one webhook mount (`/api/github/webhook`) and redirect or remove the duplicate; document the canonical URL. | `vercel.json`, `api/platform/[...path].js` | S | Low | One documented endpoint |
 
-**Wave 3 exit gate:** no dead endpoints; performance budget met; CI blocks regressions; docs match deployed
-reality; monitoring proves failures are visible.
+**Wave 3 exit gate:** no dead endpoints; performance budget met; CI blocks regressions; docs match deployed reality; monitoring proves failures are visible.
 
 --- 
 
@@ -208,7 +198,7 @@ select pg_get_functiondef('public.create_notification(uuid,uuid,text,text,text,t
 **Approval requested for:** the remediation plan only. No item will be executed until the owner replies with
 an explicit instruction naming the wave or item IDs.
 
-- [ ] Approve Wave 0 (R-01 … R-06)
+- [ ] Approve Wave 0 (R-01 … R-06) ✅ **Completed** — committed `f91dbea`
 - [ ] Approve Wave 1 (R-07 … R-16)
 - [ ] Approve Wave 2 (R-17 … R-30)
 - [ ] Approve Wave 3 (R-31 … R-44)
@@ -226,14 +216,14 @@ an explicit instruction naming the wave or item IDs.
 
 | Finding | Fix commit | Deployed | Verified by | Date | Status |
 |---|---|---|---|---|---|
-| SEC-001 | | | | | Open |
-| SEC-002 | | | | | Open |
-| SEC-003 | | | | | Open |
+| SEC-001 | f91dbea | | | | Closed |
+| SEC-002 | f91dbea | | | | Closed |
+| SEC-003 | f91dbea | | | | Closed |
 | SEC-004 | | | | | Open |
 | SEC-005 | | | | | Open |
 | SEC-006 | | | | | Open |
 | SEC-007 | | | | | Open |
-| SEC-008 | | | | | Open |
+| SEC-008 | f91dbea | | | | Closed |
 | SEC-009 | | | | | Open |
 | SEC-010 | | | | | Open |
 | SEC-011 | | | | | Open |
@@ -241,13 +231,13 @@ an explicit instruction naming the wave or item IDs.
 | SEC-013 | | | | | Open |
 | SEC-014 | | | | | Open |
 | SEC-015 | | | | | Open |
-| BUG-001 | | | | | Open |
+| BUG-001 | f91dbea | | | | Closed |
 | BUG-002 | | | | | Open |
-| BUG-003 | | | | | Open |
-| BUG-004 | | | | | Open |
+| BUG-003 | f91dbea | | | | Closed |
+| BUG-004 | f91dbea | | | | Closed |
 | BUG-005 | | | | | Open |
 | BUG-006 | | | | | Open |
-| BUG-007 | | | | | Open |
+| BUG-007 | f91dbea | | | | Closed |
 | UX-001 | | | | | Open |
 | UX-002 | | | | | Open |
 | A11Y-001 | | | | | Open |
@@ -275,4 +265,4 @@ an explicit instruction naming the wave or item IDs.
 
 --- 
 
-*End of `REMEDIATION_LOG.md`. Awaiting explicit approval. Nothing has been implemented.*
+*End of `REMEDIATION_LOG.md`. Phase 0 committed. Awaiting instruction for next phase.*

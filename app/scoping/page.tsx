@@ -362,10 +362,9 @@ export default function ScopingPage() {
                 {/* Step 3: Duration Slider */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-xs font-mono">
-                    <label htmlFor="duration-slider" className="sr-only">
-                      Sprint duration in weeks
+                    <label htmlFor="duration-slider" className="text-slate-300 cursor-pointer font-medium">
+                      3. Sprint duration
                     </label>
-                    <span className="text-slate-300">3. Sprint duration</span>
                     <span className="text-white font-medium">{weeks} Weeks</span>
                   </div>
                   <input
@@ -375,7 +374,7 @@ export default function ScopingPage() {
                     max={8}
                     value={weeks}
                     onChange={(e) => setWeeks(Number(e.target.value))}
-                    className="w-full accent-white cursor-pointer bg-white/10 rounded-lg h-1.5"
+                    className="w-full accent-cyan-400 cursor-pointer bg-white/10 rounded-lg h-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                     aria-valuetext={`${weeks} week${weeks > 1 ? 's' : ''}`}
                   />
                   <div className="flex justify-between font-mono text-[10px] text-slate-500">
@@ -420,47 +419,53 @@ export default function ScopingPage() {
 
             {/* Direct Form */}
             {!submitted ? (
-              <form onSubmit={handleSubmit} className="space-y-3 pt-1">
+              <form onSubmit={handleSubmit} className="space-y-3.5 pt-1">
                 <div>
-                  <label htmlFor="lead-name" className="sr-only">Your name</label>
+                  <label htmlFor="lead-name" className="block font-mono text-[11px] text-slate-300 mb-1">
+                    Your name <span className="text-rose-400">*</span>
+                  </label>
                   <input
                     id="lead-name"
                     type="text"
                     required
-                    placeholder="Your name"
+                    placeholder="e.g. Rahul Sharma"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-white/30 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors"
                   />
                 </div>
                 <div>
-                  <label htmlFor="lead-contact" className="sr-only">Work email or WhatsApp</label>
+                  <label htmlFor="lead-contact" className="block font-mono text-[11px] text-slate-300 mb-1">
+                    Work email or WhatsApp <span className="text-rose-400">*</span>
+                  </label>
                   <input
                     id="lead-contact"
                     type="text"
                     required
-                    placeholder="Work email or WhatsApp"
+                    placeholder="name@company.com or +91..."
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-white/30 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors"
                   />
                 </div>
                 <div>
-                  <label htmlFor="lead-idea" className="sr-only">Brief outline of your product or requirements</label>
+                  <label htmlFor="lead-idea" className="block font-mono text-[11px] text-slate-300 mb-1">
+                    Brief outline <span className="text-slate-400 font-sans text-[10px]">(optional)</span>
+                  </label>
                   <textarea
                     id="lead-idea"
                     rows={2}
                     placeholder="Brief outline of your product or requirements..."
                     value={idea}
                     onChange={(e) => setIdea(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-white/30 transition-colors resize-none"
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium text-xs sm:text-sm py-2.5 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-white text-[#07090E] font-medium text-xs sm:text-sm py-2.5 rounded-lg hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 transition-colors disabled:opacity-50"
                 >
                   {loading ? (
                     <span>Synthesizing...</span>

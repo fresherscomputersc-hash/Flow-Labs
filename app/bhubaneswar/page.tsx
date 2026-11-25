@@ -4,6 +4,9 @@ import { MapPin, ArrowRight } from 'lucide-react';
 export const metadata = {
   title: 'Bhubaneswar Engineering Studio | The Flow Labs',
   description: 'Digital engineering studio in Infocity, Bhubaneswar. Three founders building web applications, scalable cloud infrastructure, and applied intelligence.',
+  alternates: {
+    canonical: '/bhubaneswar',
+  },
 };
 
 export default function BhubaneswarPage() {

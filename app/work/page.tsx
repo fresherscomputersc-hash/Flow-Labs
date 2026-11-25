@@ -4,6 +4,9 @@ import { ArrowRight, ExternalLink, Terminal, Shield, Cpu, Activity, Database, Ch
 export const metadata = {
   title: 'Work — Production Deployments & Case Studies | The Flow Labs',
   description: 'Production applications, operations consoles, and computer vision pipelines engineered by The Flow Labs. Shipped in-house with real users and live telemetry.',
+  alternates: {
+    canonical: '/work',
+  },
 };
 
 export default function WorkPage() {

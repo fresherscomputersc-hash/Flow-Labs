@@ -80,6 +80,40 @@ const refundSlot = (ip) => {
   if (dayCount > 0) dayCount -= 1;
 };
 
+const dns = require('dns').promises;
+
+const isPrivateIP = (addr) => {
+  if (!addr) return false;
+  // IPv4 private ranges & loopback & link-local
+  if (/^127\./.test(addr)) return true;
+  if (/^0\./.test(addr)) return true;
+  if (/^10\./.test(addr)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(addr)) return true;
+  if (/^192\.168\./.test(addr)) return true;
+  if (/^169\.254\./.test(addr)) return true; // link-local
+  if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(addr)) return true; // CGNAT
+  // IPv6 ULA and loopback
+  if (/^fe80:/i.test(addr)) return true;
+  if (/^f[cd][0-9a-f]{2}:/i.test(addr)) return true;
+  if (/^::1$/.test(addr)) return true;
+  if (/^::ffff:(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/i.test(addr)) return true;
+  return false;
+};
+
+const isHostAllowed = async (host) => {
+  const cleanHost = String(host || '').replace(/^[\[]|\]$/g, '').toLowerCase();
+  if (isPrivateIP(cleanHost)) return false;
+  try {
+    const records = await dns.lookup(cleanHost, { all: true });
+    for (const r of records) {
+      if (isPrivateIP(r.address)) return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 const normalizeUrl = (raw) => {
   let value = String(raw || '').trim();
   if (!value) return null;
@@ -91,11 +125,14 @@ const normalizeUrl = (raw) => {
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
 
   const host = parsed.hostname.toLowerCase();
+
+  // 1. Hostname blocklist
   if (!host.includes('.')) return null;
   if (host === 'localhost' || host.endsWith('.local') || host.endsWith('.internal')) return null;
   if (/^(127\.|10\.|0\.|169\.254\.|192\.168\.)/.test(host)) return null;
   if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return null;
   if (/^\[?::1\]?$/.test(host)) return null;
+  if (isPrivateIP(host.replace(/^[\[]|\]$/g, ''))) return null;
 
   parsed.hash = '';
   return { url: parsed.toString(), host };
@@ -201,6 +238,19 @@ const gradeFor = (score) => {
 const fetchHtml = async (url) => {
   let current = url;
   for (let hop = 0; hop < 3; hop += 1) {
+    let urlObj;
+    try {
+      urlObj = new URL(current);
+    } catch (e) {
+      return null;
+    }
+
+    // SSRF Check (R-07): Resolve DNS asynchronously before connecting and block private IPs
+    const allowed = await isHostAllowed(urlObj.hostname);
+    if (!allowed) {
+      return null;
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 12000);
     const started = Date.now();

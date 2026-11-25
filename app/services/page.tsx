@@ -4,6 +4,9 @@ import { ArrowRight, Layers, Database, Cpu, Check, Terminal, Shield, Zap, GitBra
 export const metadata = {
   title: 'Services — Interfaces, Scaled Systems, and Applied Intelligence | The Flow Labs',
   description: 'Three core engineering disciplines engineered in-house: Interfaces (Web & Mobile), Systems (Cloud Platforms & PostgreSQL), and Applied Intelligence (AI & Automation). Fixed-price sprint delivery.',
+  alternates: {
+    canonical: '/services',
+  },
 };
 
 export default function ServicesPage() {
