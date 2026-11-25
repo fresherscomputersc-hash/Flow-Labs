@@ -18,50 +18,13 @@
   }
 
   body {
-    background: radial-gradient(circle at 50% 0%, #0d1527 0%, #07090E 70%);
+    background: #07090E;
     min-height: 100vh;
     overflow-x: hidden;
   }
 
   ::selection {
-    background: rgba(6, 182, 212, 0.3);
+    background: rgba(6, 182, 212, 0.25);
     color: #FFFFFF;
   }
-}
-
-/* Ambient Radial Glow Lighting */
-.ambient-glow-top {
-  position: fixed;
-  top: -150px;
-  left: 10%;
-  width: 700px;
-  height: 700px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(59, 130, 246, 0.05) 50%, transparent 70%);
-  filter: blur(120px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.ambient-glow-bottom {
-  position: fixed;
-  bottom: -200px;
-  right: 5%;
-  width: 800px;
-  height: 800px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(6, 182, 212, 0.04) 50%, transparent 70%);
-  filter: blur(140px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Keyframes */
-@keyframes radarPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.85); }
-}
-
-.animate-radar {
-  animation: radarPulse 2s infinite ease-in-out;
 }

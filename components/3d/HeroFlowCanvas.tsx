@@ -241,19 +241,19 @@ export function HeroFlowCanvas() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-2xl h-[260px] sm:h-[320px] mx-auto my-6 rounded-2xl bg-gradient-to-b from-neon-cyan/10 via-neon-blue/5 to-transparent border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_0_30px_rgba(6,182,212,0.05)] overflow-hidden backdrop-blur-xl flex items-center justify-center select-none"
+      className="relative w-full max-w-2xl h-[260px] sm:h-[320px] mx-auto my-6 rounded-2xl bg-white/[0.02] border border-white/10 overflow-hidden flex items-center justify-center select-none"
     >
       <canvas ref={canvasRef} className="w-full h-full block touch-none cursor-grab active:cursor-grabbing" />
 
       {/* Interactive Helper Hint */}
-      <div className="absolute top-3 left-4 font-mono text-[10px] tracking-wider uppercase text-slate-400 flex items-center gap-1.5 pointer-events-none">
-        <span className="text-neon-cyan">✦</span> Touch &amp; Drag in 3D Space
+      <div className="absolute top-3 left-4 font-mono text-[10px] text-slate-400 flex items-center gap-1.5 pointer-events-none">
+        <span>Drag to rotate 3D flow</span>
       </div>
 
       {/* Telemetry Status Badge */}
-      <div className="absolute bottom-3 right-4 inline-flex items-center gap-2 bg-[#0A0F1A]/85 border border-white/10 rounded-full px-3 py-1 font-mono text-[10px] text-slate-300 pointer-events-none backdrop-blur-md">
-        <span className="w-1.5 h-1.5 rounded-full bg-neon-cyan animate-radar shadow-[0_0_8px_#06b6d4]"></span>
-        <span>Spatial Flow Engine · 60fps</span>
+      <div className="absolute bottom-3 right-4 inline-flex items-center gap-2 bg-[#0A0F1A]/90 border border-white/10 rounded-full px-2.5 py-1 font-mono text-[10px] text-slate-300 pointer-events-none">
+        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+        <span>Spatial geometry · 60fps</span>
       </div>
     </div>
   );

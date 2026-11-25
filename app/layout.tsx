@@ -39,9 +39,6 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body bg-[#07090E] text-[#F8FAFC] antialiased selection:bg-neon-cyan/30 selection:text-white relative">
-        <div className="ambient-glow-top" aria-hidden="true" />
-        <div className="ambient-glow-bottom" aria-hidden="true" />
-
         <Dock />
         <main className="relative z-10">{children}</main>
         <Footer />
