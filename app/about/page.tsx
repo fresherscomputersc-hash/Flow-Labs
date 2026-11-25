@@ -8,157 +8,148 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="pt-32 pb-24 px-4 sm:px-6 max-w-7xl mx-auto space-y-24">
+    <div className="pt-28 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-20">
       
       {/* Header */}
       <section className="text-center max-w-3xl mx-auto space-y-4">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-neon-cyan font-mono text-xs uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-neon-cyan animate-radar"></span>
-          Studio Manifesto &amp; Team
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 text-slate-300 font-mono text-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+          Studio manifesto &amp; team
         </div>
-        <h1 className="font-display text-4xl sm:text-6xl font-bold text-white tracking-tight">
+        <h1 className="font-display text-4xl sm:text-5xl font-medium text-white tracking-tight leading-[1.1]">
           Three founders.<br />
-          <span className="bg-gradient-to-r from-neon-cyan to-neon-blue bg-clip-text text-transparent">
-            Zero account layers.
-          </span>
+          <span className="text-slate-400">Zero account layers.</span>
         </h1>
-        <p className="text-slate-400 text-base sm:text-lg leading-relaxed">
-          The Flow Labs was founded to reject the traditional agency model where senior partners sell the project, only to hand the actual work to outsourced contractors or juniors. When you hire us, you collaborate directly with the three founders writing your code.
+        <p className="text-slate-400 text-base sm:text-lg leading-relaxed max-w-xl mx-auto">
+          The Flow Labs was founded to reject the traditional agency model where senior partners sell the project, only to hand the work to junior contractors. When you hire us, you work directly with the three founders writing your code.
         </p>
       </section>
 
       {/* Founders Grid */}
-      <section className="space-y-8">
+      <section className="space-y-6">
         <div className="text-center">
-          <span className="font-mono text-xs text-neon-cyan uppercase tracking-widest font-semibold">Leadership &amp; Ownership</span>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mt-1">The Founders Building Your Product</h2>
+          <span className="font-mono text-xs text-slate-400 font-medium">Leadership</span>
+          <h2 className="font-display text-2xl sm:text-3xl font-medium text-white mt-1">The founders building your product</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Smruti */}
-          <div className="p-8 rounded-3xl bg-surface-card border border-white/10 backdrop-blur-xl space-y-5">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-700 to-neon-blue flex items-center justify-center font-mono font-bold text-white text-lg shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+            <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-mono text-white text-sm">
               SR
             </div>
             <div>
-              <h3 className="font-display text-2xl font-bold text-white">Smruti Ranjan</h3>
-              <div className="font-mono text-xs text-neon-cyan mt-1">Founder · Systems &amp; AI Architecture</div>
+              <h3 className="font-display text-xl font-medium text-white">Smruti Ranjan</h3>
+              <div className="font-mono text-xs text-slate-400 mt-0.5">Founder · Systems &amp; AI architecture</div>
             </div>
-            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+            <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
               Leads platform architecture, distributed PostgreSQL schema design, and custom AI inference pipelines. Focuses on system throughput, edge computer vision, and zero-latency backend execution.
             </p>
             <div className="font-mono text-[11px] text-slate-500 pt-2 border-t border-white/5">
-              EXPERTISE: PostgreSQL, FastAPI, LLM RAG, YOLOv8, Docker
+              PostgreSQL, FastAPI, LLM RAG, YOLOv8, Docker
             </div>
           </div>
 
           {/* Biswash */}
-          <div className="p-8 rounded-3xl bg-surface-card border border-white/10 backdrop-blur-xl space-y-5">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-700 to-neon-emerald flex items-center justify-center font-mono font-bold text-white text-lg shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+            <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-mono text-white text-sm">
               BW
             </div>
             <div>
-              <h3 className="font-display text-2xl font-bold text-white">Biswash</h3>
-              <div className="font-mono text-xs text-neon-emerald mt-1">Co-Founder · Scaled Cloud &amp; Reliability</div>
+              <h3 className="font-display text-xl font-medium text-white">Biswash</h3>
+              <div className="font-mono text-xs text-slate-400 mt-0.5">Co-founder · Cloud infrastructure</div>
             </div>
-            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+            <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
               Oversees cloud infrastructure, continuous deployment pipelines, and operational telemetry. Ensures that high-load platforms maintain strict 99.98% uptime without regression.
             </p>
             <div className="font-mono text-[11px] text-slate-500 pt-2 border-t border-white/5">
-              EXPERTISE: Cloud Architecture, Redis, CI/CD, Containerization, SRE
+              Cloud Architecture, Redis, CI/CD, Containerization, SRE
             </div>
           </div>
 
           {/* Arpita */}
-          <div className="p-8 rounded-3xl bg-surface-card border border-white/10 backdrop-blur-xl space-y-5">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-700 to-neon-purple flex items-center justify-center font-mono font-bold text-white text-lg shadow-[0_0_20px_rgba(139,92,246,0.3)]">
+          <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+            <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-mono text-white text-sm">
               AP
             </div>
             <div>
-              <h3 className="font-display text-2xl font-bold text-white">Arpita</h3>
-              <div className="font-mono text-xs text-neon-purple mt-1">Co-Founder · Interfaces &amp; Design Systems</div>
+              <h3 className="font-display text-xl font-medium text-white">Arpita</h3>
+              <div className="font-mono text-xs text-slate-400 mt-0.5">Co-founder · Interfaces &amp; design systems</div>
             </div>
-            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-              Engineers kinetic user interfaces, ThreeUI spatial web applications, and precision design systems. Blends interactive WebGL aesthetics with frictionless usability.
+            <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+              Engineers kinetic user interfaces, Three.js spatial web applications, and precision design systems. Blends interactive WebGL aesthetics with frictionless usability.
             </p>
             <div className="font-mono text-[11px] text-slate-500 pt-2 border-t border-white/5">
-              EXPERTISE: Next.js, Three.js, Spatial UI, Motion, Tailwind CSS
+              Next.js, Three.js, Spatial UI, Motion, Tailwind CSS
             </div>
           </div>
         </div>
       </section>
 
       {/* Studio Manifesto */}
-      <section className="p-8 sm:p-14 rounded-3xl bg-surface-card border border-white/10 backdrop-blur-xl space-y-10">
+      <section className="p-7 sm:p-10 rounded-2xl bg-white/[0.02] border border-white/10 space-y-8">
         <div>
-          <span className="font-mono text-xs text-neon-cyan uppercase tracking-widest font-semibold">Our Principles</span>
-          <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mt-1">The Studio Manifesto</h2>
+          <span className="font-mono text-xs text-slate-400 font-medium">Principles</span>
+          <h2 className="font-display text-2xl sm:text-3xl font-medium text-white mt-1">The Studio Manifesto</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-3 p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-            <div className="flex items-center gap-3 text-neon-cyan font-display font-bold text-xl">
-              <span>01.</span>
-              <h4>Capped at Four Builds a Month</h4>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2 p-5 rounded-xl bg-white/[0.02] border border-white/5">
+            <h3 className="font-medium text-white text-base">01. Direct Founder Access</h3>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-              We never take on more work than our three founders can personally write and verify. Capping our capacity guarantees obsessive attention to detail and zero junior delegation.
+              No project managers or communication bottlenecks. You talk directly with the engineers writing your code on a shared Slack/WhatsApp channel every day.
             </p>
           </div>
 
-          <div className="space-y-3 p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-            <div className="flex items-center gap-3 text-neon-blue font-display font-bold text-xl">
-              <span>02.</span>
-              <h4>Direct Founder Access</h4>
-            </div>
+          <div className="space-y-2 p-5 rounded-xl bg-white/[0.02] border border-white/5">
+            <h3 className="font-medium text-white text-base">02. 4 Builds Per Month Cap</h3>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-              You collaborate in a shared Slack or WhatsApp group directly with the engineers building your platform. Critical architectural decisions are made in minutes, not through weeks of email telephone.
+              We never take more than four concurrent projects per month. This deliberate capacity cap guarantees that each build receives intense architectural focus and polish.
             </p>
           </div>
 
-          <div className="space-y-3 p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-            <div className="flex items-center gap-3 text-neon-emerald font-display font-bold text-xl">
-              <span>03.</span>
-              <h4>Fixed-Price Scope Certainty</h4>
-            </div>
+          <div className="space-y-2 p-5 rounded-xl bg-white/[0.02] border border-white/5">
+            <h3 className="font-medium text-white text-base">03. 100% In-House Code</h3>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-              No open-ended hourly billing or surprise invoices. Every sprint has an upfront locked scope, concrete milestone deliverables, and guaranteed ship dates.
+              Zero subcontracting, zero white-labeling. Every component, database schema, and model pipeline is designed, typed, tested, and shipped by our founding team.
             </p>
           </div>
 
-          <div className="space-y-3 p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-            <div className="flex items-center gap-3 text-neon-purple font-display font-bold text-xl">
-              <span>04.</span>
-              <h4>100% In-House Engineering</h4>
-            </div>
+          <div className="space-y-2 p-5 rounded-xl bg-white/[0.02] border border-white/5">
+            <h3 className="font-medium text-white text-base">04. Upfront Fixed Pricing</h3>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-              We own the entire pipeline from design system tokens to PostgreSQL indexes and local AI models. Everything is designed, built, and shipped from our studio in Bhubaneswar.
+              We scope thoroughly and lock our price upfront. No surprise hourly overages, hidden retainers, or scope-creep hostage games.
             </p>
+          </div>
+        </div>
+
+        {/* Location & Studio HUD */}
+        <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono text-slate-400">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-slate-300" />
+            <span>Studio Location: <strong>Bhubaneswar, Odisha, India</strong></span>
+          </div>
+          <div>
+            <span>Availability: <strong className="text-emerald-400">Slots Open for Current Sprint</strong></span>
           </div>
         </div>
       </section>
 
-      {/* Studio Location & Connect */}
-      <section className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-blue-950/30 via-[#0B0F19] to-cyan-950/20 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-8">
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 text-neon-cyan font-mono text-xs uppercase">
-            <MapPin className="w-4 h-4" />
-            <span>Studio Headquarters</span>
-          </div>
-          <h3 className="font-display text-2xl sm:text-3xl font-bold text-white">
-            Bhubaneswar, Odisha, India
-          </h3>
-          <p className="text-slate-400 text-xs sm:text-sm max-w-lg leading-relaxed">
-            Engineering digital platforms for clients globally across India, Singapore, Europe, and North America.
-          </p>
-        </div>
-
-        <div>
+      {/* CTA Box */}
+      <section className="p-8 sm:p-10 rounded-2xl bg-white/[0.02] border border-white/10 text-center space-y-4">
+        <h2 className="font-display text-2xl font-medium text-white">
+          Let&apos;s build something exceptional together.
+        </h2>
+        <p className="text-slate-400 text-sm max-w-md mx-auto">
+          Lock in your project scope and slot directly with the founding engineers.
+        </p>
+        <div className="pt-2">
           <Link
             href="/scoping"
-            className="inline-flex items-center gap-2 bg-white text-[#07090E] font-semibold text-sm px-7 py-3 rounded-full hover:bg-slate-200 transition-all hover:scale-105 shadow-[0_4px_20px_rgba(255,255,255,0.25)]"
+            className="inline-flex items-center gap-2 bg-white text-[#07090E] font-medium text-sm px-5 py-2.5 rounded-full hover:bg-slate-200 transition-colors"
           >
-            <span>Lock In a Build Slot &rarr;</span>
+            <span>Launch scoping cockpit</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>

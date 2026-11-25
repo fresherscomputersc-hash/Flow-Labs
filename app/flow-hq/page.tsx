@@ -15,8 +15,7 @@ import {
   MessageSquare,
   ArrowRightLeft,
   Shield,
-  Clock,
-  Sparkles
+  Clock
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -58,7 +57,7 @@ const DEFAULT_TASKS: TaskItem[] = [
   },
   {
     id: '3',
-    title: 'Ship ThreeUI spatial design system components for client portal',
+    title: 'Ship Three.js spatial design system components for client portal',
     status: 'review',
     priority: 'medium',
     assignee: 'AP',
@@ -133,20 +132,20 @@ export default function FlowHQPage() {
   });
 
   return (
-    <div className="pt-28 pb-24 px-4 sm:px-6 max-w-7xl mx-auto space-y-8">
+    <div className="pt-28 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
       
       {/* Top Console Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-xl bg-white/[0.02] border border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-neon-blue to-neon-cyan flex items-center justify-center font-display font-bold text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+          <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs">
             HQ
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-xl font-bold text-white">Flow HQ Console</h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-radar"></span>
-                LIVE REALTIME
+              <h1 className="font-display text-lg font-medium text-white">Flow HQ Console</h1>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300 font-mono text-[10px]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Realtime telemetry
               </span>
             </div>
             <p className="text-slate-400 text-xs">Founder operations, collaborative task matrix &amp; CRM pipeline</p>
@@ -154,35 +153,35 @@ export default function FlowHQPage() {
         </div>
 
         {/* Console Nav Tabs */}
-        <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-xl border border-white/10 overflow-x-auto">
+        <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-lg border border-white/10 overflow-x-auto">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'dashboard' ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+              activeTab === 'dashboard' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
             }`}
           >
             Dashboard
           </button>
           <button
             onClick={() => setActiveTab('tasks')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'tasks' ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+              activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
             }`}
           >
             Task Matrix
           </button>
           <button
             onClick={() => setActiveTab('leads')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'leads' ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+              activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
             }`}
           >
             Leads CRM
           </button>
           <button
             onClick={() => setActiveTab('team')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              activeTab === 'team' ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30' : 'text-slate-400 hover:text-white'
+            className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+              activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
             }`}
           >
             Team
@@ -192,71 +191,64 @@ export default function FlowHQPage() {
 
       {/* ================= TAB 1: DASHBOARD ================= */}
       {activeTab === 'dashboard' && (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-6">
           {/* Telemetry KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
-            <div className="p-6 rounded-2xl bg-surface-card border border-white/10 relative overflow-hidden backdrop-blur-xl">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-neon-cyan to-neon-blue"></div>
-              <span className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">Active Builds</span>
-              <div className="font-display text-3xl font-bold text-white mt-1">2 / 4</div>
-              <div className="text-[11px] font-mono text-neon-emerald mt-1">50% Monthly Bandwidth</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-1">
+              <span className="font-mono text-[11px] text-slate-400 uppercase">Active Builds</span>
+              <div className="font-display text-2xl font-medium text-white">2 / 4</div>
+              <div className="text-[11px] font-mono text-slate-400">50% monthly bandwidth</div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-surface-card border border-white/10 relative overflow-hidden backdrop-blur-xl">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-neon-blue to-neon-purple"></div>
-              <span className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">Open Tasks</span>
-              <div className="font-display text-3xl font-bold text-white mt-1">{tasks.filter(t => t.status !== 'done').length}</div>
-              <div className="text-[11px] font-mono text-neon-cyan mt-1">1 Urgent Sprint Handoff</div>
+            <div className="p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-1">
+              <span className="font-mono text-[11px] text-slate-400 uppercase">Open Tasks</span>
+              <div className="font-display text-2xl font-medium text-white">{tasks.filter(t => t.status !== 'done').length}</div>
+              <div className="text-[11px] font-mono text-slate-400">1 urgent sprint handoff</div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-surface-card border border-white/10 relative overflow-hidden backdrop-blur-xl">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-neon-purple to-neon-amber"></div>
-              <span className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">Qualified Leads</span>
-              <div className="font-display text-3xl font-bold text-white mt-1">{leads.length || 6}</div>
-              <div className="text-[11px] font-mono text-neon-amber mt-1">₹3.8L Pipeline Value</div>
+            <div className="p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-1">
+              <span className="font-mono text-[11px] text-slate-400 uppercase">Qualified Leads</span>
+              <div className="font-display text-2xl font-medium text-white">{leads.length || 6}</div>
+              <div className="text-[11px] font-mono text-slate-400">₹3.8L pipeline value</div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-surface-card border border-white/10 relative overflow-hidden backdrop-blur-xl">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-neon-emerald to-neon-cyan"></div>
-              <span className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">System Latency</span>
-              <div className="font-display text-3xl font-bold text-white mt-1">16ms</div>
-              <div className="text-[11px] font-mono text-neon-emerald mt-1">99.98% Global Uptime</div>
+            <div className="p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-1">
+              <span className="font-mono text-[11px] text-slate-400 uppercase">System Latency</span>
+              <div className="font-display text-2xl font-medium text-white">16ms</div>
+              <div className="text-[11px] font-mono text-slate-400">99.98% global uptime</div>
             </div>
           </div>
 
           {/* Quick Actions & Recent Stream */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            <div className="md:col-span-8 p-6 rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+            <div className="md:col-span-8 p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
               <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <h3 className="font-display text-base font-bold text-white">Active Sprint Priority Queue</h3>
+                <h3 className="font-display text-sm font-medium text-white">Active sprint priority queue</h3>
                 <button
                   onClick={() => setActiveTab('tasks')}
-                  className="text-xs font-mono text-neon-cyan hover:underline"
+                  className="text-xs font-mono text-slate-300 hover:text-white"
                 >
-                  Manage All &rarr;
+                  Manage all &rarr;
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {tasks.slice(0, 3).map((t) => (
                   <div
                     key={t.id}
-                    className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between gap-4"
+                    className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-between gap-4"
                   >
-                    <div className="space-y-1">
-                      <div className="text-xs font-semibold text-white">{t.title}</div>
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-medium text-white">{t.title}</div>
                       <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
-                        <span className={`px-2 py-0.5 rounded text-[10px] ${
-                          t.priority === 'urgent' ? 'bg-rose-500/15 text-rose-400' : 'bg-amber-500/15 text-amber-400'
-                        }`}>
-                          {t.priority.toUpperCase()}
-                        </span>
+                        <span className="text-[10px] uppercase">{t.priority}</span>
+                        <span>·</span>
                         <span>Assignee: {t.assignee}</span>
                       </div>
                     </div>
                     <button
                       onClick={() => setHandoffTask(t)}
-                      className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-neon-cyan border border-white/10 flex items-center gap-1.5 whitespace-nowrap"
+                      className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-300 border border-white/10 flex items-center gap-1.5 whitespace-nowrap"
                     >
                       <ArrowRightLeft className="w-3 h-3" />
                       <span>Hand off</span>
@@ -266,29 +258,29 @@ export default function FlowHQPage() {
               </div>
             </div>
 
-            <div className="md:col-span-4 p-6 rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl space-y-4">
-              <h3 className="font-display text-base font-bold text-white pb-3 border-b border-white/10">
-                Founders On Duty
+            <div className="md:col-span-4 p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
+              <h3 className="font-display text-sm font-medium text-white pb-3 border-b border-white/10">
+                Founders on duty
               </h3>
-              <div className="space-y-3 text-xs">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center font-mono font-bold text-[10px] text-white">SR</div>
-                    <span>Smruti Ranjan</span>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] text-white">SR</div>
+                    <span className="text-slate-300">Smruti Ranjan</span>
                   </div>
                   <span className="font-mono text-[10px] text-emerald-400">Building</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center font-mono font-bold text-[10px] text-white">BW</div>
-                    <span>Biswash</span>
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] text-white">BW</div>
+                    <span className="text-slate-300">Biswash</span>
                   </div>
                   <span className="font-mono text-[10px] text-emerald-400">Building</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center font-mono font-bold text-[10px] text-white">AP</div>
-                    <span>Arpita</span>
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center font-mono text-[10px] text-white">AP</div>
+                    <span className="text-slate-300">Arpita</span>
                   </div>
                   <span className="font-mono text-[10px] text-emerald-400">Building</span>
                 </div>
@@ -300,9 +292,9 @@ export default function FlowHQPage() {
 
       {/* ================= TAB 2: TASK MATRIX ================= */}
       {activeTab === 'tasks' && (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-5">
           {/* Segmented Scope Bar */}
-          <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-full bg-black/40 border border-white/10 w-fit">
+          <div className="flex flex-wrap items-center gap-2 p-1 rounded-lg bg-white/[0.02] border border-white/10 w-fit">
             {[
               { id: 'all', label: 'All Tasks', count: tasks.length },
               { id: 'my', label: 'My Tasks (SR)', count: tasks.filter(t => t.assignee === 'SR').length },
@@ -312,20 +304,20 @@ export default function FlowHQPage() {
               <button
                 key={scope.id}
                 onClick={() => setTaskScope(scope.id as any)}
-                className={`px-4 py-1.5 rounded-full text-xs font-mono transition-all flex items-center gap-2 ${
+                className={`px-3 py-1 rounded text-xs font-mono transition-colors flex items-center gap-1.5 ${
                   taskScope === scope.id
-                    ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 font-semibold'
+                    ? 'bg-white/10 text-white font-medium'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <span>{scope.label}</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-white/10 text-[10px]">{scope.count}</span>
+                <span className="text-[10px] text-slate-500">({scope.count})</span>
               </button>
             ))}
           </div>
 
           {/* Kanban Columns */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { id: 'todo', label: 'Backlog & Queued', count: filteredTasks.filter(t => t.status === 'todo').length },
               { id: 'in_progress', label: 'In Development', count: filteredTasks.filter(t => t.status === 'in_progress').length },
@@ -334,32 +326,30 @@ export default function FlowHQPage() {
             ].map((col) => (
               <div
                 key={col.id}
-                className="p-5 rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl flex flex-col min-h-[460px] space-y-4"
+                className="p-4 rounded-xl bg-white/[0.02] border border-white/10 flex flex-col min-h-[420px] space-y-3"
               >
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <h3 className="font-display text-sm font-bold text-white">{col.label}</h3>
-                  <span className="font-mono text-xs text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">{col.count}</span>
+                <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
+                  <h3 className="font-display text-xs font-medium text-white">{col.label}</h3>
+                  <span className="font-mono text-xs text-slate-500">{col.count}</span>
                 </div>
 
-                <div className="space-y-3 flex-1">
+                <div className="space-y-2 flex-1">
                   {filteredTasks
                     .filter((t) => t.status === col.id)
                     .map((t) => (
                       <div
                         key={t.id}
-                        className={`p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3 hover:border-white/20 transition-all ${
-                          t.priority === 'urgent' ? 'border-l-4 border-l-rose-500' : t.priority === 'high' ? 'border-l-4 border-l-amber-500' : 'border-l-4 border-l-neon-cyan'
-                        }`}
+                        className="p-3 rounded-lg bg-white/[0.02] border border-white/10 space-y-2.5 hover:border-white/20 transition-colors"
                       >
-                        <div className="text-xs font-semibold text-white leading-snug">{t.title}</div>
+                        <div className="text-xs font-medium text-white leading-snug">{t.title}</div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-white/5">
                           {/* Collaborator Initials */}
-                          <div className="flex items-center -space-x-1.5">
+                          <div className="flex items-center -space-x-1">
                             {t.collaborators.map((c) => (
                               <div
                                 key={c}
-                                className="w-5 h-5 rounded-full bg-blue-600 border border-[#0A0D15] flex items-center justify-center font-mono text-[9px] font-bold text-white"
+                                className="w-4 h-4 rounded-full bg-white/10 border border-[#0A0D15] flex items-center justify-center font-mono text-[8px] text-slate-300"
                                 title={`Collaborator: ${c}`}
                               >
                                 {c}
@@ -369,9 +359,9 @@ export default function FlowHQPage() {
 
                           <button
                             onClick={() => setHandoffTask(t)}
-                            className="text-[10px] font-mono text-neon-cyan hover:underline flex items-center gap-1"
+                            className="text-[10px] font-mono text-slate-400 hover:text-white flex items-center gap-1"
                           >
-                            <ArrowRightLeft className="w-3 h-3" />
+                            <ArrowRightLeft className="w-2.5 h-2.5" />
                             <span>Hand off</span>
                           </button>
                         </div>
@@ -386,16 +376,16 @@ export default function FlowHQPage() {
 
       {/* ================= TAB 3: LEADS CRM ================= */}
       {activeTab === 'leads' && (
-        <div className="p-6 sm:p-8 rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl space-y-6 animate-fade-in">
-          <div className="flex items-center justify-between pb-4 border-b border-white/10">
+        <div className="p-5 sm:p-6 rounded-xl bg-white/[0.02] border border-white/10 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <div>
-              <h3 className="font-display text-xl font-bold text-white">Inbound Leads &amp; Scopes</h3>
+              <h3 className="font-display text-base font-medium text-white">Inbound Leads &amp; Scopes</h3>
               <p className="text-slate-400 text-xs">Direct submissions from the Project Scoping Cockpit</p>
             </div>
             <button
               onClick={loadLeads}
               disabled={loadingLeads}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-neon-cyan hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-slate-300 hover:bg-white/10"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loadingLeads ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
@@ -406,31 +396,31 @@ export default function FlowHQPage() {
             <table className="w-full text-left text-xs font-mono">
               <thead>
                 <tr className="border-b border-white/10 text-slate-400">
-                  <th className="py-3 px-4">Contact</th>
-                  <th className="py-3 px-4">Architecture</th>
-                  <th className="py-3 px-4">Scope Estimate</th>
-                  <th className="py-3 px-4">Project Brief</th>
-                  <th className="py-3 px-4">Actions</th>
+                  <th className="py-2.5 px-3">Contact</th>
+                  <th className="py-2.5 px-3">Architecture</th>
+                  <th className="py-2.5 px-3">Scope Estimate</th>
+                  <th className="py-2.5 px-3">Project Brief</th>
+                  <th className="py-2.5 px-3">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {leads.map((l) => (
-                  <tr key={l.id} className="hover:bg-white/[0.02]">
-                    <td className="py-3.5 px-4 font-sans font-medium text-white">
+                  <tr key={l.id} className="hover:bg-white/[0.01]">
+                    <td className="py-3 px-3 font-sans font-medium text-white">
                       <div>{l.name}</div>
-                      <div className="text-[11px] font-mono text-neon-cyan">{l.contact}</div>
+                      <div className="text-[11px] font-mono text-slate-400">{l.contact}</div>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-300">{l.project_type || 'Custom Build'}</td>
-                    <td className="py-3.5 px-4 text-neon-emerald font-semibold">{l.budget || '₹40,000+'}</td>
-                    <td className="py-3.5 px-4 text-slate-400 max-w-xs truncate">{l.idea || 'Direct scope inquiry'}</td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3 px-3 text-slate-300">{l.project_type || 'Custom Build'}</td>
+                    <td className="py-3 px-3 text-white font-medium">{l.budget || '₹40,000+'}</td>
+                    <td className="py-3 px-3 text-slate-400 max-w-xs truncate">{l.idea || 'Direct scope inquiry'}</td>
+                    <td className="py-3 px-3">
                       <a
                         href={`https://wa.me/?text=Hi%20${encodeURIComponent(l.name)},%20this%20is%20Smruti%20from%20The%20Flow%20Labs%20regarding%20your%20project%20scope.`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] text-neon-cyan hover:underline"
+                        className="inline-flex items-center gap-1 text-[11px] text-slate-300 hover:text-white hover:underline"
                       >
-                        <MessageSquare className="w-3.5 h-3.5" />
+                        <MessageSquare className="w-3 h-3" />
                         <span>WhatsApp</span>
                       </a>
                     </td>
@@ -451,25 +441,25 @@ export default function FlowHQPage() {
 
       {/* ================= TAB 4: TEAM ================= */}
       {activeTab === 'team' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
             { initials: 'SR', name: 'Smruti Ranjan', role: 'Owner · Lead Architect', email: 'smruti@theflowlabs.online' },
             { initials: 'BW', name: 'Biswash', role: 'Co-Founder · Cloud Systems', email: 'biswash@theflowlabs.online' },
             { initials: 'AP', name: 'Arpita', role: 'Co-Founder · Interfaces & UX', email: 'arpita@theflowlabs.online' },
           ].map((m) => (
-            <div key={m.name} className="p-6 rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl space-y-4">
+            <div key={m.name} className="p-5 rounded-xl bg-white/[0.02] border border-white/10 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-neon-blue to-neon-cyan flex items-center justify-center font-mono font-bold text-white text-base">
+                <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-mono text-white text-sm">
                   {m.initials}
                 </div>
-                <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-neon-cyan/15 text-neon-cyan border border-neon-cyan/20">
-                  ACTIVE
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/10">
+                  Active
                 </span>
               </div>
               <div>
-                <h4 className="font-display font-bold text-white text-lg">{m.name}</h4>
-                <div className="font-mono text-xs text-neon-cyan">{m.role}</div>
-                <div className="font-mono text-xs text-slate-400 mt-1">{m.email}</div>
+                <h4 className="font-display font-medium text-white text-base">{m.name}</h4>
+                <div className="font-mono text-xs text-slate-400">{m.role}</div>
+                <div className="font-mono text-[11px] text-slate-500 mt-0.5">{m.email}</div>
               </div>
             </div>
           ))}
@@ -479,19 +469,19 @@ export default function FlowHQPage() {
       {/* ================= HANDOFF MODAL ================= */}
       {handoffTask && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5 animate-scale-in">
+          <div className="max-w-md w-full p-5 rounded-xl bg-[#0E1424] border border-white/20 shadow-xl space-y-4">
             <div>
-              <span className="font-mono text-xs text-neon-cyan uppercase">Task Delegation Workflow</span>
-              <h3 className="font-display text-lg font-bold text-white mt-1">Hand off Task</h3>
-              <p className="text-slate-400 text-xs mt-1">{handoffTask.title}</p>
+              <span className="font-mono text-xs text-slate-400 uppercase">Delegation</span>
+              <h3 className="font-display text-base font-medium text-white mt-0.5">Hand off task</h3>
+              <p className="text-slate-400 text-xs mt-0.5">{handoffTask.title}</p>
             </div>
 
-            <div className="space-y-2">
-              <label className="block font-mono text-xs text-slate-400">Select Target Engineer</label>
+            <div className="space-y-1.5">
+              <label className="block font-mono text-xs text-slate-400">Select target engineer</label>
               <select
                 value={handoffTarget}
                 onChange={(e) => setHandoffTarget(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-neon-cyan"
+                className="w-full p-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
               >
                 <option value="SR" className="bg-[#0E1424]">Smruti Ranjan (SR)</option>
                 <option value="BW" className="bg-[#0E1424]">Biswash (BW)</option>
@@ -499,18 +489,18 @@ export default function FlowHQPage() {
               </select>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setHandoffTask(null)}
-                className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-300"
+                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleHandoff}
-                className="px-4 py-2 rounded-lg bg-neon-cyan text-[#07090E] font-semibold text-xs font-mono hover:bg-neon-cyan/80"
+                className="px-3 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
               >
-                Confirm Handoff
+                Confirm handoff
               </button>
             </div>
           </div>

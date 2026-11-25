@@ -1,38 +1,37 @@
 import Link from 'next/link';
 import { ArrowRight, Layers, Database, Cpu } from 'lucide-react';
-import { HeroFlowCanvas } from '@/components/3d/HeroFlowCanvas';
+import { HeroFlowBackground } from '@/components/3d/HeroFlowBackground';
 
 export default function HomePage() {
   return (
-    <div className="pt-28 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-24">
+    <div className="pt-24 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-24">
       
-      {/* ================= 1. HERO SECTION ================= */}
-      <section className="text-center max-w-3xl mx-auto pt-6 sm:pt-10">
-        
+      {/* ================= 1. HERO SECTION (INTEGRATED FLUID 3D ANIMATION) ================= */}
+      <section className="relative text-center max-w-3xl mx-auto pt-6 sm:pt-14 pb-4">
+        {/* 3D Flow Background Canvas (spans hero, no separate box) */}
+        <HeroFlowBackground />
+
         {/* Studio Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.03] border border-white/10 mb-6">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.03] border border-white/10 mb-6 backdrop-blur-md">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
           <span className="font-mono text-xs text-slate-300">
             Founder-led studio · 4 builds a month · 100% in-house
           </span>
         </div>
 
-        {/* Hero Headline (Solid text, medium weight, no AI gradient wash) */}
+        {/* Hero Headline */}
         <h1 className="font-display text-4xl sm:text-6xl font-medium tracking-tight text-white leading-[1.1] mb-5">
           Engineering interfaces, scaled systems &amp;{' '}
           <span className="text-slate-400">applied intelligence.</span>
         </h1>
 
         {/* Subtitle */}
-        <p className="text-slate-400 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
+        <p className="text-slate-400 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-9">
           A three-person engineering studio building digital products for ambitious teams. Zero account managers, fixed sprint pricing, and direct collaboration with the founders writing your code.
         </p>
 
-        {/* 3D SPATIAL FLOW ENGINE (The one bright element of the hero) */}
-        <HeroFlowCanvas />
-
-        {/* Action CTAs (Quiet, clean buttons without hover scaling or colored drop-shadows) */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mt-8 mb-12">
+        {/* Action CTAs */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-14">
           <Link
             href="/scoping"
             className="inline-flex items-center gap-2 bg-white text-[#07090E] font-medium text-sm px-5 py-2.5 rounded-full hover:bg-slate-200 transition-colors"
@@ -42,14 +41,14 @@ export default function HomePage() {
           </Link>
           <Link
             href="/work"
-            className="inline-flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-white font-medium text-sm px-5 py-2.5 rounded-full border border-white/10 transition-colors"
+            className="inline-flex items-center gap-2 bg-white/[0.04] hover:bg-white/[0.08] text-white font-medium text-sm px-5 py-2.5 rounded-full border border-white/10 transition-colors backdrop-blur-sm"
           >
             <span>Inspect case studies</span>
           </Link>
         </div>
 
-        {/* Studio Telemetry HUD (Tabular figures, calm borders, clean typography) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/10">
+        {/* Studio Telemetry HUD */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/10 backdrop-blur-md">
           <div className="text-center p-2.5">
             <div className="font-display text-2xl font-medium text-white tracking-tight">0%</div>
             <div className="font-mono text-[11px] text-slate-400 mt-0.5">Outsourced code</div>
