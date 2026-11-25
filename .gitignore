@@ -20,6 +20,7 @@ gtoken.json
 # scratch/redesign staging copy (not part of the deploy)
 _redesign_temp/
 _trial_100milionseek/
+*.tsbuildinfo
 build.log
 
 # internal business ops — kept out of the public site repo

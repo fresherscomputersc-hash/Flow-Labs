@@ -54,9 +54,23 @@ import {
   SlidersHorizontal,
   ChevronRight,
   TrendingUp,
-  FileCheck
+  FileCheck,
+  DollarSign,
+  Timer,
+  BookOpen,
+  ShieldCheck,
+  AlertTriangle,
+  FileCheck2,
+  Receipt
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import LeadsCRM from '@/components/flow-hq/LeadsCRM';
+import FinanceManager from '@/components/flow-hq/FinanceManager';
+import TimeTracker from '@/components/flow-hq/TimeTracker';
+import SOPLibrary from '@/components/flow-hq/SOPLibrary';
+import QAReviewModal from '@/components/flow-hq/QAReviewModal';
+import BlockerModal from '@/components/flow-hq/BlockerModal';
+import HandoverModal from '@/components/flow-hq/HandoverModal';
 
 // ================= DATA MODELS =================
 export interface TeamMember {
@@ -91,6 +105,10 @@ export interface TaskItem {
   priority: 'urgent' | 'high' | 'medium' | 'low';
   assignee: string;
   notes?: string;
+  is_blocked?: boolean;
+  blocker_reason?: string;
+  in_review?: boolean;
+  reviewer_id?: string;
 }
 
 export interface ClientAccount {
@@ -253,7 +271,16 @@ export default function FlowHQPage() {
   const [authLoading, setAuthLoading] = useState(false);
 
   // Active Navigation Tab
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects' | 'tasks' | 'clients' | 'team' | 'leads' | 'standups'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects' | 'tasks' | 'clients' | 'team' | 'leads' | 'standups' | 'finance' | 'timetracking' | 'sops'>('dashboard');
+
+  // QA Review, Blocker, Handover & Templates
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [taskForReview, setTaskForReview] = useState<TaskItem | null>(null);
+  const [showBlockerModal, setShowBlockerModal] = useState(false);
+  const [taskForBlocker, setTaskForBlocker] = useState<TaskItem | null>(null);
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [projectForHandover, setProjectForHandover] = useState<Project | null>(null);
+  const [selectedProjectTemplate, setSelectedProjectTemplate] = useState<'blank' | 'web_app' | 'ai_automation' | 'software' | 'retainer'>('web_app');
 
   // Application Data with Local Storage Persistence
   const [team, setTeam] = useState<TeamMember[]>(DEFAULT_TEAM);
@@ -545,6 +572,17 @@ export default function FlowHQPage() {
     if (!newProjectName.trim()) return;
 
     const newKey = newProjectKey.trim().toUpperCase() || 'FLW';
+    let defaultModules = ['Core Architecture', 'Frontend Interface', 'Cloud API'];
+    if (selectedProjectTemplate === 'web_app') {
+      defaultModules = ['Discovery & Database Schema', 'Full-Stack Frontend & UX', 'API Integrations & Auth', 'QA Acceptance & Handover'];
+    } else if (selectedProjectTemplate === 'ai_automation') {
+      defaultModules = ['Workflow Audit & LLM Architecture', 'Multi-Agent Prompts & Tool Orchestration', 'Supabase Vector / Edge Deployments', 'Regression Testing & Observability'];
+    } else if (selectedProjectTemplate === 'software') {
+      defaultModules = ['Technical Spec & ERD', 'Mobile Shell & State Engine', 'Cloud Sync & GraphQL/REST APIs', 'Beta TestFlight & Store Release'];
+    } else if (selectedProjectTemplate === 'retainer') {
+      defaultModules = ['Weekly Health Checks & Security Patches', 'Automated Database Backups & Redundancy', 'On-Demand High-Priority Feature Sprints'];
+    }
+
     const newProj: Project = {
       id: `proj-${Date.now()}`,
       name: newProjectName.trim(),
@@ -555,7 +593,7 @@ export default function FlowHQPage() {
       progress: 0,
       budget: newProjectBudget.trim() || '₹75,000',
       dueDate: newProjectDue.trim() || '3 Weeks',
-      modules: ['Core Architecture', 'Frontend Interface', 'Cloud API'],
+      modules: defaultModules,
     };
 
     const updated = [newProj, ...projects];
@@ -1262,9 +1300,38 @@ export default function FlowHQPage() {
               }`}
             >
               <Target className="w-3.5 h-3.5" />
-              <span>Leads CRM ({leads.length})</span>
+              <span>Leads & Quotes ({leads.length})</span>
             </button>
           )}
+          {isFounder && (
+            <button
+              onClick={() => setActiveTab('finance')}
+              className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'finance' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              <span>Finance & Invoicing</span>
+            </button>
+          )}
+          <button
+            onClick={() => setActiveTab('timetracking')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'timetracking' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <Timer className="w-3.5 h-3.5" />
+            <span>Time Tracking</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('sops')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'sops' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>SOP Library</span>
+          </button>
         </div>
       </div>
 
@@ -1594,16 +1661,19 @@ export default function FlowHQPage() {
                       Delivery: {proj.dueDate}
                     </span>
 
-                    {/* Complete Project Button */}
+                    {/* Complete Project / Handover Gate Button */}
                     {isFounder && (
                       proj.status !== 'completed' ? (
                         <button
-                          onClick={() => handleCompleteProject(proj.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-colors"
-                          title="Mark Project Complete"
+                          onClick={() => {
+                            setProjectForHandover(proj);
+                            setShowHandoverModal(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors"
+                          title="Verify Handover Checklist & Mark Complete"
                         >
-                          <Check className="w-3 h-3" />
-                          <span>Complete</span>
+                          <FileCheck2 className="w-3.5 h-3.5" />
+                          <span>Handover Gate</span>
                         </button>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 text-[11px]">
@@ -1857,20 +1927,43 @@ export default function FlowHQPage() {
                   <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 space-y-2 text-xs">
                     <div className="font-medium text-white">{t.title}</div>
                     {t.notes && <p className="text-slate-400 text-[11px] leading-relaxed">{t.notes}</p>}
+                    {t.is_blocked && (
+                      <div
+                        onClick={() => {
+                          setTaskForBlocker(t);
+                          setShowBlockerModal(true);
+                        }}
+                        className="p-1.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-[10px] cursor-pointer flex items-center gap-1"
+                      >
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        <span className="truncate">BLOCKED: {t.blocker_reason || 'See blocker details'}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
                       <span className="text-amber-400">{t.priority}</span>
                       <span>Assignee: {t.assignee}</span>
                     </div>
-                    <div className="pt-2 border-t border-white/5 flex justify-between items-center">
-                      <button
-                        onClick={() => {
-                          setTargetTaskForHandoff(t);
-                          setShowHandoffModal(true);
-                        }}
-                        className="text-[10px] font-mono text-slate-400 hover:text-white"
-                      >
-                        Hand off
-                      </button>
+                    <div className="pt-2 border-t border-white/5 flex flex-wrap justify-between items-center gap-1">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setTaskForBlocker(t);
+                            setShowBlockerModal(true);
+                          }}
+                          className="text-[10px] font-mono text-amber-400 hover:text-amber-300"
+                        >
+                          {t.is_blocked ? 'Blocker (!)' : 'Flag blocker'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setTaskForReview(t);
+                            setShowReviewModal(true);
+                          }}
+                          className="text-[10px] font-mono text-purple-400 hover:text-purple-300"
+                        >
+                          QA review
+                        </button>
+                      </div>
                       <button
                         onClick={() => handleMoveTaskStatus(t.id, 'review')}
                         className="text-[10px] font-mono text-slate-300 hover:text-white"
@@ -2119,74 +2212,34 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= TAB 7: LEADS CRM ================= */}
+      {/* ================= TAB 7: LEADS CRM & PROPOSALS ================= */}
       {activeTab === 'leads' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
-            <div>
-              <h2 className="font-display text-xl font-normal text-white">Inbound leads CRM</h2>
-              <p className="text-slate-400 text-xs">Direct submissions from the scoping cockpit and website intake</p>
-            </div>
-            <button
-              onClick={loadLeads}
-              disabled={loadingLeads}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-mono text-xs border border-white/10 transition-colors w-fit"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loadingLeads ? 'animate-spin' : ''}`} />
-              <span>Refresh leads</span>
-            </button>
-          </div>
+        <LeadsCRM
+          onOnboardCustomer={(lead) => {
+            setNewTeamName(lead.name);
+            setNewTeamEmail(lead.contact);
+            setNewTeamRole('client');
+            setNewClientCompany(lead.name + ' Org');
+            setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
+            setShowAddTeamModal(true);
+          }}
+          onRefreshProjects={loadLiveProjects}
+        />
+      )}
 
-          <div className="space-y-3">
-            {leads.length > 0 ? (
-              leads.map((lead) => (
-                <div key={lead.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-white text-sm">{lead.name}</span>
-                      <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-[10px] text-slate-300">
-                        {lead.project_type}
-                      </span>
-                    </div>
-                    <div className="font-mono text-xs text-slate-400">
-                      Contact: <strong className="text-white">{lead.contact}</strong> · Budget: <strong className="text-emerald-400">{lead.budget}</strong>
-                    </div>
-                    {lead.idea && (
-                      <p className="text-slate-400 text-xs mt-1 max-w-2xl">{lead.idea}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 self-end md:self-center">
-                    <button
-                      onClick={() => {
-                        setNewTeamName(lead.name);
-                        setNewTeamEmail(lead.contact);
-                        setNewTeamRole('client');
-                        setNewClientCompany(lead.name + ' Org');
-                        setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
-                        setShowAddTeamModal(true);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-mono text-xs transition-colors whitespace-nowrap"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Onboard Customer</span>
-                    </button>
-                    <div className="font-mono text-[11px] text-slate-500 whitespace-nowrap">
-                      {new Date(lead.created_at).toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="p-8 rounded-2xl bg-white/[0.01] border border-white/5 text-center text-xs font-mono text-slate-500">
-                No recent leads captured yet. Submissions from /scoping will automatically appear here.
-              </div>
-            )}
-          </div>
-        </div>
+      {/* ================= TAB 8: FINANCE & INVOICING ================= */}
+      {activeTab === 'finance' && isFounder && (
+        <FinanceManager projects={projects} clients={clients} team={team} />
+      )}
+
+      {/* ================= TAB 9: TIME TRACKING ================= */}
+      {activeTab === 'timetracking' && (
+        <TimeTracker tasks={tasks} projects={projects} currentUser={session!} />
+      )}
+
+      {/* ================= TAB 10: SOP LIBRARY ================= */}
+      {activeTab === 'sops' && (
+        <SOPLibrary />
       )}
 
       {/* ================= MODAL: ADD PROJECT ================= */}
@@ -2204,6 +2257,21 @@ export default function FlowHQPage() {
             </div>
 
             <form onSubmit={handleAddProject} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Service Project Template</label>
+                <select
+                  value={selectedProjectTemplate}
+                  onChange={(e) => setSelectedProjectTemplate(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-cyan-400"
+                >
+                  <option value="web_app" className="bg-[#0E1424]">🚀 Full-Stack Web App / SaaS (4 Sprints)</option>
+                  <option value="ai_automation" className="bg-[#0E1424]">🤖 AI Agent & Automation Engine (4 Sprints)</option>
+                  <option value="software" className="bg-[#0E1424]">⚡ Mobile App / Custom Software (4 Sprints)</option>
+                  <option value="retainer" className="bg-[#0E1424]">🛡️ Monthly Retainer & Maintenance</option>
+                  <option value="blank" className="bg-[#0E1424]">Custom Blank Project</option>
+                </select>
+              </div>
+
               <div className="space-y-1">
                 <label className="block font-mono text-xs text-slate-300">Project name</label>
                 <input
@@ -3127,6 +3195,51 @@ export default function FlowHQPage() {
           </div>
         </div>
       )}
+
+      {/* ================= MODAL: QA REVIEW SUBMISSION ================= */}
+      <QAReviewModal
+        isOpen={showReviewModal}
+        onClose={() => {
+          setShowReviewModal(false);
+          setTaskForReview(null);
+        }}
+        task={taskForReview}
+        team={team}
+        onSubmitted={() => {
+          logActivityEvent(session?.userInitials || 'SR', 'submitted QA review', taskForReview?.title || 'task');
+          if (taskForReview) {
+            handleMoveTaskStatus(taskForReview.id, 'review');
+          }
+        }}
+      />
+
+      {/* ================= MODAL: BLOCKER ALERT ================= */}
+      <BlockerModal
+        isOpen={showBlockerModal}
+        onClose={() => {
+          setShowBlockerModal(false);
+          setTaskForBlocker(null);
+        }}
+        task={taskForBlocker}
+        onSubmitted={() => {
+          logActivityEvent(session?.userInitials || 'SR', 'updated blocker state', taskForBlocker?.title || 'task');
+        }}
+      />
+
+      {/* ================= MODAL: PROJECT HANDOVER GATE ================= */}
+      <HandoverModal
+        isOpen={showHandoverModal}
+        onClose={() => {
+          setShowHandoverModal(false);
+          setProjectForHandover(null);
+        }}
+        project={projectForHandover}
+        onCompleted={() => {
+          if (projectForHandover) {
+            handleCompleteProject(projectForHandover.id);
+          }
+        }}
+      />
 
     </div>
   );
