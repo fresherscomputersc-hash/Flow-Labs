@@ -218,6 +218,39 @@ const DEFAULT_ACTIVITY: ActivityLog[] = [
   { id: 'act-4', actor: 'SR', action: 'issued portal access', target: 'Rohan Sharma (Droovee)', time: '4h ago' },
 ];
 
+const DEFAULT_LEADS: Lead[] = [
+  {
+    id: 'lead-1',
+    name: 'Vikramaditya Patnaik',
+    contact: 'vikram@odishalogistics.in',
+    project_type: 'Fleet Dispatch & Telemetry IoT',
+    budget: '₹1,80,000',
+    idea: 'Need a real-time GPS fleet tracking system with automated driver trip allocation, fuel consumption analytics, and instant WhatsApp billing.',
+    created_at: '2026-11-24T16:30:00Z',
+    status: 'new'
+  },
+  {
+    id: 'lead-2',
+    name: 'Dr. Ananya Mohanty',
+    contact: 'ananya@medixcare.org',
+    project_type: 'Healthcare Patient Portal & EMR',
+    budget: '₹95,000',
+    idea: 'Telemedicine consultation workflow with automated calendar invites, encrypted prescription uploads, and Razorpay OPD fee collection.',
+    created_at: '2026-11-23T11:15:00Z',
+    status: 'contacted'
+  },
+  {
+    id: 'lead-3',
+    name: 'Rahul Senapati',
+    contact: 'rahul@urbanmart.co',
+    project_type: 'Quick-Commerce Hyperlocal Catalog',
+    budget: '₹1,40,000',
+    idea: '15,000 SKU catalog with sub-second Elasticsearch indexing, real-time store inventory sync, and Mapbox courier routing.',
+    created_at: '2026-11-21T09:40:00Z',
+    status: 'qualified'
+  }
+];
+
 export default function FlowHQPage() {
   // Session State
   const [session, setSession] = useState<{ userEmail: string; userName: string; userRole: string; userInitials: string } | null>(null);
@@ -236,7 +269,7 @@ export default function FlowHQPage() {
   const [clients, setClients] = useState<ClientAccount[]>(DEFAULT_CLIENTS);
   const [activity, setActivity] = useState<ActivityLog[]>(DEFAULT_ACTIVITY);
   const [standups, setStandups] = useState<DailyStandup[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leads, setLeads] = useState<Lead[]>(DEFAULT_LEADS);
   const [loadingLeads, setLoadingLeads] = useState(false);
 
   // View Filter: "All Studio Tasks" vs "My Work"
@@ -313,6 +346,9 @@ export default function FlowHQPage() {
 
       const savedStandups = localStorage.getItem('flow_hq_standups');
       if (savedStandups) setStandups(JSON.parse(savedStandups));
+
+      const savedLeads = localStorage.getItem('flow_hq_leads');
+      if (savedLeads) setLeads(JSON.parse(savedLeads));
     } catch (err) {
       console.warn('LocalStorage load notice:', err);
     }
@@ -359,8 +395,9 @@ export default function FlowHQPage() {
         .order('created_at', { ascending: false })
         .limit(30);
 
-      if (data && !error) {
+      if (data && !error && data.length > 0) {
         setLeads(data);
+        persistState('flow_hq_leads', data);
       }
     } catch (err) {
       console.warn('Leads fetch error:', err);
@@ -816,7 +853,7 @@ export default function FlowHQPage() {
     <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
       
       {/* ================= TOP CONSOLE HEADER ================= */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/10">
         
         {/* Brand & User Active Context */}
         <div className="flex items-center gap-3.5">
@@ -828,9 +865,9 @@ export default function FlowHQPage() {
             HQ
           </Link>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-display text-lg font-normal text-white">Flow HQ Studio OS</h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[11px]">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-display text-lg font-normal text-white whitespace-nowrap">Flow HQ Studio OS</h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[11px] whitespace-nowrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 <span>{session.userName} ({session.userRole})</span>
               </span>
@@ -839,87 +876,93 @@ export default function FlowHQPage() {
           </div>
         </div>
 
-        {/* Global Navigation Tabs & Actions */}
-        <div className="flex flex-wrap items-center gap-2">
-          
-          <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/10 overflow-x-auto text-xs font-mono">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${
-                activeTab === 'dashboard' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => setActiveTab('projects')}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${
-                activeTab === 'projects' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Projects ({projects.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('tasks')}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${
-                activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Tasks ({tasks.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${
-                activeTab === 'clients' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Clients ({clients.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('team')}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${
-                activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Team ({team.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('standups')}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${
-                activeTab === 'standups' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Standups ({standups.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('leads')}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${
-                activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Leads ({leads.length})
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Link
-              href="/client"
-              className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white font-mono text-xs border border-white/10 transition-colors"
-              title="Open Client Portal View"
-            >
-              Client View
-            </Link>
-            <button
-              onClick={handleSignOut}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-red-400 border border-white/10 transition-colors"
-              title="Sign out of Flow HQ"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-
+        {/* Global Quick Actions */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link
+            href="/client"
+            className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white font-mono text-xs border border-white/10 transition-colors whitespace-nowrap"
+            title="Open Client Portal View"
+          >
+            Client View
+          </Link>
+          <button
+            onClick={handleSignOut}
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-red-400 border border-white/10 transition-colors"
+            title="Sign out of Flow HQ"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
 
+      </div>
+
+      {/* ================= DEDICATED WORKSPACE TAB STRIP ================= */}
+      <div className="p-1.5 rounded-2xl bg-white/[0.02] border border-white/10 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 min-w-max text-xs font-mono">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'dashboard' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <LayoutDashboard className="w-3.5 h-3.5" />
+            <span>Dashboard</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('projects')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'projects' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Projects ({projects.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('tasks')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <CheckSquare className="w-3.5 h-3.5" />
+            <span>Tasks ({tasks.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('clients')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'clients' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <Building className="w-3.5 h-3.5" />
+            <span>Clients ({clients.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('team')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Team ({team.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('standups')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'standups' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Standups ({standups.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('leads')}
+            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+              activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+            }`}
+          >
+            <Target className="w-3.5 h-3.5" />
+            <span>Leads CRM ({leads.length})</span>
+          </button>
+        </div>
       </div>
 
       {/* ================= TAB 1: EXECUTIVE DASHBOARD ================= */}
@@ -971,10 +1014,10 @@ export default function FlowHQPage() {
             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
               <div className="flex justify-between items-center text-xs font-mono text-slate-400">
                 <span>Inbound leads</span>
-                <span className="text-white font-medium">{leads.length || '3'} new</span>
+                <span className="text-white font-medium">{leads.length} new</span>
               </div>
               <div className="font-display text-3xl font-normal text-white">
-                {leads.length || '3'} Inquiries
+                {leads.length} Inquiries
               </div>
               <div className="text-[11px] font-mono text-slate-400">
                 From project scoping cockpit

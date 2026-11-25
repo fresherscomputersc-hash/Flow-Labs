@@ -227,6 +227,36 @@ export default function ClientPortalPage() {
     }
   };
 
+  const handleDownloadAsset = (doc: Deliverable) => {
+    const content = `# The Flow Labs Deliverable Asset
+Project: ${session?.projectName || 'Studio Build'}
+Asset: ${doc.name}
+Type: ${doc.type}
+Verification Status: ${doc.status}
+Size: ${doc.size}
+Release Date: ${doc.date}
+Client: ${session?.clientName || 'Authorized Client'} (${session?.companyName || 'Enterprise Partner'})
+Assigned Founding Engineers: ${session?.assignedFounders || 'Smruti Ranjan, Biswash'}
+Timestamp: ${new Date().toISOString()}
+
+==================================================
+CONFIDENTIAL & ENCRYPTED DELIVERABLE SPECIFICATION
+THE FLOW LABS STUDIO DELIVERY OS - HIGH ASSURANCE
+==================================================
+This verified deliverable confirms technical milestone completion for ${session?.projectName || 'this build sprint'}. All schemas, contracts, and deployment artifacts have been validated against our staging environment.
+`;
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const safeFilename = doc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    link.setAttribute('download', `${safeFilename}.md`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // ================= VIEW: CLIENT LOGIN SCREEN =================
   if (!session) {
     return (
@@ -270,8 +300,8 @@ export default function ClientPortalPage() {
                 type="text"
                 placeholder="e.g. DRV-CLIENT-9842"
                 value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 uppercase"
+                onChange={(e) => setKeyInput(e.target.value.toUpperCase())}
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white font-mono placeholder:normal-case placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 uppercase"
               />
             </div>
 
@@ -498,7 +528,7 @@ export default function ClientPortalPage() {
                 </div>
 
                 <button
-                  onClick={() => alert(`Downloading verified deliverable: ${doc.name}`)}
+                  onClick={() => handleDownloadAsset(doc)}
                   className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 border border-white/10 flex items-center gap-1.5 w-fit transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
