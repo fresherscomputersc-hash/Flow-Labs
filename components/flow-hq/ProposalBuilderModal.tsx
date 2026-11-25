@@ -31,7 +31,7 @@ export default function ProposalBuilderModal({
   const [selectedLeadId, setSelectedLeadId] = useState<string>(initialLead ? String(initialLead.id) : '');
   const [title, setTitle] = useState(initialLead ? `Studio Proposal for ${initialLead.name}` : '');
   const [scope, setScope] = useState(initialLead?.idea || '');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
   const [terms, setTerms] = useState('50% advance deposit upon acceptance. Remaining 50% upon final production delivery. Net 14 payment terms.');
   const [lineItems, setLineItems] = useState<ProposalItem[]>([
     { description: 'Core Architecture, DB Schema & API Spec', hours: 20, rate: 60, amount: 1200 },
@@ -163,8 +163,8 @@ export default function ProposalBuilderModal({
                 onChange={(e) => setCurrency(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-cyan-400"
               >
-                <option value="USD" className="bg-[#0E1424]">USD ($)</option>
                 <option value="INR" className="bg-[#0E1424]">INR (₹)</option>
+                <option value="USD" className="bg-[#0E1424]">USD ($)</option>
                 <option value="EUR" className="bg-[#0E1424]">EUR (€)</option>
                 <option value="GBP" className="bg-[#0E1424]">GBP (£)</option>
               </select>

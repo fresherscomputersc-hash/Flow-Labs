@@ -213,7 +213,7 @@ module.exports = async (req, res) => {
             subtotal: advanceAmount,
             tax: 0,
             total_amount: advanceAmount,
-            currency: proposal.currency || 'USD',
+            currency: proposal.currency || 'INR',
             status: 'sent',
             line_items: [
               { description: `50% Advance Commitment Deposit for ${project.name}`, quantity: 1, unit_price: advanceAmount, total: advanceAmount }

@@ -66,6 +66,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import LeadsCRM from '@/components/flow-hq/LeadsCRM';
 import FinanceManager from '@/components/flow-hq/FinanceManager';
+import DeliverablesManager from '@/components/flow-hq/DeliverablesManager';
 import TimeTracker from '@/components/flow-hq/TimeTracker';
 import SOPLibrary from '@/components/flow-hq/SOPLibrary';
 import QAReviewModal from '@/components/flow-hq/QAReviewModal';
@@ -152,114 +153,11 @@ export interface DailyStandup {
 }
 
 // ================= INITIAL DATA =================
-const DEFAULT_TEAM: TeamMember[] = [
-  { id: 'tm-1', name: 'Smruti Ranjan', email: 'smruti@theflowlabs.online', role: 'owner', initials: 'SR', status: 'active' },
-  { id: 'tm-2', name: 'Biswash', email: 'biswash@theflowlabs.online', role: 'admin', initials: 'BW', status: 'active' },
-  { id: 'tm-3', name: 'Arpita', email: 'arpita@theflowlabs.online', role: 'admin', initials: 'AP', status: 'active' },
-];
-
-const DEFAULT_PROJECTS: Project[] = [
-  {
-    id: 'proj-1',
-    name: 'Droovee Chauffeur Platform',
-    key: 'DRV',
-    client: 'Droovee Mobility',
-    clientEmail: 'rohan@droovee.in',
-    status: 'active',
-    progress: 75,
-    budget: '₹1,20,000',
-    dueDate: '15 Dec 2026',
-    modules: ['Customer Web Booking', 'Driver Dispatch Engine', 'Automated GST Billing'],
-  },
-  {
-    id: 'proj-2',
-    name: 'Drishti Edge Vision AI',
-    key: 'DSH',
-    client: 'In-House Laboratory',
-    clientEmail: 'lab@theflowlabs.online',
-    status: 'active',
-    progress: 90,
-    budget: '₹85,000',
-    dueDate: '20 Dec 2026',
-    modules: ['YOLOv8 Edge Pipeline', 'WebRTC Video Stream', 'Alert Webhook'],
-  },
-  {
-    id: 'proj-3',
-    name: 'FlowOps Studio Monitor',
-    key: 'OPS',
-    client: 'Internal Tooling',
-    clientEmail: 'ops@theflowlabs.online',
-    status: 'completed',
-    progress: 100,
-    budget: '₹40,000',
-    dueDate: 'Completed',
-    modules: ['Synthetic Heartbeats', 'Telegram Bot Alerts'],
-  },
-];
-
-const DEFAULT_TASKS: TaskItem[] = [
-  {
-    id: 't-1',
-    projectId: 'proj-1',
-    moduleName: 'Driver Dispatch Engine',
-    title: 'Deploy Droovee dynamic distance calculation algorithm',
-    status: 'in_progress',
-    priority: 'urgent',
-    assignee: 'SR',
-    notes: 'Testing road distances with Mapbox matrix APIs.',
-  },
-  {
-    id: 't-2',
-    projectId: 'proj-2',
-    moduleName: 'YOLOv8 Edge Pipeline',
-    title: 'Optimize Drishti YOLOv8 video frame rate to 30 FPS on edge node',
-    status: 'in_progress',
-    priority: 'high',
-    assignee: 'BW',
-    notes: 'Quantizing weights to ONNX format.',
-  },
-  {
-    id: 't-3',
-    projectId: 'proj-1',
-    moduleName: 'Customer Web Booking',
-    title: 'Ship Three.js spatial design system components for client portal',
-    status: 'review',
-    priority: 'medium',
-    assignee: 'AP',
-    notes: 'Accessible keyboard navigation verified.',
-  },
-  {
-    id: 't-4',
-    projectId: 'proj-1',
-    moduleName: 'Automated GST Billing',
-    title: 'Finalize PostgreSQL row-level security policies for multi-tenant users',
-    status: 'done',
-    priority: 'high',
-    assignee: 'SR',
-    notes: 'Migration 0002_work.sql policies verified.',
-  },
-];
-
-const DEFAULT_CLIENTS: ClientAccount[] = [
-  {
-    id: 'c-1',
-    name: 'Rohan Sharma',
-    company: 'Droovee Mobility',
-    email: 'rohan@droovee.in',
-    projectId: 'proj-1',
-    projectName: 'Droovee Chauffeur Platform',
-    accessKey: 'DRV-CLIENT-9842',
-    status: 'active',
-  },
-];
-
-const DEFAULT_ACTIVITY: ActivityLog[] = [
-  { id: 'act-1', actor: 'SR', action: 'moved task to Review', target: 'FLW-04 PostgreSQL RLS Policies', time: '10m ago' },
-  { id: 'act-2', actor: 'BW', action: 'deployed edge container', target: 'Drishti 30 FPS Node', time: '45m ago' },
-  { id: 'act-3', actor: 'AP', action: 'updated design tokens', target: 'Spatial Obsidian Kit', time: '2h ago' },
-  { id: 'act-4', actor: 'SR', action: 'issued portal access', target: 'Rohan Sharma (Droovee)', time: '4h ago' },
-];
-
+const DEFAULT_TEAM: TeamMember[] = [];
+const DEFAULT_PROJECTS: Project[] = [];
+const DEFAULT_TASKS: TaskItem[] = [];
+const DEFAULT_CLIENTS: ClientAccount[] = [];
+const DEFAULT_ACTIVITY: ActivityLog[] = [];
 const DEFAULT_LEADS: Lead[] = [];
 
 export default function FlowHQPage() {
@@ -271,7 +169,7 @@ export default function FlowHQPage() {
   const [authLoading, setAuthLoading] = useState(false);
 
   // Active Navigation Tab
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects' | 'tasks' | 'clients' | 'team' | 'leads' | 'standups' | 'finance' | 'timetracking' | 'sops'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects' | 'tasks' | 'clients' | 'deliverables' | 'team' | 'leads' | 'standups' | 'finance' | 'timetracking' | 'sops'>('dashboard');
 
   // QA Review, Blocker, Handover & Templates
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -383,20 +281,34 @@ export default function FlowHQPage() {
   const [standupBlockers, setStandupBlockers] = useState('None');
   const [standupHours, setStandupHours] = useState('6');
 
-  // Initialize and load saved state from localStorage
+  // Initialize and load saved state from localStorage (excluding legacy demo IDs)
   useEffect(() => {
     try {
+      const isUuid = (id?: string) => !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id);
+
       const savedProjects = localStorage.getItem('flow_hq_projects');
-      if (savedProjects) setProjects(JSON.parse(savedProjects));
+      if (savedProjects) {
+        const parsed = JSON.parse(savedProjects);
+        if (Array.isArray(parsed)) setProjects(parsed.filter((p: any) => isUuid(p.id)));
+      }
 
       const savedTasks = localStorage.getItem('flow_hq_tasks');
-      if (savedTasks) setTasks(JSON.parse(savedTasks));
+      if (savedTasks) {
+        const parsed = JSON.parse(savedTasks);
+        if (Array.isArray(parsed)) setTasks(parsed.filter((t: any) => isUuid(t.id)));
+      }
 
       const savedClients = localStorage.getItem('flow_hq_clients');
-      if (savedClients) setClients(JSON.parse(savedClients));
+      if (savedClients) {
+        const parsed = JSON.parse(savedClients);
+        if (Array.isArray(parsed)) setClients(parsed.filter((c: any) => isUuid(c.id)));
+      }
 
       const savedTeam = localStorage.getItem('flow_hq_team');
-      if (savedTeam) setTeam(JSON.parse(savedTeam));
+      if (savedTeam) {
+        const parsed = JSON.parse(savedTeam);
+        if (Array.isArray(parsed)) setTeam(parsed.filter((m: any) => isUuid(m.id)));
+      }
 
       const savedStandups = localStorage.getItem('flow_hq_standups');
       if (savedStandups) setStandups(JSON.parse(savedStandups));
@@ -458,7 +370,7 @@ export default function FlowHQPage() {
     checkAuth();
   }, []);
 
-  // Load live projects from Supabase
+  // Load live projects, clients, team, and tasks from Supabase
   const loadLiveProjects = async () => {
     try {
       const { data: dbProjs } = await supabase
@@ -466,16 +378,16 @@ export default function FlowHQPage() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (dbProjs && dbProjs.length > 0) {
+      if (dbProjs) {
         const mapped: Project[] = dbProjs.map((p: any) => ({
           id: p.id,
           name: p.name || 'Studio Project',
           key: p.key || 'FLW',
           client: p.summary || 'Client Build',
           status: p.status === 'completed' ? 'completed' : 'active',
-          progress: p.status === 'completed' ? 100 : 70,
-          budget: '₹75,000',
-          dueDate: p.due_date || '3 Weeks',
+          progress: p.status === 'completed' ? 100 : 0,
+          budget: p.budget || '₹0',
+          dueDate: p.due_date || 'TBD',
           modules: ['Core Architecture', 'Frontend Interface', 'API & Database'],
         }));
         setProjects(mapped);
@@ -486,9 +398,92 @@ export default function FlowHQPage() {
     }
   };
 
+  const loadClientsAndTeam = async () => {
+    try {
+      const [profRes, pcRes] = await Promise.all([
+        supabase.from('profiles').select('id, email, full_name, role, status').order('created_at', { ascending: false }),
+        supabase.from('project_clients').select('user_id, project_id, company_name, projects(name)')
+      ]);
+
+      const pcMap = new Map<string, any>();
+      if (pcRes.data) {
+        pcRes.data.forEach((row: any) => {
+          if (!pcMap.has(row.user_id)) pcMap.set(row.user_id, row);
+        });
+      }
+
+      if (profRes.data) {
+        const clientRows: ClientAccount[] = [];
+        const teamRows: TeamMember[] = [];
+
+        profRes.data.forEach((p: any) => {
+          if (p.role === 'client') {
+            const pc = pcMap.get(p.id);
+            clientRows.push({
+              id: p.id,
+              name: p.full_name || p.email?.split('@')[0] || 'Client',
+              company: pc?.company_name || pc?.projects?.name || 'Client Org',
+              email: p.email || '',
+              projectId: pc?.project_id || '',
+              projectName: pc?.projects?.name || 'Unassigned Project',
+              accessKey: 'PASSWORD-ENABLED',
+              status: p.status === 'pending' ? 'pending' : 'active',
+            });
+          } else {
+            const name = p.full_name || p.email?.split('@')[0] || 'Member';
+            const parts = name.trim().split(' ');
+            const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+            teamRows.push({
+              id: p.id,
+              name,
+              email: p.email || '',
+              role: (['owner', 'admin', 'manager', 'member'].includes(p.role) ? p.role : 'member') as TeamMember['role'],
+              initials,
+              status: p.status === 'invited' ? 'invited' : 'active',
+            });
+          }
+        });
+
+        setClients(clientRows);
+        setTeam(teamRows);
+        persistState('flow_hq_clients', clientRows);
+        persistState('flow_hq_team', teamRows);
+      }
+    } catch (e) {
+      console.warn('Clients/team load notice:', e);
+    }
+  };
+
+  const loadLiveTasks = async () => {
+    try {
+      const { data } = await supabase
+        .from('tasks')
+        .select('*, modules(name), profiles!tasks_assignee_id_fkey(full_name)')
+        .order('created_at', { ascending: false });
+      if (data) {
+        const mapped: TaskItem[] = data.map((t: any) => ({
+          id: t.id,
+          projectId: t.project_id,
+          moduleName: t.modules?.name || 'Core Module',
+          title: t.title,
+          status: (['todo', 'in_progress', 'review', 'done'].includes(t.status) ? t.status : 'todo') as TaskItem['status'],
+          priority: (['urgent', 'high', 'medium', 'low'].includes(t.priority) ? t.priority : 'medium') as TaskItem['priority'],
+          assignee: t.profiles?.full_name?.slice(0, 2)?.toUpperCase() || 'HQ',
+          notes: t.description || undefined,
+        }));
+        setTasks(mapped);
+        persistState('flow_hq_tasks', mapped);
+      }
+    } catch (e) {
+      console.warn('Tasks load notice:', e);
+    }
+  };
+
   useEffect(() => {
     if (session) {
       loadLiveProjects();
+      loadClientsAndTeam();
+      loadLiveTasks();
       loadLeads();
     }
   }, [session]);
@@ -999,21 +994,6 @@ export default function FlowHQPage() {
 
       setOnboardSuccessMsg(`Account created for ${newTeamEmail}! Welcome email dispatched.`);
 
-      const parts = newTeamName.trim().split(' ');
-      const initials = parts.length > 1
-        ? (parts[0][0] + parts[1][0]).toUpperCase()
-        : parts[0].slice(0, 2).toUpperCase();
-
-      const newMember: TeamMember = {
-        id: resData.user_id || `tm-${Date.now()}`,
-        name: newTeamName.trim(),
-        email: newTeamEmail.trim().toLowerCase(),
-        role: newTeamRole === 'client' ? 'member' : newTeamRole,
-        initials,
-        status: 'active',
-      };
-      setTeam((prev) => [...prev, newMember]);
-
       if (newTeamRole === 'client') {
         const proj = projects.find((p) => p.id === newClientProject);
         const newCli: ClientAccount = {
@@ -1021,15 +1001,32 @@ export default function FlowHQPage() {
           name: newTeamName.trim(),
           company: newClientCompany.trim() || proj?.name || 'Client Org',
           email: newTeamEmail.trim().toLowerCase(),
-          projectId: newClientProject || projects[0]?.id || 'proj-1',
-          projectName: proj?.name || 'Studio Project',
+          projectId: newClientProject || projects[0]?.id || '',
+          projectName: proj?.name || 'Unassigned Project',
           accessKey: 'PASSWORD-ENABLED',
           status: 'active',
         };
         const updatedClients = [newCli, ...clients];
         setClients(updatedClients);
         persistState('flow_hq_clients', updatedClients);
+      } else {
+        const parts = newTeamName.trim().split(' ');
+        const initials = parts.length > 1
+          ? (parts[0][0] + parts[1][0]).toUpperCase()
+          : parts[0].slice(0, 2).toUpperCase();
+
+        const newMember: TeamMember = {
+          id: resData.user_id || `tm-${Date.now()}`,
+          name: newTeamName.trim(),
+          email: newTeamEmail.trim().toLowerCase(),
+          role: newTeamRole,
+          initials,
+          status: 'active',
+        };
+        setTeam((prev) => [...prev, newMember]);
       }
+
+      await loadClientsAndTeam();
 
       logActivityEvent(session?.userInitials || 'SR', 'provisioned account', `${newTeamName} (${newTeamRole})`);
 
@@ -1192,7 +1189,7 @@ export default function FlowHQPage() {
   const isFounder = session.userRole === 'owner' || session.userRole === 'admin';
 
   return (
-    <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
+    <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
       
       {/* ================= TOP CONSOLE HEADER ================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/10">
@@ -1231,109 +1228,129 @@ export default function FlowHQPage() {
 
       </div>
 
-      {/* ================= DEDICATED WORKSPACE TAB STRIP ================= */}
-      <div className="p-1.5 rounded-2xl bg-white/[0.02] border border-white/10 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1 min-w-max text-xs font-mono">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'dashboard' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>Dashboard</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('projects')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'projects' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Projects ({projects.length})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('tasks')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <CheckSquare className="w-3.5 h-3.5" />
-            <span>Tasks ({tasks.length})</span>
-          </button>
+      {/* ================= VERTICAL SIDEBAR + WORKSPACE CONTENT ================= */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <aside className="w-full lg:w-60 shrink-0 p-2.5 rounded-2xl bg-white/[0.02] border border-white/10 lg:sticky lg:top-6 space-y-3">
+          <div>
+            <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-500">Workspace</div>
+            <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible text-xs font-mono mt-1">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                  activeTab === 'dashboard' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4 shrink-0" />
+                <span>Dashboard</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('projects')}
+                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                  activeTab === 'projects' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                }`}
+              >
+                <Layers className="w-4 h-4 shrink-0" />
+                <span>Projects ({projects.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('tasks')}
+                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                  activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                }`}
+              >
+                <CheckSquare className="w-4 h-4 shrink-0" />
+                <span>Tasks ({tasks.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('standups')}
+                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                  activeTab === 'standups' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                }`}
+              >
+                <Clock className="w-4 h-4 shrink-0" />
+                <span>Standups ({standups.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('timetracking')}
+                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                  activeTab === 'timetracking' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                }`}
+              >
+                <Timer className="w-4 h-4 shrink-0" />
+                <span>Time Tracking</span>
+              </button>
+            </nav>
+          </div>
+
           {isFounder && (
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'clients' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-              }`}
-            >
-              <Building className="w-3.5 h-3.5" />
-              <span>Clients ({clients.length})</span>
-            </button>
+            <div className="pt-2 border-t border-white/5">
+              <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-500">Admin &amp; Clients</div>
+              <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible text-xs font-mono mt-1">
+                <button
+                  onClick={() => setActiveTab('clients')}
+                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                    activeTab === 'clients' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <Building className="w-4 h-4 shrink-0" />
+                  <span>Clients ({clients.length})</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('deliverables')}
+                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                    activeTab === 'deliverables' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
+                  <span>Deliverables &amp; Tickets</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('finance')}
+                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                    activeTab === 'finance' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <DollarSign className="w-4 h-4 shrink-0" />
+                  <span>Finance &amp; Invoicing</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('leads')}
+                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                    activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <Target className="w-4 h-4 shrink-0" />
+                  <span>Leads &amp; Quotes ({leads.length})</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('team')}
+                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                    activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span>Team ({team.length})</span>
+                </button>
+              </nav>
+            </div>
           )}
-          {isFounder && (
-            <button
-              onClick={() => setActiveTab('team')}
-              className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Team ({team.length})</span>
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab('standups')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'standups' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            <span>Standups ({standups.length})</span>
-          </button>
-          {isFounder && (
-            <button
-              onClick={() => setActiveTab('leads')}
-              className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-              }`}
-            >
-              <Target className="w-3.5 h-3.5" />
-              <span>Leads & Quotes ({leads.length})</span>
-            </button>
-          )}
-          {isFounder && (
-            <button
-              onClick={() => setActiveTab('finance')}
-              className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-                activeTab === 'finance' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-              }`}
-            >
-              <DollarSign className="w-3.5 h-3.5" />
-              <span>Finance & Invoicing</span>
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab('timetracking')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'timetracking' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <Timer className="w-3.5 h-3.5" />
-            <span>Time Tracking</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('sops')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'sops' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>SOP Library</span>
-          </button>
-        </div>
-      </div>
+
+          <div className="pt-2 border-t border-white/5">
+            <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible text-xs font-mono">
+              <button
+                onClick={() => setActiveTab('sops')}
+                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                  activeTab === 'sops' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                }`}
+              >
+                <BookOpen className="w-4 h-4 shrink-0" />
+                <span>SOP Library</span>
+              </button>
+            </nav>
+          </div>
+        </aside>
+
+        <div className="flex-1 min-w-0 w-full space-y-6">
 
       {/* ================= TAB 1: EXECUTIVE DASHBOARD ================= */}
       {activeTab === 'dashboard' && (
@@ -2237,10 +2254,18 @@ export default function FlowHQPage() {
         <TimeTracker tasks={tasks} projects={projects} currentUser={session!} />
       )}
 
+      {/* ================= TAB: DELIVERABLES & TICKETS ================= */}
+      {activeTab === 'deliverables' && isFounder && (
+        <DeliverablesManager projects={projects} team={team} />
+      )}
+
       {/* ================= TAB 10: SOP LIBRARY ================= */}
       {activeTab === 'sops' && (
         <SOPLibrary />
       )}
+
+        </div>
+      </div>
 
       {/* ================= MODAL: ADD PROJECT ================= */}
       {showAddProjectModal && (

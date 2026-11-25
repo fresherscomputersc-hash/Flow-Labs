@@ -95,29 +95,44 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
   const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
 
   // New Invoice Form
   const [invProject, setInvProject] = useState('');
   const [invClient, setInvClient] = useState('');
   const [invTitle, setInvTitle] = useState('');
   const [invType, setInvType] = useState<Invoice['type']>('milestone');
-  const [invCurrency, setInvCurrency] = useState('USD');
+  const [invCurrency, setInvCurrency] = useState('INR');
   const [invDueDate, setInvDueDate] = useState(new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0]);
   const [invItems, setInvItems] = useState<InvoiceItem[]>([
-    { description: 'Sprint Milestone Delivery & Staging Acceptance', quantity: 1, unit_price: 2500, total: 2500 }
+    { description: 'Sprint Milestone Delivery & Staging Acceptance', quantity: 1, unit_price: 25000, total: 25000 }
   ]);
 
   // Payment Form
+  const [payInvoiceId, setPayInvoiceId] = useState('');
   const [payAmount, setPayAmount] = useState('');
-  const [payMethod, setPayMethod] = useState('card');
+  const [payMethod, setPayMethod] = useState('upi');
   const [payRef, setPayRef] = useState('');
+  const [payStatus, setPayStatus] = useState('verified');
 
   // Expense Form
   const [expCategory, setExpCategory] = useState('software');
   const [expDesc, setExpDesc] = useState('');
   const [expAmount, setExpAmount] = useState('');
   const [expDate, setExpDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Payout Form
+  const [payoutMemberId, setPayoutMemberId] = useState('');
+  const [payoutProjectId, setPayoutProjectId] = useState('');
+  const [payoutHours, setPayoutHours] = useState('');
+  const [payoutRate, setPayoutRate] = useState('');
+
+  const formatMoney = (amount: number | string, currency = 'INR') => {
+    const sym = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '₹';
+    return `${sym}${Number(amount || 0).toLocaleString('en-IN')}`;
+  };
 
   const fetchFinanceData = async () => {
     setLoading(true);
@@ -217,34 +232,176 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
     }
   };
 
-  // Submit Payment
+  // Submit or Update Payment
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedInvoiceForPayment || !payAmount) return;
+    if (!payAmount) return;
 
     try {
-      const res = await fetch('/api/operations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'record_payment',
-          invoice_id: selectedInvoiceForPayment.id,
-          amount: Number(payAmount),
-          payment_method: payMethod,
-          reference_id: payRef || `PAY-${Date.now()}`
-        })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setNotice('Payment successfully recorded against invoice.');
+      if (editingPayment) {
+        const { error } = await supabase
+          .from('payments')
+          .update({
+            amount: Number(payAmount),
+            payment_method: payMethod,
+            reference_id: payRef || editingPayment.reference_id,
+            status: payStatus,
+          })
+          .eq('id', editingPayment.id);
+        if (error) throw error;
+        setNotice('Payment record updated.');
+        setEditingPayment(null);
         setShowPaymentModal(false);
-        setSelectedInvoiceForPayment(null);
         await fetchFinanceData();
-      } else {
-        alert(data.error || 'Failed to record payment.');
+        return;
       }
+
+      const targetInvoiceId = selectedInvoiceForPayment?.id || payInvoiceId;
+      if (targetInvoiceId) {
+        const res = await fetch('/api/operations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'record_payment',
+            invoice_id: targetInvoiceId,
+            amount: Number(payAmount),
+            payment_method: payMethod,
+            reference_id: payRef || `PAY-${Date.now()}`
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Failed to record payment.');
+      } else {
+        const { error } = await supabase.from('payments').insert([
+          {
+            amount: Number(payAmount),
+            payment_method: payMethod,
+            reference_id: payRef || `PAY-${Date.now()}`,
+            status: payStatus,
+            paid_at: new Date().toISOString(),
+          },
+        ]);
+        if (error) throw error;
+      }
+
+      setNotice('Payment successfully recorded.');
+      setShowPaymentModal(false);
+      setSelectedInvoiceForPayment(null);
+      setPayInvoiceId('');
+      setPayAmount('');
+      setPayRef('');
+      await fetchFinanceData();
     } catch (err: any) {
       alert(err.message || 'Error recording payment.');
+    }
+  };
+
+  const handleUpdateInvoiceStatus = async (inv: Invoice, status: Invoice['status']) => {
+    try {
+      const updates: any = { status };
+      if (status === 'paid' && !inv.paid_at) updates.paid_at = new Date().toISOString();
+      const { error } = await supabase.from('invoices').update(updates).eq('id', inv.id);
+      if (error) throw error;
+      setNotice(`Invoice ${inv.invoice_number} marked ${status}.`);
+      await fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update invoice status.');
+    }
+  };
+
+  const handleDeleteInvoice = async (id: string) => {
+    if (!confirm('Delete this invoice?')) return;
+    try {
+      const { error } = await supabase.from('invoices').delete().eq('id', id);
+      if (error) throw error;
+      setNotice('Invoice deleted.');
+      await fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete invoice.');
+    }
+  };
+
+  const handleUpdatePaymentStatus = async (paymentId: string, status: string) => {
+    try {
+      const { error } = await supabase.from('payments').update({ status }).eq('id', paymentId);
+      if (error) throw error;
+      setNotice(`Payment status updated to ${status}.`);
+      await fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update payment.');
+    }
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!confirm('Delete this payment record?')) return;
+    try {
+      const { error } = await supabase.from('payments').delete().eq('id', paymentId);
+      if (error) throw error;
+      setNotice('Payment record deleted.');
+      await fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete payment.');
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    if (!confirm('Delete this expense?')) return;
+    try {
+      const { error } = await supabase.from('expenses').delete().eq('id', expenseId);
+      if (error) throw error;
+      setNotice('Expense deleted.');
+      await fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete expense.');
+    }
+  };
+
+  const handleCreatePayout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payoutMemberId || !payoutHours || !payoutRate) return;
+    const total = Number(payoutHours) * Number(payoutRate);
+    try {
+      const { error } = await supabase.from('team_payouts').insert([
+        {
+          member_id: payoutMemberId,
+          project_id: payoutProjectId || null,
+          hours_logged: Number(payoutHours),
+          hourly_rate: Number(payoutRate),
+          total_amount: total,
+          status: 'pending',
+        },
+      ]);
+      if (error) throw error;
+      setNotice('Team payout generated.');
+      setShowPayoutModal(false);
+      setPayoutHours('');
+      setPayoutRate('');
+      await fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to create payout.');
+    }
+  };
+
+  const handleUpdatePayoutStatus = async (id: string, status: TeamPayout['status']) => {
+    try {
+      const { error } = await supabase.from('team_payouts').update({ status }).eq('id', id);
+      if (error) throw error;
+      setNotice(`Payout marked ${status}.`);
+      await fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update payout.');
+    }
+  };
+
+  const handleDeletePayout = async (id: string) => {
+    if (!confirm('Delete this payout?')) return;
+    try {
+      const { error } = await supabase.from('team_payouts').delete().eq('id', id);
+      if (error) throw error;
+      setNotice('Payout deleted.');
+      await fetchFinanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete payout.');
     }
   };
 
@@ -259,7 +416,7 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
           category: expCategory,
           description: expDesc.trim(),
           amount: Number(expAmount),
-          currency: 'USD',
+          currency: 'INR',
           incurred_date: expDate
         }
       ]);
@@ -323,11 +480,34 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
             <span>Generate Invoice</span>
           </button>
           <button
+            onClick={() => {
+              setSelectedInvoiceForPayment(null);
+              setEditingPayment(null);
+              setPayInvoiceId('');
+              setPayAmount('');
+              setPayMethod('upi');
+              setPayRef('');
+              setPayStatus('verified');
+              setShowPaymentModal(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-mono text-xs border border-emerald-500/30 transition-colors"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Log Payment</span>
+          </button>
+          <button
             onClick={() => setShowExpenseModal(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-mono text-xs border border-white/10 transition-colors"
           >
             <Receipt className="w-3.5 h-3.5" />
             <span>Log Expense</span>
+          </button>
+          <button
+            onClick={() => setShowPayoutModal(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-mono text-xs border border-white/10 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Create Payout</span>
           </button>
           <button
             onClick={exportInvoicesCsv}
@@ -358,32 +538,32 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 font-mono">
         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
           <div className="text-slate-400 text-[11px]">Total Invoiced</div>
-          <div className="font-display text-2xl text-white font-normal">${totalInvoiced.toLocaleString()}</div>
+          <div className="font-display text-2xl text-white font-normal">{formatMoney(totalInvoiced)}</div>
           <div className="text-[10px] text-slate-500">{invoices.length} invoices generated</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
           <div className="text-slate-400 text-[11px]">Collected Revenue</div>
-          <div className="font-display text-2xl text-emerald-400 font-normal">${totalCollected.toLocaleString()}</div>
+          <div className="font-display text-2xl text-emerald-400 font-normal">{formatMoney(totalCollected)}</div>
           <div className="text-[10px] text-emerald-500/80">Paid in full</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
           <div className="text-slate-400 text-[11px]">Pending Receivables</div>
-          <div className="font-display text-2xl text-amber-400 font-normal">${totalPending.toLocaleString()}</div>
+          <div className="font-display text-2xl text-amber-400 font-normal">{formatMoney(totalPending)}</div>
           <div className="text-[10px] text-amber-500/80">Awaiting client settlement</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
           <div className="text-slate-400 text-[11px]">Studio Expenses</div>
-          <div className="font-display text-2xl text-slate-300 font-normal">${totalExpensesAmount.toLocaleString()}</div>
+          <div className="font-display text-2xl text-slate-300 font-normal">{formatMoney(totalExpensesAmount)}</div>
           <div className="text-[10px] text-slate-500">{expenses.length} expense items</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
           <div className="text-slate-400 text-[11px]">Net Studio Margin</div>
           <div className={`font-display text-2xl font-normal ${netProfit >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>
-            ${netProfit.toLocaleString()}
+            {formatMoney(netProfit)}
           </div>
           <div className="text-[10px] text-slate-500">Collected less expenses</div>
         </div>
@@ -456,19 +636,36 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 self-end md:self-center font-mono">
+              <div className="flex items-center gap-3 self-end md:self-center font-mono flex-wrap">
                 <div className="text-right">
                   <div className="text-slate-400 text-[10px]">Invoice Total</div>
                   <div className="font-display text-base text-white font-normal">
-                    ${Number(inv.total_amount).toLocaleString()} {inv.currency}
+                    {formatMoney(inv.total_amount, inv.currency)} {inv.currency || 'INR'}
                   </div>
                 </div>
+
+                <select
+                  value={inv.status}
+                  onChange={(e) => handleUpdateInvoiceStatus(inv, e.target.value as Invoice['status'])}
+                  className="px-2.5 py-1.5 rounded-lg bg-[#090D16] border border-white/10 text-xs text-slate-200 focus:outline-none"
+                >
+                  <option value="draft">Draft</option>
+                  <option value="sent">Sent</option>
+                  <option value="paid">Paid</option>
+                  <option value="overdue">Overdue</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
 
                 {inv.status !== 'paid' && (
                   <button
                     onClick={() => {
                       setSelectedInvoiceForPayment(inv);
+                      setEditingPayment(null);
+                      setPayInvoiceId(inv.id);
                       setPayAmount(String(inv.total_amount));
+                      setPayMethod('upi');
+                      setPayRef('');
+                      setPayStatus('verified');
                       setShowPaymentModal(true);
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs transition-colors whitespace-nowrap"
@@ -477,6 +674,14 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                     <span>Record Payment</span>
                   </button>
                 )}
+
+                <button
+                  onClick={() => handleDeleteInvoice(inv.id)}
+                  className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-colors"
+                  title="Delete invoice"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           ))}
@@ -493,25 +698,57 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
       {activeSubTab === 'payments' && (
         <div className="space-y-3">
           {payments.map((p) => (
-            <div key={p.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex justify-between items-center text-xs font-mono">
+            <div key={p.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-400 font-medium">Verified Payment</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-emerald-400 font-medium capitalize">{p.status || 'verified'} Payment</span>
                   <span className="text-slate-400">Ref: {p.reference_id}</span>
                 </div>
                 <div className="text-slate-500 text-[11px]">
-                  Method: {p.payment_method} · Paid {new Date(p.paid_at).toLocaleString()}
+                  Method: {p.payment_method} · Paid {new Date(p.paid_at).toLocaleString('en-IN')}
                 </div>
               </div>
-              <div className="font-display text-base text-emerald-400 font-normal">
-                +${Number(p.amount).toLocaleString()}
+              <div className="flex items-center gap-2.5 self-end sm:self-center">
+                <div className="font-display text-base text-emerald-400 font-normal mr-1">
+                  +{formatMoney(p.amount)}
+                </div>
+                <select
+                  value={p.status || 'verified'}
+                  onChange={(e) => handleUpdatePaymentStatus(p.id, e.target.value)}
+                  className="px-2 py-1 rounded-lg bg-[#090D16] border border-white/10 text-xs text-slate-200 focus:outline-none"
+                >
+                  <option value="verified">Verified</option>
+                  <option value="pending">Pending</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+                <button
+                  onClick={() => {
+                    setEditingPayment(p);
+                    setSelectedInvoiceForPayment(null);
+                    setPayAmount(String(p.amount));
+                    setPayMethod(p.payment_method || 'upi');
+                    setPayRef(p.reference_id || '');
+                    setPayStatus(p.status || 'verified');
+                    setShowPaymentModal(true);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-xs"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeletePayment(p.id)}
+                  className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                  title="Delete payment"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           ))}
 
           {payments.length === 0 && (
             <div className="p-8 text-center text-xs font-mono text-slate-500">
-              No payment transactions recorded yet.
+              No payment transactions recorded yet. Click &quot;Log Payment&quot; to record a payment.
             </div>
           )}
         </div>
@@ -521,7 +758,7 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
       {activeSubTab === 'expenses' && (
         <div className="space-y-3">
           {expenses.map((e) => (
-            <div key={e.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex justify-between items-center text-xs font-mono">
+            <div key={e.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex justify-between items-center gap-3 text-xs font-mono">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-white font-medium">{e.description}</span>
@@ -529,10 +766,19 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                     {e.category}
                   </span>
                 </div>
-                <div className="text-slate-500 text-[11px]">Incurred {new Date(e.incurred_date).toLocaleDateString()}</div>
+                <div className="text-slate-500 text-[11px]">Incurred {new Date(e.incurred_date).toLocaleDateString('en-IN')}</div>
               </div>
-              <div className="font-display text-base text-slate-300 font-normal">
-                -${Number(e.amount).toLocaleString()}
+              <div className="flex items-center gap-3">
+                <div className="font-display text-base text-slate-300 font-normal">
+                  -{formatMoney(e.amount, e.currency)}
+                </div>
+                <button
+                  onClick={() => handleDeleteExpense(e.id)}
+                  className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                  title="Delete expense"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           ))}
@@ -549,10 +795,12 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
       {activeSubTab === 'payouts' && (
         <div className="space-y-3">
           {payouts.map((out) => (
-            <div key={out.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex justify-between items-center text-xs font-mono">
+            <div key={out.id} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-white font-medium">Team Member Payout</span>
+                  <span className="text-white font-medium">
+                    {team.find((m) => m.id === out.member_id)?.name || 'Team Member Payout'}
+                  </span>
                   <span className={`px-2 py-0.5 rounded text-[10px] uppercase border ${
                     out.status === 'paid'
                       ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
@@ -562,18 +810,36 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                   </span>
                 </div>
                 <div className="text-slate-500 text-[11px]">
-                  {out.hours_logged}h logged @ ${out.hourly_rate}/h
+                  {out.hours_logged}h logged @ {formatMoney(out.hourly_rate)}/h
                 </div>
               </div>
-              <div className="font-display text-base text-white font-normal">
-                ${Number(out.total_amount).toLocaleString()}
+              <div className="flex items-center gap-2.5 self-end sm:self-center">
+                <div className="font-display text-base text-white font-normal mr-1">
+                  {formatMoney(out.total_amount)}
+                </div>
+                <select
+                  value={out.status}
+                  onChange={(e) => handleUpdatePayoutStatus(out.id, e.target.value as TeamPayout['status'])}
+                  className="px-2 py-1 rounded-lg bg-[#090D16] border border-white/10 text-xs text-slate-200 focus:outline-none"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="paid">Paid</option>
+                </select>
+                <button
+                  onClick={() => handleDeletePayout(out.id)}
+                  className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                  title="Delete payout"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           ))}
 
           {payouts.length === 0 && (
             <div className="p-8 text-center text-xs font-mono text-slate-500">
-              No team payout records generated yet. Log hours via Time Tracker to auto-calculate payouts.
+              No team payout records generated yet. Click &quot;Create Payout&quot; to issue a team payout.
             </div>
           )}
         </div>
@@ -674,7 +940,7 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                         />
                         <span className="text-slate-500 font-mono">=</span>
                         <div className="w-20 font-mono text-right text-emerald-400 font-medium">
-                          ${item.total.toLocaleString()}
+                          {formatMoney(item.total, invCurrency)}
                         </div>
                         <button
                           type="button"
@@ -692,7 +958,7 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                 <div className="flex justify-end gap-3 pt-2 text-xs font-mono">
                   <span className="text-slate-400">Total Invoice Amount:</span>
                   <span className="font-display text-lg text-emerald-400 font-normal">
-                    ${invSubtotal.toLocaleString()}
+                    {formatMoney(invSubtotal, invCurrency)}
                   </span>
                 </div>
               </div>
@@ -715,8 +981,8 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                     onChange={(e) => setInvCurrency(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
                   >
-                    <option value="USD">USD ($)</option>
                     <option value="INR">INR (₹)</option>
+                    <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
                   </select>
                 </div>
@@ -742,23 +1008,49 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
         </div>
       )}
 
-      {/* ================= MODAL: RECORD PAYMENT ================= */}
-      {showPaymentModal && selectedInvoiceForPayment && (
+      {/* ================= MODAL: RECORD / EDIT PAYMENT ================= */}
+      {showPaymentModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-display text-lg font-normal text-white">Record Invoice Payment</h3>
-                <p className="text-slate-400 text-xs">For {selectedInvoiceForPayment.invoice_number}</p>
+                <h3 className="font-display text-lg font-normal text-white">
+                  {editingPayment ? 'Edit Payment Record' : 'Record Payment'}
+                </h3>
+                <p className="text-slate-400 text-xs">
+                  {selectedInvoiceForPayment ? `For ${selectedInvoiceForPayment.invoice_number}` : 'Link to an invoice or log a direct payment'}
+                </p>
               </div>
-              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => { setShowPaymentModal(false); setEditingPayment(null); }} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleRecordPayment} className="space-y-3.5">
+              {!selectedInvoiceForPayment && !editingPayment && (
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Invoice (Optional)</label>
+                  <select
+                    value={payInvoiceId}
+                    onChange={(e) => {
+                      setPayInvoiceId(e.target.value);
+                      const inv = invoices.find((i) => i.id === e.target.value);
+                      if (inv && !payAmount) setPayAmount(String(inv.total_amount));
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-[#090D16] border border-white/10 text-white font-mono text-xs focus:outline-none"
+                  >
+                    <option value="">Direct / Standalone Payment</option>
+                    {invoices.filter((i) => i.status !== 'paid').map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.invoice_number} — {i.title} ({formatMoney(i.total_amount, i.currency)})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Amount Received ($)</label>
+                <label className="block font-mono text-xs text-slate-300">Amount Received (₹)</label>
                 <input
                   type="number"
                   required
@@ -773,12 +1065,13 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                 <select
                   value={payMethod}
                   onChange={(e) => setPayMethod(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                  className="w-full px-3 py-2 rounded-lg bg-[#090D16] border border-white/10 text-white font-mono text-xs focus:outline-none"
                 >
-                  <option value="stripe">Stripe</option>
+                  <option value="upi">UPI / GPay / PhonePe</option>
                   <option value="razorpay">Razorpay</option>
-                  <option value="bank_wire">Bank Wire / ACH</option>
-                  <option value="card">Credit Card</option>
+                  <option value="bank_wire">NEFT / IMPS / Bank Wire</option>
+                  <option value="card">Card</option>
+                  <option value="stripe">Stripe</option>
                 </select>
               </div>
 
@@ -786,7 +1079,7 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                 <label className="block font-mono text-xs text-slate-300">Transaction Reference ID (Optional)</label>
                 <input
                   type="text"
-                  placeholder="e.g. ch_3M5qJj2eZvKYlo2C1g"
+                  placeholder="e.g. UTR / UPI Ref / pay_..."
                   value={payRef}
                   onChange={(e) => setPayRef(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
@@ -796,7 +1089,7 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
               <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
                 <button
                   type="button"
-                  onClick={() => setShowPaymentModal(false)}
+                  onClick={() => { setShowPaymentModal(false); setEditingPayment(null); }}
                   className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
                 >
                   Cancel
@@ -805,7 +1098,7 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                   type="submit"
                   className="px-4 py-1.5 rounded-lg bg-emerald-500 text-black font-medium text-xs font-mono hover:bg-emerald-400"
                 >
-                  Mark Paid
+                  {editingPayment ? 'Save Changes' : 'Save Payment'}
                 </button>
               </div>
             </form>
@@ -857,11 +1150,11 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="block font-mono text-xs text-slate-300">Amount ($)</label>
+                  <label className="block font-mono text-xs text-slate-300">Amount (₹)</label>
                   <input
                     type="number"
                     required
-                    placeholder="150"
+                    placeholder="1500"
                     value={expAmount}
                     onChange={(e) => setExpAmount(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
@@ -892,6 +1185,108 @@ export default function FinanceManager({ projects, clients, team }: FinanceManag
                   className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
                 >
                   Save Expense
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: CREATE PAYOUT ================= */}
+      {showPayoutModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Create Team Payout</h3>
+                <p className="text-slate-400 text-xs">Calculate and issue member payout in INR</p>
+              </div>
+              <button onClick={() => setShowPayoutModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePayout} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Team Member</label>
+                <select
+                  required
+                  value={payoutMemberId}
+                  onChange={(e) => setPayoutMemberId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-[#090D16] border border-white/10 text-white font-mono text-xs focus:outline-none"
+                >
+                  <option value="">Select member...</option>
+                  {team.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Project (Optional)</label>
+                <select
+                  value={payoutProjectId}
+                  onChange={(e) => setPayoutProjectId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-[#090D16] border border-white/10 text-white font-mono text-xs focus:outline-none"
+                >
+                  <option value="">General Studio</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Hours Logged</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    placeholder="20"
+                    value={payoutHours}
+                    onChange={(e) => setPayoutHours(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Rate (₹/hr)</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    placeholder="1000"
+                    value={payoutRate}
+                    onChange={(e) => setPayoutRate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {payoutHours && payoutRate && (
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-xs font-mono flex justify-between">
+                  <span className="text-slate-400">Total Payout</span>
+                  <span className="text-white font-medium">{formatMoney(Number(payoutHours) * Number(payoutRate))}</span>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowPayoutModal(false)}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
+                >
+                  Generate Payout
                 </button>
               </div>
             </form>

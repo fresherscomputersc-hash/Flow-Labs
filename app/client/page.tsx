@@ -33,6 +33,7 @@ import {
 import { supabase } from '@/lib/supabase';
 
 interface ClientSession {
+  userId?: string;
   clientEmail: string;
   clientName: string;
   companyName: string;
@@ -55,11 +56,13 @@ interface ClientUpdate {
 }
 
 interface Deliverable {
+  id?: string;
   name: string;
   type: string;
   size: string;
   date: string;
   status: string;
+  url?: string;
 }
 
 interface ProposalItem {
@@ -109,82 +112,10 @@ interface Ticket {
   created_at: string;
 }
 
-const DEFAULT_CLIENTS: ClientSession[] = [
-  {
-    clientEmail: 'rohan@droovee.in',
-    clientName: 'Rohan Sharma',
-    companyName: 'Droovee Mobility',
-    projectName: 'Droovee Chauffeur Platform',
-    projectKey: 'DRV',
-    accessKey: 'DRV-CLIENT-9842',
-    progress: 75,
-    activePhase: 'Driver Matrix Sync & Database RLS',
-    assignedFounders: 'Smruti Ranjan, Biswash',
-    stagingUrl: 'https://droovee.in',
-  },
-];
-
-const DEFAULT_UPDATES: ClientUpdate[] = [
-  {
-    id: 'up-1',
-    title: 'Sprint 3 Staging Deployed & P95 Latency Verified',
-    date: '24 Nov 2026',
-    summary: 'The dynamic chauffeur distance calculation engine has been deployed to the staging environment. Mapbox routing calls are executing under 120ms P95.',
-    badge: 'Staging release',
-  },
-  {
-    id: 'up-2',
-    title: 'PostgreSQL Row-Level Security Policies Hardened',
-    date: '22 Nov 2026',
-    summary: 'Multi-tenant database isolation policies compiled. Customer and driver profiles are strictly segregated at the database engine level.',
-    badge: 'Security milestone',
-  },
-  {
-    id: 'up-3',
-    title: 'Razorpay Webhooks & Automated GST Tax Engine Live',
-    date: '19 Nov 2026',
-    summary: 'Integrated automated billing with instant PDF invoice generation and verified HSN codes dispatched via Twilio WhatsApp API.',
-    badge: 'Payment rails',
-  },
-];
-
-const DEFAULT_DELIVERABLES: Deliverable[] = [
-  {
-    name: 'Architecture Blueprint & Database ERD (v1.2)',
-    type: 'PDF Specification',
-    size: '2.4 MB',
-    date: '21 Nov 2026',
-    status: 'Verified',
-  },
-  {
-    name: 'API Schema Contract & Postman Collection',
-    type: 'OpenAPI JSON',
-    size: '480 KB',
-    date: '22 Nov 2026',
-    status: 'Active',
-  },
-  {
-    name: 'Staging Environment Credentials & Vault Access Keys',
-    type: 'Encrypted Key',
-    size: 'Vault Key',
-    date: '24 Nov 2026',
-    status: 'Secured',
-  },
-  {
-    name: 'Automated GST Invoice Reconciliation Engine',
-    type: 'Module Build',
-    size: '1.1 MB',
-    date: '24 Nov 2026',
-    status: 'Ready',
-  },
-];
-
-const DEFAULT_ONBOARDING: OnboardingItem[] = [
-  { id: '1', label: 'Brand Assets & Logo (SVG/PNG vector files provided)', completed: true },
-  { id: '2', label: 'Domain, DNS & Hosting Access Credentials shared', completed: true },
-  { id: '3', label: 'Third-party API Keys (Stripe, OpenAI, Supabase) configured in vault', completed: false },
-  { id: '4', label: 'Primary Decision Maker & Stakeholder contact confirmed', completed: true }
-];
+const DEFAULT_CLIENTS: ClientSession[] = [];
+const DEFAULT_UPDATES: ClientUpdate[] = [];
+const DEFAULT_DELIVERABLES: Deliverable[] = [];
+const DEFAULT_ONBOARDING: OnboardingItem[] = [];
 
 export default function ClientPortalPage() {
   const [session, setSession] = useState<ClientSession | null>(null);
@@ -221,11 +152,13 @@ export default function ClientPortalPage() {
 
   const loadClientData = async (userId: string, projectId?: string) => {
     try {
-      const [propRes, invRes, chkRes, tktRes] = await Promise.all([
+      const [propRes, invRes, chkRes, tktRes, attRes, updRes] = await Promise.all([
         supabase.from('proposals').select('*').order('created_at', { ascending: false }),
         supabase.from('invoices').select('*').order('due_date', { ascending: false }),
         projectId ? supabase.from('onboarding_checklists').select('*').eq('project_id', projectId) : Promise.resolve({ data: null }),
-        projectId ? supabase.from('tickets').select('*').eq('project_id', projectId).order('created_at', { ascending: false }) : Promise.resolve({ data: null })
+        projectId ? supabase.from('tickets').select('*').eq('project_id', projectId).order('created_at', { ascending: false }) : supabase.from('tickets').select('*').eq('client_id', userId).order('created_at', { ascending: false }),
+        projectId ? supabase.from('attachments').select('*').eq('project_id', projectId).eq('client_visible', true).order('created_at', { ascending: false }) : Promise.resolve({ data: null }),
+        projectId ? supabase.from('client_updates').select('*').eq('project_id', projectId).eq('published', true).order('created_at', { ascending: false }) : Promise.resolve({ data: null })
       ]);
 
       if (propRes.data) setProposals(propRes.data);
@@ -234,6 +167,26 @@ export default function ClientPortalPage() {
         setOnboardingItems(chkRes.data[0].items);
       }
       if (tktRes.data) setTickets(tktRes.data);
+      if (attRes.data) {
+        setDeliverables(attRes.data.map((a: any) => ({
+          id: a.id,
+          name: a.file_name,
+          type: a.mime_type || 'Deliverable',
+          size: a.size_bytes ? `${Math.max(1, Math.round(a.size_bytes / 1024))} KB` : 'Link / Asset',
+          date: new Date(a.created_at).toLocaleDateString('en-IN'),
+          status: 'Verified',
+          url: a.storage_path,
+        })));
+      }
+      if (updRes.data) {
+        setUpdates(updRes.data.map((u: any) => ({
+          id: u.id,
+          title: u.title,
+          date: new Date(u.published_at || u.created_at).toLocaleDateString('en-IN'),
+          summary: u.body,
+          badge: 'Sprint update',
+        })));
+      }
     } catch (e) {
       console.warn('Client data load notice:', e);
     }
@@ -249,7 +202,7 @@ export default function ClientPortalPage() {
       if (pcRows && pcRows.length > 0) {
         const pc = pcRows[0];
         const proj = pc.projects;
-        let progress = 75;
+        let progress = 0;
 
         if (pc.project_id) {
           const { data: tasks } = await supabase
@@ -266,6 +219,7 @@ export default function ClientPortalPage() {
         }
 
         setSession({
+          userId,
           clientEmail: email,
           clientName: email.split('@')[0],
           companyName: pc.company_name || proj?.name || 'Client',
@@ -274,8 +228,8 @@ export default function ClientPortalPage() {
           projectKey: proj?.key || 'FLW',
           progress,
           activePhase: proj?.status === 'completed' ? 'Completed & Deployed' : 'Active Sprint Delivery',
-          assignedFounders: 'Smruti Ranjan, Biswash',
-          stagingUrl: proj?.github_repo || 'https://staging.theflowlabs.online',
+          assignedFounders: 'Flow Labs Engineering',
+          stagingUrl: proj?.github_repo || '',
         });
 
         await loadClientData(userId, pc.project_id);
@@ -330,15 +284,16 @@ export default function ClientPortalPage() {
         }
 
         setSession({
+          userId: authData.session.user.id,
           clientEmail: email,
           clientName: email.split('@')[0],
-          companyName: 'Client Project',
-          projectName: 'Production Platform',
+          companyName: 'Client Organization',
+          projectName: 'Assigned Workspace',
           projectKey: 'FLW',
-          progress: 80,
-          activePhase: 'Sprint 2 Quality & Security Verification',
-          assignedFounders: 'Smruti Ranjan, Biswash',
-          stagingUrl: 'https://staging.theflowlabs.online',
+          progress: 0,
+          activePhase: 'Onboarding & Setup',
+          assignedFounders: 'Flow Labs Engineering',
+          stagingUrl: '',
         });
         await loadClientData(authData.session.user.id);
         setLoading(false);
@@ -348,14 +303,7 @@ export default function ClientPortalPage() {
       console.warn('Supabase auth attempt notice:', err);
     }
 
-    // Fallback: demo account
-    const matched = DEFAULT_CLIENTS.find((c) => c.clientEmail.toLowerCase() === email);
-    if (matched && (password === 'flowlabs2026' || password.length >= 6)) {
-      setSession(matched);
-      await loadClientData('demo');
-    } else {
-      setErrorMsg('Invalid client credentials. Please check your email and password, or contact the founders.');
-    }
+    setErrorMsg('Invalid client credentials. Please check your email and password, or contact the studio.');
     setLoading(false);
   };
 
@@ -398,9 +346,13 @@ export default function ClientPortalPage() {
     if (!ticketTitle.trim() || !ticketDesc.trim()) return;
 
     try {
+      const { data: userData } = await supabase.auth.getUser();
+      const clientId = session?.userId || userData?.user?.id || null;
+
       const { error } = await supabase.from('tickets').insert([
         {
           project_id: session?.projectId || null,
+          client_id: clientId,
           title: ticketTitle.trim(),
           description: ticketDesc.trim(),
           type: ticketType,
@@ -414,7 +366,10 @@ export default function ClientPortalPage() {
       setTicketTitle('');
       setTicketDesc('');
       if (session?.projectId) {
-        const { data } = await supabase.from('tickets').select('*').eq('project_id', session.projectId);
+        const { data } = await supabase.from('tickets').select('*').eq('project_id', session.projectId).order('created_at', { ascending: false });
+        if (data) setTickets(data);
+      } else if (clientId) {
+        const { data } = await supabase.from('tickets').select('*').eq('client_id', clientId).order('created_at', { ascending: false });
         if (data) setTickets(data);
       }
     } catch (e: any) {
@@ -428,15 +383,20 @@ export default function ClientPortalPage() {
     if (!reviewText.trim()) return;
 
     try {
-      await supabase.from('testimonials').insert([
+      const { data: userData } = await supabase.auth.getUser();
+      const clientId = session?.userId || userData?.user?.id || null;
+
+      const { error } = await supabase.from('testimonials').insert([
         {
           project_id: session?.projectId || null,
+          client_id: clientId,
           rating,
           review: reviewText.trim(),
           author_name: session?.clientName || 'Client Partner',
           company_name: session?.companyName || 'Studio Client'
         }
       ]);
+      if (error) throw error;
       setTestimonialDone(true);
       setActionNotice('Thank you! Your verified testimonial has been submitted to the studio portfolio.');
     } catch (e: any) {
@@ -547,7 +507,7 @@ export default function ClientPortalPage() {
 
   // ================= VIEW: AUTHENTICATED CLIENT DASHBOARD =================
   return (
-    <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
+    <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
       
       {/* Top Bar Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 gap-3">
@@ -588,94 +548,87 @@ export default function ClientPortalPage() {
         </div>
       )}
 
-      {/* Header */}
-      <section className="text-center max-w-2xl mx-auto space-y-2.5">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 text-slate-300 font-mono text-xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          Active client telemetry
-        </div>
-        <h1 className="font-display text-3xl sm:text-5xl font-normal text-white tracking-tight leading-[1.1]">
-          {session.projectName}
-        </h1>
-        <p className="text-slate-400 text-sm leading-relaxed">
-          Real-time sprint progress, proposal sign-off, milestone invoices, and verified production deliverables.
-        </p>
-      </section>
+      {/* Vertical Sidebar + Main Content */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <aside className="w-full lg:w-60 shrink-0 p-2 rounded-2xl bg-white/[0.02] border border-white/10 lg:sticky lg:top-6">
+          <div className="px-3 py-2 mb-1 border-b border-white/5">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Client Portal</div>
+            <div className="text-xs font-medium text-white truncate mt-0.5">{session.projectName}</div>
+          </div>
+          <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible text-xs font-mono">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`w-auto lg:w-full px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                activeTab === 'overview' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <Layers className="w-4 h-4 shrink-0" />
+              <span>Sprint Overview</span>
+            </button>
 
-      {/* Client Portal Tab Strip */}
-      <div className="p-1.5 rounded-2xl bg-white/[0.02] border border-white/10 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1 min-w-max text-xs font-mono">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'overview' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Sprint Overview</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('proposals')}
+              className={`w-auto lg:w-full px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                activeTab === 'proposals' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <FileText className="w-4 h-4 shrink-0" />
+              <span>Proposals &amp; Contracts</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('proposals')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'proposals' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Proposals &amp; Contracts</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('invoices')}
+              className={`w-auto lg:w-full px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                activeTab === 'invoices' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <DollarSign className="w-4 h-4 shrink-0" />
+              <span>Invoices &amp; Billing</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('invoices')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'invoices' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <DollarSign className="w-3.5 h-3.5" />
-            <span>Invoices &amp; Billing</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('deliverables')}
+              className={`w-auto lg:w-full px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                activeTab === 'deliverables' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <Shield className="w-4 h-4 shrink-0" />
+              <span>Deliverables Vault</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('deliverables')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'deliverables' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span>Deliverables Vault</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('tickets')}
+              className={`w-auto lg:w-full px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                activeTab === 'tickets' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <HelpCircle className="w-4 h-4 shrink-0" />
+              <span>Support ({tickets.length})</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('tickets')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'tickets' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Support &amp; Requests ({tickets.length})</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('onboarding')}
+              className={`w-auto lg:w-full px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                activeTab === 'onboarding' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>Onboarding</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('onboarding')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'onboarding' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Onboarding Checklist</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('feedback')}
+              className={`w-auto lg:w-full px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                activeTab === 'feedback' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+              }`}
+            >
+              <Star className="w-4 h-4 shrink-0" />
+              <span>Testimonial</span>
+            </button>
+          </nav>
+        </aside>
 
-          <button
-            onClick={() => setActiveTab('feedback')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'feedback' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Star className="w-3.5 h-3.5" />
-            <span>Testimonial</span>
-          </button>
-        </div>
-      </div>
+        <div className="flex-1 min-w-0 w-full space-y-6">
 
       {/* ================= TAB 1: SPRINT OVERVIEW ================= */}
       {activeTab === 'overview' && (
@@ -922,7 +875,7 @@ export default function ClientPortalPage() {
                     <div className="text-right">
                       <div className="text-slate-400 text-[10px]">Amount Due</div>
                       <div className="font-display text-base text-white font-normal">
-                        ${Number(inv.total_amount).toLocaleString()} {inv.currency}
+                        {inv.currency === 'USD' ? '$' : '₹'}{Number(inv.total_amount).toLocaleString('en-IN')} {inv.currency || 'INR'}
                       </div>
                     </div>
 
@@ -989,15 +942,33 @@ export default function ClientPortalPage() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => alert(`Verified deliverable download: ${doc.name} will be retrieved from your private repository.`)}
-                    className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 border border-white/10 flex items-center gap-1.5 w-fit transition-colors"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download asset</span>
-                  </button>
+                  {doc.url && doc.url.startsWith('http') ? (
+                    <a
+                      href={doc.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 border border-white/10 flex items-center gap-1.5 w-fit transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Open deliverable</span>
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => alert(`Deliverable: ${doc.name}\nPath: ${doc.url || 'Private Vault'}`)}
+                      className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 border border-white/10 flex items-center gap-1.5 w-fit transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download asset</span>
+                    </button>
+                  )}
                 </div>
               ))}
+
+              {deliverables.length === 0 && (
+                <div className="p-8 text-center text-xs font-mono text-slate-500">
+                  No deliverables published yet. Shared build artifacts and specifications will appear here.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1198,6 +1169,9 @@ export default function ClientPortalPage() {
           </div>
         </div>
       )}
+
+        </div>
+      </div>
 
     </div>
   );
