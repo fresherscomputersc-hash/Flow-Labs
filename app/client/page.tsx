@@ -5,8 +5,19 @@ import { ExternalLink, Download, FileText, CheckCircle2, MessageSquare, Shield, 
 
 export default function ClientPortalPage() {
   return (
-    <div className="pt-28 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-12">
+    <div className="pt-6 sm:pt-10 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-10">
       
+      {/* Top Bar Navigation */}
+      <div className="flex items-center justify-between max-w-4xl mx-auto pb-4 border-b border-white/10">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors"
+        >
+          <span>&larr; Exit to public website</span>
+        </Link>
+        <span className="font-mono text-xs text-slate-500">Client Portal v2.0</span>
+      </div>
+
       {/* Header */}
       <section className="text-center max-w-2xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 text-slate-300 font-mono text-xs">

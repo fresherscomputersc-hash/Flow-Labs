@@ -15,6 +15,18 @@ const NAV_LINKS = [
 export function Dock() {
   const pathname = usePathname();
 
+  // Hide public navigation dock on internal consoles, admin panels, and client portals
+  const isInternalPortal =
+    pathname?.startsWith('/flow-hq') ||
+    pathname?.startsWith('/client') ||
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/dashboard') ||
+    pathname?.startsWith('/portal');
+
+  if (isInternalPortal) {
+    return null;
+  }
+
   return (
     <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
       <header className="pointer-events-auto flex items-center gap-3 bg-[#0D111A]/90 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-sm">

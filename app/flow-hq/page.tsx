@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -132,14 +133,18 @@ export default function FlowHQPage() {
   });
 
   return (
-    <div className="pt-28 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
+    <div className="pt-6 sm:pt-10 pb-24 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
       
       {/* Top Console Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-xl bg-white/[0.02] border border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs">
+          <Link
+            href="/"
+            className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs transition-colors"
+            title="Return to public site"
+          >
             HQ
-          </div>
+          </Link>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-display text-lg font-medium text-white">Flow HQ Console</h1>
@@ -148,44 +153,53 @@ export default function FlowHQPage() {
                 Realtime telemetry
               </span>
             </div>
-            <p className="text-slate-400 text-xs">Founder operations, collaborative task matrix &amp; CRM pipeline</p>
+            <p className="text-slate-400 text-xs">Founder operations, collaborative task matrix and CRM pipeline</p>
           </div>
         </div>
 
-        {/* Console Nav Tabs */}
-        <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-lg border border-white/10 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
-              activeTab === 'dashboard' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
+        {/* Console Nav Tabs and Site Link */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-lg border border-white/10 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+                activeTab === 'dashboard' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('tasks')}
+              className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+                activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Task Matrix
+            </button>
+            <button
+              onClick={() => setActiveTab('leads')}
+              className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+                activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Leads CRM
+            </button>
+            <button
+              onClick={() => setActiveTab('team')}
+              className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
+                activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Team
+            </button>
+          </div>
+
+          <Link
+            href="/"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-mono text-xs border border-white/10 transition-colors"
           >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setActiveTab('tasks')}
-            className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
-              activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Task Matrix
-          </button>
-          <button
-            onClick={() => setActiveTab('leads')}
-            className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
-              activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Leads CRM
-          </button>
-          <button
-            onClick={() => setActiveTab('team')}
-            className={`px-3 py-1 rounded text-xs font-mono transition-colors ${
-              activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Team
-          </button>
+            <span>Exit to site</span>
+          </Link>
         </div>
       </div>
 

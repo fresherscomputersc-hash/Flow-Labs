@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function Footer() {
   const [time, setTime] = useState<string>('--:--:--');
+  const pathname = usePathname();
 
   useEffect(() => {
     function updateClock() {
@@ -20,6 +22,18 @@ export function Footer() {
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Hide marketing footer on internal consoles, admin panels, and client portals
+  const isInternalPortal =
+    pathname?.startsWith('/flow-hq') ||
+    pathname?.startsWith('/client') ||
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/dashboard') ||
+    pathname?.startsWith('/portal');
+
+  if (isInternalPortal) {
+    return null;
+  }
 
   return (
     <footer className="border-t border-white/10 bg-[#07090E] relative z-10 text-sm text-slate-400">
