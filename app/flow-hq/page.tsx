@@ -310,10 +310,23 @@ export default function FlowHQPage() {
   const [newClientEmail, setNewClientEmail] = useState('');
   const [newClientProject, setNewClientProject] = useState('proj-1');
 
-  // Form States - New Team Member
+  // Form States - New Team Member & Client Onboarding
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamEmail, setNewTeamEmail] = useState('');
-  const [newTeamRole, setNewTeamRole] = useState<'owner' | 'admin' | 'manager' | 'member'>('member');
+  const [newMemberPassword, setNewMemberPassword] = useState('');
+  const [newTeamRole, setNewTeamRole] = useState<'owner' | 'admin' | 'manager' | 'member' | 'client'>('member');
+  const [onboardLoading, setOnboardLoading] = useState(false);
+  const [onboardSuccessMsg, setOnboardSuccessMsg] = useState('');
+  const [onboardErrorMsg, setOnboardErrorMsg] = useState('');
+
+  // Project Actions: Manage & Delete
+  const [projectToManage, setProjectToManage] = useState<Project | null>(null);
+  const [manageBudget, setManageBudget] = useState('');
+  const [manageDue, setManageDue] = useState('');
+  const [manageStatus, setManageStatus] = useState<string>('active');
+  const [manageClient, setManageClient] = useState('');
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Form States - Daily Standup
   const [standupProject, setStandupProject] = useState('proj-1');
@@ -355,42 +368,81 @@ export default function FlowHQPage() {
     }
   };
 
-  // Check Supabase Auth session; derive role from server profiles, never hard-code
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session?.user) {
-          const email = data.session.user.email || '';
-          const name = email.split('@')[0];
-          let role = 'member';
-          try {
-            const { data: prof } = await supabase
-              .from('profiles')
-              .select('role, status')
-              .eq('id', data.session.user.id)
-              .single();
-            if (prof?.status === 'active') {
-              role = prof.role || 'member';
-            }
-          } catch {}
-          if (role === 'owner' || role === 'admin') {
-            setSession({
-              userEmail: email,
-              userName: name.charAt(0).toUpperCase() + name.slice(1),
-              userRole: role,
-              userInitials: name.slice(0, 2).toUpperCase(),
-            });
-          } else {
-            setAuthError('You do not have access to Flow HQ.');
+  // Check Supabase Auth session; support both Founders and Team Members
+  const checkAuth = async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.user) {
+        const email = data.session.user.email || '';
+        const name = email.split('@')[0];
+        let role = 'member';
+        try {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('role, status')
+            .eq('id', data.session.user.id)
+            .single();
+          if (prof?.status === 'active') {
+            role = prof.role || 'member';
           }
+        } catch {}
+
+        if (role === 'owner' || role === 'admin' || role === 'manager' || role === 'member') {
+          setSession({
+            userEmail: email,
+            userName: name.charAt(0).toUpperCase() + name.slice(1),
+            userRole: role as any,
+            userInitials: name.slice(0, 2).toUpperCase(),
+          });
+        } else if (role === 'client') {
+          setAuthError('You are registered as a Client. Please sign in to the Client Portal at /client');
+        } else {
+          setAuthError('You do not have active studio access.');
         }
-      } catch (err) {
-        console.warn('Auth session check notice:', err);
       }
+    } catch (err) {
+      console.warn('Auth session check notice:', err);
     }
+  };
+
+  useEffect(() => {
     checkAuth();
   }, []);
+
+  // Load live projects from Supabase
+  const loadLiveProjects = async () => {
+    try {
+      const { data: dbProjs } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (dbProjs && dbProjs.length > 0) {
+        const mapped: Project[] = dbProjs.map((p: any) => ({
+          id: p.id,
+          name: p.name || 'Studio Project',
+          key: p.key || 'FLW',
+          client: p.summary || 'Client Build',
+          status: p.status === 'completed' ? 'completed' : 'active',
+          progress: p.status === 'completed' ? 100 : 70,
+          budget: '₹75,000',
+          dueDate: p.due_date || '3 Weeks',
+          modules: ['Core Architecture', 'Frontend Interface', 'API & Database'],
+        }));
+        setProjects(mapped);
+        persistState('flow_hq_projects', mapped);
+      }
+    } catch (e) {
+      console.warn('Live projects load notice:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (session) {
+      loadLiveProjects();
+      loadLeads();
+    }
+  }, [session]);
 
   // Load Inbound Leads from Supabase
   const loadLeads = async () => {
@@ -631,33 +683,195 @@ export default function FlowHQPage() {
     setNewClientEmail('');
   };
 
-  // Add Team Member
-  const handleAddTeamMember = (e: React.FormEvent) => {
+  // Complete Project Action
+  const handleCompleteProject = async (projId: string) => {
+    const updated = projects.map((p) =>
+      p.id === projId ? { ...p, status: 'completed' as const, progress: 100 } : p
+    );
+    setProjects(updated);
+    persistState('flow_hq_projects', updated);
+
+    if (/^[0-9a-f-]{36}$/i.test(projId)) {
+      try {
+        await supabase.from('projects').update({ status: 'completed' }).eq('id', projId);
+      } catch (e) {
+        console.warn('Project complete notice:', e);
+      }
+    }
+    const targetProj = projects.find((p) => p.id === projId);
+    logActivityEvent(session?.userInitials || 'SR', 'completed project build', targetProj?.name || projId);
+  };
+
+  // Manage Project
+  const openManageModal = (proj: Project) => {
+    setProjectToManage(proj);
+    setManageBudget(proj.budget);
+    setManageDue(proj.dueDate);
+    setManageStatus(proj.status);
+    setManageClient(proj.client);
+  };
+
+  const saveManageProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTeamName.trim() || !newTeamEmail.trim()) return;
+    if (!projectToManage) return;
 
-    const parts = newTeamName.trim().split(' ');
-    const initials = parts.length > 1
-      ? (parts[0][0] + parts[1][0]).toUpperCase()
-      : parts[0].slice(0, 2).toUpperCase();
+    const updated = projects.map((p) =>
+      p.id === projectToManage.id
+        ? {
+            ...p,
+            budget: manageBudget.trim() || p.budget,
+            dueDate: manageDue.trim() || p.dueDate,
+            status: manageStatus as any,
+            client: manageClient.trim() || p.client,
+            progress: manageStatus === 'completed' ? 100 : p.progress,
+          }
+        : p
+    );
+    setProjects(updated);
+    persistState('flow_hq_projects', updated);
 
-    const newMember: TeamMember = {
-      id: `tm-${Date.now()}`,
-      name: newTeamName.trim(),
-      email: newTeamEmail.trim().toLowerCase(),
-      role: newTeamRole,
-      initials,
-      status: 'active',
-    };
+    if (/^[0-9a-f-]{36}$/i.test(projectToManage.id)) {
+      try {
+        await supabase
+          .from('projects')
+          .update({
+            status: manageStatus,
+            summary: manageClient.trim(),
+          })
+          .eq('id', projectToManage.id);
+      } catch (e) {
+        console.warn('Project manage update notice:', e);
+      }
+    }
 
-    const updated = [...team, newMember];
-    setTeam(updated);
-    persistState('flow_hq_team', updated);
+    logActivityEvent(session?.userInitials || 'SR', 'updated project settings', projectToManage.name);
+    setProjectToManage(null);
+  };
 
-    logActivityEvent(session?.userInitials || 'SR', 'added team member', `${newMember.name} (${newMember.role})`);
-    setShowAddTeamModal(false);
-    setNewTeamName('');
-    setNewTeamEmail('');
+  // Delete Project with Confirmation
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
+    const projId = projectToDelete.id;
+
+    const updatedProjs = projects.filter((p) => p.id !== projId);
+    const updatedTasks = tasks.filter((t) => t.projectId !== projId);
+    setProjects(updatedProjs);
+    setTasks(updatedTasks);
+    persistState('flow_hq_projects', updatedProjs);
+    persistState('flow_hq_tasks', updatedTasks);
+
+    if (/^[0-9a-f-]{36}$/i.test(projId)) {
+      try {
+        await supabase.from('projects').delete().eq('id', projId);
+      } catch (e) {
+        console.warn('Project delete notice:', e);
+      }
+    }
+
+    logActivityEvent(session?.userInitials || 'SR', 'deleted project', projectToDelete.name);
+    setProjectToDelete(null);
+    setDeleteConfirmText('');
+  };
+
+  // Provision User / Onboard Client with ID + Password
+  const handleProvisionUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTeamName.trim() || !newTeamEmail.trim() || !newMemberPassword.trim()) {
+      setOnboardErrorMsg('Full name, email (login ID), and password are required.');
+      return;
+    }
+
+    setOnboardLoading(true);
+    setOnboardErrorMsg('');
+    setOnboardSuccessMsg('');
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const res = await fetch('/api/platform/team/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          email: newTeamEmail.trim().toLowerCase(),
+          full_name: newTeamName.trim(),
+          password: newMemberPassword.trim(),
+          role: newTeamRole,
+          project_ids: newClientProject ? [newClientProject] : [],
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || 'Failed to provision account.');
+      }
+
+      setOnboardSuccessMsg(`Account created for ${newTeamEmail}! Welcome email dispatched.`);
+
+      const parts = newTeamName.trim().split(' ');
+      const initials = parts.length > 1
+        ? (parts[0][0] + parts[1][0]).toUpperCase()
+        : parts[0].slice(0, 2).toUpperCase();
+
+      const newMember: TeamMember = {
+        id: resData.user_id || `tm-${Date.now()}`,
+        name: newTeamName.trim(),
+        email: newTeamEmail.trim().toLowerCase(),
+        role: newTeamRole === 'client' ? 'member' : newTeamRole,
+        initials,
+        status: 'active',
+      };
+      setTeam((prev) => [...prev, newMember]);
+
+      if (newTeamRole === 'client') {
+        const proj = projects.find((p) => p.id === newClientProject);
+        const newCli: ClientAccount = {
+          id: resData.user_id || `c-${Date.now()}`,
+          name: newTeamName.trim(),
+          company: newClientCompany.trim() || proj?.name || 'Client Org',
+          email: newTeamEmail.trim().toLowerCase(),
+          projectId: newClientProject || projects[0]?.id || 'proj-1',
+          projectName: proj?.name || 'Studio Project',
+          accessKey: 'PASSWORD-ENABLED',
+          status: 'active',
+        };
+        const updatedClients = [newCli, ...clients];
+        setClients(updatedClients);
+        persistState('flow_hq_clients', updatedClients);
+      }
+
+      logActivityEvent(session?.userInitials || 'SR', 'provisioned account', `${newTeamName} (${newTeamRole})`);
+
+      setTimeout(() => {
+        setShowAddTeamModal(false);
+        setNewTeamName('');
+        setNewTeamEmail('');
+        setNewMemberPassword('');
+        setOnboardSuccessMsg('');
+      }, 1200);
+    } catch (err: any) {
+      setOnboardErrorMsg(err.message || 'Error provisioning account.');
+    } finally {
+      setOnboardLoading(false);
+    }
+  };
+
+  // Quick Task Status Update (for Kanban & Team Workspace)
+  const handleUpdateTaskStatus = async (taskId: string, newStatus: TaskItem['status']) => {
+    const updated = tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t));
+    setTasks(updated);
+    persistState('flow_hq_tasks', updated);
+
+    if (/^[0-9a-f-]{36}$/i.test(taskId)) {
+      try {
+        await supabase.from('tasks').update({ status: newStatus }).eq('id', taskId);
+      } catch (e) {
+        console.warn('Task status update notice:', e);
+      }
+    }
   };
 
   // Submit Daily Standup
@@ -787,6 +1001,8 @@ export default function FlowHQPage() {
   }
 
   // ================= 2. VIEW: AUTHENTICATED STUDIO OS APPLICATION =================
+  const isFounder = session.userRole === 'owner' || session.userRole === 'admin';
+
   return (
     <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-6xl mx-auto space-y-8">
       
@@ -864,24 +1080,28 @@ export default function FlowHQPage() {
             <CheckSquare className="w-3.5 h-3.5" />
             <span>Tasks ({tasks.length})</span>
           </button>
-          <button
-            onClick={() => setActiveTab('clients')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'clients' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <Building className="w-3.5 h-3.5" />
-            <span>Clients ({clients.length})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('team')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Team ({team.length})</span>
-          </button>
+          {isFounder && (
+            <button
+              onClick={() => setActiveTab('clients')}
+              className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'clients' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+              }`}
+            >
+              <Building className="w-3.5 h-3.5" />
+              <span>Clients ({clients.length})</span>
+            </button>
+          )}
+          {isFounder && (
+            <button
+              onClick={() => setActiveTab('team')}
+              className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Team ({team.length})</span>
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('standups')}
             className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -891,15 +1111,17 @@ export default function FlowHQPage() {
             <Clock className="w-3.5 h-3.5" />
             <span>Standups ({standups.length})</span>
           </button>
-          <button
-            onClick={() => setActiveTab('leads')}
-            className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
-              activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
-            }`}
-          >
-            <Target className="w-3.5 h-3.5" />
-            <span>Leads CRM ({leads.length})</span>
-          </button>
+          {isFounder && (
+            <button
+              onClick={() => setActiveTab('leads')}
+              className={`px-3.5 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.02]'
+              }`}
+            >
+              <Target className="w-3.5 h-3.5" />
+              <span>Leads CRM ({leads.length})</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -936,31 +1158,63 @@ export default function FlowHQPage() {
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
-              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
-                <span>Active clients</span>
-                <span className="text-emerald-400">Active SLA</span>
-              </div>
-              <div className="font-display text-3xl font-normal text-white">
-                {clients.length} Accounts
-              </div>
-              <div className="text-[11px] font-mono text-slate-400">
-                Provisioned portal access
-              </div>
-            </div>
+            {isFounder ? (
+              <>
+                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
+                  <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                    <span>Active clients</span>
+                    <span className="text-emerald-400">Active SLA</span>
+                  </div>
+                  <div className="font-display text-3xl font-normal text-white">
+                    {clients.length} Accounts
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    Provisioned portal access
+                  </div>
+                </div>
 
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
-              <div className="flex justify-between items-center text-xs font-mono text-slate-400">
-                <span>Inbound leads</span>
-                <span className="text-white font-medium">{leads.length} new</span>
-              </div>
-              <div className="font-display text-3xl font-normal text-white">
-                {leads.length} Inquiries
-              </div>
-              <div className="text-[11px] font-mono text-slate-400">
-                From project scoping cockpit
-              </div>
-            </div>
+                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
+                  <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                    <span>Inbound leads</span>
+                    <span className="text-white font-medium">{leads.length} new</span>
+                  </div>
+                  <div className="font-display text-3xl font-normal text-white">
+                    {leads.length} Inquiries
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    From project scoping cockpit
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
+                  <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                    <span>My assigned tasks</span>
+                    <span className="text-cyan-400 font-mono">Assigned</span>
+                  </div>
+                  <div className="font-display text-3xl font-normal text-white">
+                    {tasks.filter((t) => t.assignee === session.userInitials && t.status !== 'done').length} Active
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    Sprint work queue
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
+                  <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                    <span>Daily standups</span>
+                    <span className="text-emerald-400 font-mono">Verified</span>
+                  </div>
+                  <div className="font-display text-3xl font-normal text-white">
+                    {standups.filter((s) => s.engineer === session.userName).length} Logged
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    Your sprint check-ins
+                  </div>
+                </div>
+              </>
+            )}
 
           </div>
 
@@ -972,13 +1226,15 @@ export default function FlowHQPage() {
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setShowAddProjectModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New project</span>
-              </button>
+              {isFounder && (
+                <button
+                  onClick={() => setShowAddProjectModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New project</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowAddTaskModal(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-mono text-xs border border-white/10 transition-colors"
@@ -986,20 +1242,32 @@ export default function FlowHQPage() {
                 <Plus className="w-3.5 h-3.5" />
                 <span>New task</span>
               </button>
-              <button
-                onClick={() => setShowAddClientModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-mono text-xs border border-white/10 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New client</span>
-              </button>
-              <button
-                onClick={() => setShowAddTeamModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-mono text-xs border border-white/10 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add member</span>
-              </button>
+              {isFounder && (
+                <button
+                  onClick={() => {
+                    setNewTeamRole('client');
+                    setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
+                    setShowAddTeamModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-mono text-xs border border-white/10 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New client</span>
+                </button>
+              )}
+              {isFounder && (
+                <button
+                  onClick={() => {
+                    setNewTeamRole('member');
+                    setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
+                    setShowAddTeamModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-mono text-xs border border-white/10 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add member</span>
+                </button>
+              )}
               <button
                 onClick={() => setShowStandupModal(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono text-xs border border-emerald-500/20 transition-colors"
@@ -1131,12 +1399,45 @@ export default function FlowHQPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                    <span className="px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
-                      Budget: {proj.budget}
-                    </span>
+                    {isFounder && (
+                      <span className="px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
+                        Budget: {proj.budget}
+                      </span>
+                    )}
                     <span className="px-3 py-1 rounded bg-white/5 border border-white/10 text-slate-300">
                       Delivery: {proj.dueDate}
                     </span>
+
+                    {/* Complete Project Button */}
+                    {isFounder && (
+                      proj.status !== 'completed' ? (
+                        <button
+                          onClick={() => handleCompleteProject(proj.id)}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-colors"
+                          title="Mark Project Complete"
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>Complete</span>
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 text-[11px]">
+                          ✓ Shipped
+                        </span>
+                      )
+                    )}
+
+                    {/* Manage Project Drawer */}
+                    {isFounder && (
+                      <button
+                        onClick={() => openManageModal(proj)}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-colors"
+                      >
+                        <SlidersHorizontal className="w-3 h-3" />
+                        <span>Manage</span>
+                      </button>
+                    )}
+
+                    {/* Add Module */}
                     <button
                       onClick={() => {
                         setTargetProjectForModule(proj.id);
@@ -1147,6 +1448,17 @@ export default function FlowHQPage() {
                       <Plus className="w-3 h-3" />
                       <span>Add module</span>
                     </button>
+
+                    {/* Delete Project */}
+                    {isFounder && (
+                      <button
+                        onClick={() => setProjectToDelete(proj)}
+                        className="p-1.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors"
+                        title="Delete project"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1357,7 +1669,11 @@ export default function FlowHQPage() {
               <p className="text-slate-400 text-xs">Onboard clients, link builds, and issue unique portal telemetry keys</p>
             </div>
             <button
-              onClick={() => setShowAddClientModal(true)}
+              onClick={() => {
+                setNewTeamRole('client');
+                setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
+                setShowAddTeamModal(true);
+              }}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors w-fit"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -1384,8 +1700,12 @@ export default function FlowHQPage() {
                     <span className="text-white font-medium">{cli.projectName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Portal access key:</span>
-                    <span className="text-slate-200 font-semibold">{cli.accessKey}</span>
+                    <span className="text-slate-500">Auth Method:</span>
+                    <span className="text-emerald-400 font-semibold">Email & Password</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Client Login ID:</span>
+                    <span className="text-slate-200 font-semibold">{cli.email}</span>
                   </div>
                 </div>
 
@@ -1395,8 +1715,9 @@ export default function FlowHQPage() {
                   </Link>
                   <button
                     onClick={() => {
-                      navigator.clipboard?.writeText?.(cli.accessKey);
-                      alert(`Copied access key for ${cli.name}: ${cli.accessKey}`);
+                      const creds = `Login ID: ${cli.email} | Portal: https://www.theflowlabs.online/client`;
+                      navigator.clipboard?.writeText?.(creds);
+                      alert(`Copied login details for ${cli.name}:\n${creds}`);
                     }}
                     className="px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10"
                   >
@@ -1531,12 +1852,28 @@ export default function FlowHQPage() {
                       <p className="text-slate-400 text-xs mt-1 max-w-2xl">{lead.idea}</p>
                     )}
                   </div>
-                  <div className="font-mono text-[11px] text-slate-500 whitespace-nowrap">
-                    {new Date(lead.created_at).toLocaleDateString('en-IN', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                  <div className="flex items-center gap-3 self-end md:self-center">
+                    <button
+                      onClick={() => {
+                        setNewTeamName(lead.name);
+                        setNewTeamEmail(lead.contact);
+                        setNewTeamRole('client');
+                        setNewClientCompany(lead.name + ' Org');
+                        setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
+                        setShowAddTeamModal(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-mono text-xs transition-colors whitespace-nowrap"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Onboard Customer</span>
+                    </button>
+                    <div className="font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                      {new Date(lead.created_at).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </div>
                   </div>
                 </div>
               ))
@@ -1900,125 +2237,82 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= MODAL: ADD CLIENT ================= */}
-      {showAddClientModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-display text-lg font-normal text-white">Onboard client</h3>
-                <p className="text-slate-400 text-xs">Create client credentials and link to their build</p>
-              </div>
-              <button onClick={() => setShowAddClientModal(false)} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddClient} className="space-y-3.5">
-              <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Client contact name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Vikram Verma"
-                  value={newClientName}
-                  onChange={(e) => setNewClientName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Company / Product</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Zenith Mobility"
-                  value={newClientCompany}
-                  onChange={(e) => setNewClientCompany(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Work email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="vikram@zenithmobility.com"
-                  value={newClientEmail}
-                  onChange={(e) => setNewClientEmail(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Assign build project</label>
-                <select
-                  value={newClientProject}
-                  onChange={(e) => setNewClientProject(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
-                >
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id} className="bg-[#0E1424]">
-                      {p.name} ({p.key})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setShowAddClientModal(false)}
-                  className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
-                >
-                  Provision portal access
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ================= MODAL: ADD TEAM MEMBER ================= */}
+      {/* ================= MODAL: PROVISION USER / ONBOARD CLIENT ================= */}
       {showAddTeamModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="font-display text-lg font-normal text-white">Add studio team member</h3>
-                <p className="text-slate-400 text-xs">Invite an engineer to collaborate on builds and tasks</p>
+                <h3 className="font-display text-lg font-normal text-white">
+                  {newTeamRole === 'client' ? 'Onboard Client & Provision Portal' : 'Add Studio Team Member'}
+                </h3>
+                <p className="text-slate-400 text-xs">
+                  {newTeamRole === 'client'
+                    ? 'Creates client ID & password and dispatches automated welcome email'
+                    : 'Provisions engineer credentials with direct password login'}
+                </p>
               </div>
-              <button onClick={() => setShowAddTeamModal(false)} className="text-slate-400 hover:text-white">
+              <button
+                onClick={() => {
+                  setShowAddTeamModal(false);
+                  setOnboardErrorMsg('');
+                  setOnboardSuccessMsg('');
+                }}
+                className="text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleAddTeamMember} className="space-y-3.5">
+            {onboardSuccessMsg && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+                <Check className="w-4 h-4 shrink-0" />
+                <span>{onboardSuccessMsg}</span>
+              </div>
+            )}
+
+            {onboardErrorMsg && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{onboardErrorMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleProvisionUser} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Full name</label>
+                <label className="block font-mono text-xs text-slate-300">
+                  {newTeamRole === 'client' ? 'Client Contact Name' : 'Full Name'}
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Priya Dash"
+                  placeholder={newTeamRole === 'client' ? 'e.g. Vikram Verma' : 'e.g. Priya Dash'}
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
                 />
               </div>
 
+              {newTeamRole === 'client' && (
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Company / Organization</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Zenith Mobility"
+                    value={newClientCompany}
+                    onChange={(e) => setNewClientCompany(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
+                  />
+                </div>
+              )}
+
               <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Work email</label>
+                <label className="block font-mono text-xs text-slate-300">Work Email (Login ID)</label>
                 <input
                   type="email"
                   required
-                  placeholder="priya@theflowlabs.online"
+                  placeholder={newTeamRole === 'client' ? 'client@company.com' : 'engineer@theflowlabs.online'}
                   value={newTeamEmail}
                   onChange={(e) => setNewTeamEmail(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
@@ -2026,23 +2320,138 @@ export default function FlowHQPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="block font-mono text-xs text-slate-300">Access role</label>
-                <select
-                  value={newTeamRole}
-                  onChange={(e: any) => setNewTeamRole(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
-                >
-                  <option value="member" className="bg-[#0E1424]">Member (Task execution)</option>
-                  <option value="manager" className="bg-[#0E1424]">Manager (Sprint delegation)</option>
-                  <option value="admin" className="bg-[#0E1424]">Admin (Full project control)</option>
-                  <option value="owner" className="bg-[#0E1424]">Owner (Studio leadership)</option>
-                </select>
+                <label className="block font-mono text-xs text-slate-300">Initial Password</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Set initial password..."
+                  value={newMemberPassword}
+                  onChange={(e) => setNewMemberPassword(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
+                />
+                <p className="text-[10px] text-slate-400">User will use this password to sign in directly.</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Access Role</label>
+                  <select
+                    value={newTeamRole}
+                    onChange={(e: any) => setNewTeamRole(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                  >
+                    <option value="client" className="bg-[#0E1424]">Client (Portal)</option>
+                    <option value="member" className="bg-[#0E1424]">Member (Engineer)</option>
+                    <option value="manager" className="bg-[#0E1424]">Manager (Lead)</option>
+                    <option value="admin" className="bg-[#0E1424]">Admin (Full)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Assigned Project</label>
+                  <select
+                    value={newClientProject}
+                    onChange={(e) => setNewClientProject(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                  >
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id} className="bg-[#0E1424]">
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
                 <button
                   type="button"
-                  onClick={() => setShowAddTeamModal(false)}
+                  onClick={() => {
+                    setShowAddTeamModal(false);
+                    setOnboardErrorMsg('');
+                    setOnboardSuccessMsg('');
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={onboardLoading}
+                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors disabled:opacity-50"
+                >
+                  {onboardLoading ? 'Provisioning...' : 'Provision User & Send Email'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: MANAGE PROJECT ================= */}
+      {projectToManage && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Manage Project</h3>
+                <p className="text-slate-400 text-xs">{projectToManage.name} ({projectToManage.key})</p>
+              </div>
+              <button onClick={() => setProjectToManage(null)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={saveManageProject} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Project Status</label>
+                <select
+                  value={manageStatus}
+                  onChange={(e) => setManageStatus(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
+                >
+                  <option value="active" className="bg-[#0E1424]">Active (In Sprint)</option>
+                  <option value="planning" className="bg-[#0E1424]">Planning (Scoping)</option>
+                  <option value="completed" className="bg-[#0E1424]">Completed (Shipped)</option>
+                  <option value="on_hold" className="bg-[#0E1424]">On Hold</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Client / Company Name</label>
+                <input
+                  type="text"
+                  value={manageClient}
+                  onChange={(e) => setManageClient(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Budget / Value</label>
+                  <input
+                    type="text"
+                    value={manageBudget}
+                    onChange={(e) => setManageBudget(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-slate-300">Delivery Due Date</label>
+                  <input
+                    type="text"
+                    value={manageDue}
+                    onChange={(e) => setManageDue(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-white/30"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setProjectToManage(null)}
                   className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
                 >
                   Cancel
@@ -2051,10 +2460,47 @@ export default function FlowHQPage() {
                   type="submit"
                   className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
                 >
-                  Add team member
+                  Save Changes
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: DELETE PROJECT CONFIRMATION ================= */}
+      {projectToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-rose-500/30 shadow-2xl space-y-5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Delete Project</h3>
+                <p className="text-slate-400 text-xs mt-1">
+                  Are you sure you want to permanently delete <strong className="text-white">{projectToDelete.name}</strong>?
+                  This will remove all associated tasks, modules, and unlink connected clients.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setProjectToDelete(null)}
+                className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteProject}
+                className="px-4 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-medium text-xs font-mono transition-colors"
+              >
+                Yes, Delete Project
+              </button>
+            </div>
           </div>
         </div>
       )}

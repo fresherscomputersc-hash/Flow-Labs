@@ -57,7 +57,7 @@ const config = () => ({
     || '',
   service: process.env.SUPABASE_SERVICE_KEY
     || process.env.SUPABASE_SERVICE_ROLE_KEY
-    || ''
+    || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvbGNxcXd2enJ2cXlkenhwd2lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5Mzg3NDUyMSwiZXhwIjoyMTA5NDUwNTIxfQ.1fLjVpclKFx2q2CJxBWm8Rjkj7-w9H0Y0FZ2f9tLneE'
 });
 
 const readBody = async (req) => {
@@ -322,6 +322,53 @@ const handle = async (req, res, segments) => {
           prefer: 'resolution=merge-duplicates,return=minimal',
           body: rows
         });
+      }
+    }
+
+    // Automated Onboarding Welcome Email for Clients or Team Members
+    if (password) {
+      try {
+        const nodemailer = require('nodemailer');
+        const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+        const port = Number(process.env.SMTP_PORT || 465);
+        const user = process.env.SMTP_USER || 'theflowlabs01@gmail.com';
+        const pass = process.env.SMTP_PASS;
+
+        if (pass) {
+          const transporter = nodemailer.createTransport({
+            host,
+            port,
+            secure: port === 465,
+            auth: { user, pass }
+          });
+
+          const isClient = role === 'client';
+          const portalUrl = isClient ? 'https://www.theflowlabs.online/client' : 'https://www.theflowlabs.online/flow-hq';
+          const subject = isClient
+            ? 'Welcome to The Flow Labs — Your Project Portal Access'
+            : 'Welcome to The Flow Labs Team — Flow HQ Access';
+
+          await transporter.sendMail({
+            from: `"The Flow Labs" <${user}>`,
+            to: email,
+            subject,
+            html: `
+              <div style="font-family: sans-serif; background-color: #07090E; color: #F8FAFC; padding: 28px; border-radius: 10px; max-width: 560px; margin: 0 auto; border: 1px solid rgba(255,255,255,0.1);">
+                <h2 style="color: #FFFFFF; margin-top: 0;">Welcome, ${fullName || (isClient ? 'Client' : 'Team Member')}</h2>
+                <p style="color: #94A3B8; font-size: 14px;">Your ${isClient ? 'Client Portal' : 'Flow HQ'} access has been provisioned.</p>
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 16px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Login URL:</strong> <a href="${portalUrl}" style="color: #22D3EE;">${portalUrl}</a></p>
+                  <p style="margin: 0 0 8px 0; font-size: 13px;"><strong>Login ID (Email):</strong> <code style="color: #FFFFFF;">${email}</code></p>
+                  <p style="margin: 0; font-size: 13px;"><strong>Temporary Password:</strong> <code style="color: #FFFFFF;">${password}</code></p>
+                </div>
+                <p style="color: #94A3B8; font-size: 12px; margin-bottom: 20px;">Please sign in and change your password if desired.</p>
+                <a href="${portalUrl}" style="display: inline-block; background: #FFFFFF; color: #07090E; font-weight: 600; font-size: 13px; padding: 10px 20px; border-radius: 6px; text-decoration: none;">Sign In Now</a>
+              </div>
+            `
+          });
+        }
+      } catch (mailErr) {
+        console.warn('[team/invite] Automated welcome email notice:', mailErr.message);
       }
     }
 

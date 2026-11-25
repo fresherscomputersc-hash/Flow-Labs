@@ -134,6 +134,18 @@ export default function ScopingPage() {
         );
         return;
       }
+
+      // Trigger automated transactional email (founder notification + lead confirmation)
+      try {
+        await fetch('/api/mail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'new_lead', lead: payload }),
+        });
+      } catch (mailErr) {
+        console.warn('Mail notification trigger notice:', mailErr);
+      }
+
       setSubmitted(true);
     } catch (err: any) {
       console.error('Lead submission fallback:', err);
