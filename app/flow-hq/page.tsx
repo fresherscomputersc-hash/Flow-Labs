@@ -61,7 +61,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   FileCheck2,
-  Receipt
+  Receipt,
+  Menu
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import LeadsCRM from '@/components/flow-hq/LeadsCRM';
@@ -105,6 +106,7 @@ export interface TaskItem {
   status: 'todo' | 'in_progress' | 'review' | 'done';
   priority: 'urgent' | 'high' | 'medium' | 'low';
   assignee: string;
+  assigneeId?: string;
   notes?: string;
   is_blocked?: boolean;
   blocker_reason?: string;
@@ -162,7 +164,8 @@ const DEFAULT_LEADS: Lead[] = [];
 
 export default function FlowHQPage() {
   // Session State
-  const [session, setSession] = useState<{ userEmail: string; userName: string; userRole: string; userInitials: string } | null>(null);
+  const [session, setSession] = useState<{ userId?: string; userEmail: string; userName: string; userRole: string; userInitials: string } | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -223,9 +226,9 @@ export default function FlowHQPage() {
 
   // Form States - New Task
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskProject, setNewTaskProject] = useState('proj-1');
+  const [newTaskProject, setNewTaskProject] = useState('');
   const [newTaskModule, setNewTaskModule] = useState('');
-  const [newTaskAssignee, setNewTaskAssignee] = useState('SR');
+  const [newTaskAssignee, setNewTaskAssignee] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<'urgent' | 'high' | 'medium' | 'low'>('medium');
   const [newTaskStatus, setNewTaskStatus] = useState<'todo' | 'in_progress' | 'review' | 'done'>('todo');
   const [newTaskNotes, setNewTaskNotes] = useState('');
@@ -234,7 +237,7 @@ export default function FlowHQPage() {
   const [newClientName, setNewClientName] = useState('');
   const [newClientCompany, setNewClientCompany] = useState('');
   const [newClientEmail, setNewClientEmail] = useState('');
-  const [newClientProject, setNewClientProject] = useState('proj-1');
+  const [newClientProject, setNewClientProject] = useState('');
 
   // Form States - New Team Member & Client Onboarding
   const [newTeamName, setNewTeamName] = useState('');
@@ -258,6 +261,7 @@ export default function FlowHQPage() {
   const [manageClient, setManageClient] = useState('');
   const [manageClientEmail, setManageClientEmail] = useState('');
   const [manageModules, setManageModules] = useState<string[]>([]);
+  const [manageMemberIds, setManageMemberIds] = useState<string[]>([]);
   const [newModuleInput, setNewModuleInput] = useState('');
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -350,6 +354,7 @@ export default function FlowHQPage() {
 
         if (role === 'owner' || role === 'admin' || role === 'manager' || role === 'member') {
           setSession({
+            userId: data.session.user.id,
             userEmail: email,
             userName: name.charAt(0).toUpperCase() + name.slice(1),
             userRole: role as any,
@@ -402,8 +407,11 @@ export default function FlowHQPage() {
     try {
       const [profRes, pcRes] = await Promise.all([
         supabase.from('profiles').select('id, email, full_name, role, status').order('created_at', { ascending: false }),
-        supabase.from('project_clients').select('user_id, project_id, company_name, projects(name)')
+        supabase.from('project_clients').select('user_id, project_id, projects(name)')
       ]);
+
+      if (profRes.error) console.warn('Profiles fetch error:', profRes.error.message);
+      if (pcRes.error) console.warn('Project clients fetch error:', pcRes.error.message);
 
       const pcMap = new Map<string, any>();
       if (pcRes.data) {
@@ -422,7 +430,7 @@ export default function FlowHQPage() {
             clientRows.push({
               id: p.id,
               name: p.full_name || p.email?.split('@')[0] || 'Client',
-              company: pc?.company_name || pc?.projects?.name || 'Client Org',
+              company: pc?.projects?.name || 'Client Org',
               email: p.email || '',
               projectId: pc?.project_id || '',
               projectName: pc?.projects?.name || 'Unassigned Project',
@@ -456,21 +464,30 @@ export default function FlowHQPage() {
 
   const loadLiveTasks = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('tasks')
         .select('*, modules(name), profiles!tasks_assignee_id_fkey(full_name)')
         .order('created_at', { ascending: false });
+      if (error) console.warn('Tasks fetch error:', error.message);
       if (data) {
-        const mapped: TaskItem[] = data.map((t: any) => ({
-          id: t.id,
-          projectId: t.project_id,
-          moduleName: t.modules?.name || 'Core Module',
-          title: t.title,
-          status: (['todo', 'in_progress', 'review', 'done'].includes(t.status) ? t.status : 'todo') as TaskItem['status'],
-          priority: (['urgent', 'high', 'medium', 'low'].includes(t.priority) ? t.priority : 'medium') as TaskItem['priority'],
-          assignee: t.profiles?.full_name?.slice(0, 2)?.toUpperCase() || 'HQ',
-          notes: t.description || undefined,
-        }));
+        const mapped: TaskItem[] = data.map((t: any) => {
+          const fullName = t.profiles?.full_name || '';
+          const parts = fullName.trim().split(' ');
+          const initials = parts.length > 1
+            ? (parts[0][0] + parts[1][0]).toUpperCase()
+            : fullName ? fullName.slice(0, 2).toUpperCase() : 'HQ';
+          return {
+            id: t.id,
+            projectId: t.project_id,
+            moduleName: t.modules?.name || 'Core Module',
+            title: t.title,
+            status: (['todo', 'in_progress', 'review', 'done'].includes(t.status) ? t.status : 'todo') as TaskItem['status'],
+            priority: (['urgent', 'high', 'medium', 'low'].includes(t.priority) ? t.priority : 'medium') as TaskItem['priority'],
+            assignee: initials,
+            assigneeId: t.assignee_id || undefined,
+            notes: t.description || undefined,
+          };
+        });
         setTasks(mapped);
         persistState('flow_hq_tasks', mapped);
       }
@@ -478,6 +495,26 @@ export default function FlowHQPage() {
       console.warn('Tasks load notice:', e);
     }
   };
+
+  useEffect(() => {
+    if (projects.length > 0) {
+      if (!newTaskProject || !projects.some((p) => p.id === newTaskProject)) {
+        setNewTaskProject(projects[0].id);
+      }
+      if (!newClientProject || !projects.some((p) => p.id === newClientProject)) {
+        setNewClientProject(projects[0].id);
+      }
+      if (!standupProject || !projects.some((p) => p.id === standupProject)) {
+        setStandupProject(projects[0].id);
+      }
+    }
+  }, [projects]);
+
+  useEffect(() => {
+    if (team.length > 0 && (!newTaskAssignee || !team.some((m) => m.id === newTaskAssignee))) {
+      setNewTaskAssignee(team[0].id);
+    }
+  }, [team]);
 
   useEffect(() => {
     if (session) {
@@ -561,63 +598,49 @@ export default function FlowHQPage() {
     setSession(null);
   };
 
-  // Add Project
-  const handleAddProject = (e: React.FormEvent) => {
+  // Add Project (persisted to Supabase)
+  const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
 
-    const newKey = newProjectKey.trim().toUpperCase() || 'FLW';
-    let defaultModules = ['Core Architecture', 'Frontend Interface', 'Cloud API'];
-    if (selectedProjectTemplate === 'web_app') {
-      defaultModules = ['Discovery & Database Schema', 'Full-Stack Frontend & UX', 'API Integrations & Auth', 'QA Acceptance & Handover'];
-    } else if (selectedProjectTemplate === 'ai_automation') {
-      defaultModules = ['Workflow Audit & LLM Architecture', 'Multi-Agent Prompts & Tool Orchestration', 'Supabase Vector / Edge Deployments', 'Regression Testing & Observability'];
-    } else if (selectedProjectTemplate === 'software') {
-      defaultModules = ['Technical Spec & ERD', 'Mobile Shell & State Engine', 'Cloud Sync & GraphQL/REST APIs', 'Beta TestFlight & Store Release'];
-    } else if (selectedProjectTemplate === 'retainer') {
-      defaultModules = ['Weekly Health Checks & Security Patches', 'Automated Database Backups & Redundancy', 'On-Demand High-Priority Feature Sprints'];
+    const rawKey = newProjectKey.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const newKey = /^[A-Z][A-Z0-9]{1,7}$/.test(rawKey) ? rawKey : `FLW${Math.floor(10 + Math.random() * 89)}`;
+
+    try {
+      const { data: insertedProj, error } = await supabase
+        .from('projects')
+        .insert([
+          {
+            name: newProjectName.trim(),
+            key: newKey,
+            summary: newProjectClient.trim() || 'Direct Client',
+            status: 'active',
+            due_date: /^\d{4}-\d{2}-\d{2}$/.test(newProjectDue.trim()) ? newProjectDue.trim() : null,
+            owner_id: session?.userId || null,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (insertedProj && session?.userId) {
+        await supabase.from('project_members').upsert(
+          [{ project_id: insertedProj.id, user_id: session.userId, role: 'lead' }],
+          { onConflict: 'project_id,user_id' }
+        );
+      }
+
+      await loadLiveProjects();
+      logActivityEvent(session?.userInitials || 'SR', 'created new project', `${newProjectName.trim()} (${newKey})`);
+      setShowAddProjectModal(false);
+      setNewProjectName('');
+      setNewProjectKey('');
+      setNewProjectClient('');
+      setNewProjectClientEmail('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to create project in database.');
     }
-
-    const newProj: Project = {
-      id: `proj-${Date.now()}`,
-      name: newProjectName.trim(),
-      key: newKey,
-      client: newProjectClient.trim() || 'Direct Client',
-      clientEmail: newProjectClientEmail.trim() || undefined,
-      status: 'active',
-      progress: 0,
-      budget: newProjectBudget.trim() || '₹75,000',
-      dueDate: newProjectDue.trim() || '3 Weeks',
-      modules: defaultModules,
-    };
-
-    const updated = [newProj, ...projects];
-    setProjects(updated);
-    persistState('flow_hq_projects', updated);
-
-    // If client email was provided, auto-create client portal account
-    if (newProjectClientEmail.trim()) {
-      const newCli: ClientAccount = {
-        id: `c-${Date.now()}`,
-        name: newProjectClient.trim() || 'Client Lead',
-        company: newProjectClient.trim(),
-        email: newProjectClientEmail.trim().toLowerCase(),
-        projectId: newProj.id,
-        projectName: newProj.name,
-        accessKey: `${newKey}-CLIENT-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: 'active',
-      };
-      const updatedClients = [newCli, ...clients];
-      setClients(updatedClients);
-      persistState('flow_hq_clients', updatedClients);
-    }
-
-    logActivityEvent(session?.userInitials || 'SR', 'created new project', `${newProj.name} (${newKey})`);
-    setShowAddProjectModal(false);
-    setNewProjectName('');
-    setNewProjectKey('');
-    setNewProjectClient('');
-    setNewProjectClientEmail('');
   };
 
   // Add Module
@@ -638,39 +661,59 @@ export default function FlowHQPage() {
     setNewModuleName('');
   };
 
-  // Add Task
-  const handleAddTask = (e: React.FormEvent) => {
+  // Add Task (persisted to Supabase + auto-grants project_members access to assignee)
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim() || !newTaskProject) {
+      alert('Please select a project and enter a task title.');
+      return;
+    }
 
-    const proj = projects.find((p) => p.id === newTaskProject);
+    const memberObj = team.find((m) => m.id === newTaskAssignee || m.initials === newTaskAssignee);
+    const assigneeId = memberObj?.id && /^[0-9a-f-]{36}$/i.test(memberObj.id) ? memberObj.id : null;
 
-    const newTask: TaskItem = {
-      id: `t-${Date.now()}`,
-      projectId: newTaskProject,
-      moduleName: newTaskModule || (proj?.modules[0] ?? 'Core'),
-      title: newTaskTitle.trim(),
-      status: newTaskStatus,
-      priority: newTaskPriority,
-      assignee: newTaskAssignee,
-      notes: newTaskNotes.trim() || undefined,
-    };
+    try {
+      const { error } = await supabase.from('tasks').insert([
+        {
+          project_id: newTaskProject,
+          title: newTaskTitle.trim(),
+          description: newTaskNotes.trim() || null,
+          status: newTaskStatus,
+          priority: newTaskPriority,
+          assignee_id: assigneeId,
+          reporter_id: session?.userId || null,
+        },
+      ]);
 
-    const updated = [newTask, ...tasks];
-    setTasks(updated);
-    persistState('flow_hq_tasks', updated);
+      if (error) throw error;
 
-    logActivityEvent(session?.userInitials || 'SR', 'created task', `${newTask.title} &rarr; ${newTask.assignee}`);
-    setShowAddTaskModal(false);
-    setNewTaskTitle('');
-    setNewTaskNotes('');
+      if (assigneeId) {
+        await supabase.from('project_members').upsert(
+          [{ project_id: newTaskProject, user_id: assigneeId, role: 'member' }],
+          { onConflict: 'project_id,user_id' }
+        );
+      }
+
+      await loadLiveTasks();
+      logActivityEvent(session?.userInitials || 'SR', 'created task', `${newTaskTitle.trim()} → ${memberObj?.initials || 'Team'}`);
+      setShowAddTaskModal(false);
+      setNewTaskTitle('');
+      setNewTaskNotes('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to save task.');
+    }
   };
 
-  // Move Task Status
-  const handleMoveTaskStatus = (taskId: string, newStatus: TaskItem['status']) => {
+  // Move Task Status (persisted to Supabase)
+  const handleMoveTaskStatus = async (taskId: string, newStatus: TaskItem['status']) => {
     const updated = tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t));
     setTasks(updated);
     persistState('flow_hq_tasks', updated);
+
+    if (/^[0-9a-f-]{36}$/i.test(taskId)) {
+      const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', taskId);
+      if (error) console.warn('Task status update notice:', error.message);
+    }
 
     const target = tasks.find((t) => t.id === taskId);
     if (target) {
@@ -678,28 +721,41 @@ export default function FlowHQPage() {
     }
   };
 
-  // Task Handoff
-  const handleExecuteHandoff = (e: React.FormEvent) => {
+  // Task Handoff (persisted to Supabase + grants project_members access)
+  const handleExecuteHandoff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetTaskForHandoff) return;
 
-    const updated = tasks.map((t) =>
-      t.id === targetTaskForHandoff.id
-        ? {
-            ...t,
-            assignee: handoffTargetUser,
-            notes: handoffNotes.trim()
-              ? `${t.notes ? t.notes + ' | ' : ''}Handoff Note: ${handoffNotes.trim()}`
-              : t.notes,
-          }
-        : t
-    );
-    setTasks(updated);
-    persistState('flow_hq_tasks', updated);
+    const memberObj = team.find((m) => m.id === handoffTargetUser || m.initials === handoffTargetUser);
+    const assigneeId = memberObj?.id && /^[0-9a-f-]{36}$/i.test(memberObj.id) ? memberObj.id : null;
+    const updatedNotes = handoffNotes.trim()
+      ? `${targetTaskForHandoff.notes ? targetTaskForHandoff.notes + ' | ' : ''}Handoff Note: ${handoffNotes.trim()}`
+      : targetTaskForHandoff.notes;
+
+    if (/^[0-9a-f-]{36}$/i.test(targetTaskForHandoff.id)) {
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          assignee_id: assigneeId,
+          description: updatedNotes || null,
+        })
+        .eq('id', targetTaskForHandoff.id);
+      if (error) {
+        alert(error.message || 'Failed to hand off task.');
+        return;
+      }
+      if (assigneeId && /^[0-9a-f-]{36}$/i.test(targetTaskForHandoff.projectId)) {
+        await supabase.from('project_members').upsert(
+          [{ project_id: targetTaskForHandoff.projectId, user_id: assigneeId, role: 'member' }],
+          { onConflict: 'project_id,user_id' }
+        );
+      }
+      await loadLiveTasks();
+    }
 
     logActivityEvent(
       session?.userInitials || 'SR',
-      `handed off task to ${handoffTargetUser}`,
+      `handed off task to ${memberObj?.initials || handoffTargetUser}`,
       targetTaskForHandoff.title
     );
 
@@ -758,7 +814,7 @@ export default function FlowHQPage() {
   };
 
   // Manage Project
-  const openManageModal = (proj: Project) => {
+  const openManageModal = async (proj: Project) => {
     setProjectToManage(proj);
     setManageName(proj.name);
     setManageSummary(proj.summary || '');
@@ -769,6 +825,17 @@ export default function FlowHQPage() {
     setManageClientEmail(proj.clientEmail || '');
     setManageModules([...proj.modules]);
     setNewModuleInput('');
+    setManageMemberIds([]);
+
+    if (/^[0-9a-f-]{36}$/i.test(proj.id)) {
+      const { data } = await supabase
+        .from('project_members')
+        .select('user_id')
+        .eq('project_id', proj.id);
+      if (data) {
+        setManageMemberIds(data.map((r: any) => r.user_id));
+      }
+    }
   };
 
   const handleAddModuleToManage = () => {
@@ -816,9 +883,21 @@ export default function FlowHQPage() {
             name: manageName.trim() || projectToManage.name,
             summary: manageSummary.trim() || manageClient.trim(),
             status: manageStatus,
-            due_date: manageDue.trim() || null,
+            due_date: /^\d{4}-\d{2}-\d{2}$/.test(manageDue.trim()) ? manageDue.trim() : null,
           })
           .eq('id', projectToManage.id);
+
+        // Sync assigned team members
+        await supabase.from('project_members').delete().eq('project_id', projectToManage.id);
+        if (manageMemberIds.length > 0) {
+          await supabase.from('project_members').insert(
+            manageMemberIds.map((uid) => ({
+              project_id: projectToManage.id,
+              user_id: uid,
+              role: 'member',
+            }))
+          );
+        }
       } catch (e) {
         console.warn('Project manage update notice:', e);
       }
@@ -1087,8 +1166,10 @@ export default function FlowHQPage() {
 
   // Filtered Tasks for current view
   const currentFilteredTasks = tasks.filter((t) => {
-    if (filterMyWorkOnly && session?.userInitials) {
-      if (t.assignee !== session.userInitials) return false;
+    if (filterMyWorkOnly && session) {
+      const matchesId = t.assigneeId && session.userId && t.assigneeId === session.userId;
+      const matchesInitials = !t.assigneeId && t.assignee === session.userInitials;
+      if (!matchesId && !matchesInitials) return false;
     }
     if (selectedProjectFilter !== 'all') {
       if (t.projectId !== selectedProjectFilter) return false;
@@ -1192,34 +1273,41 @@ export default function FlowHQPage() {
     <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
       
       {/* ================= TOP CONSOLE HEADER ================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/10">
+      <div className="flex items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/10">
         
         {/* Brand & User Active Context */}
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="lg:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
           <Link
             href="/"
-            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs transition-colors shrink-0"
+            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center font-mono font-medium text-white text-xs transition-colors shrink-0"
             title="Return to public site"
           >
             HQ
           </Link>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-display text-lg font-normal text-white whitespace-nowrap">Flow HQ Studio OS</h1>
+              <h1 className="font-display text-base sm:text-lg font-normal text-white whitespace-nowrap">Flow HQ</h1>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[11px] whitespace-nowrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>{session.userName} ({session.userRole})</span>
+                <span>{session.userName} · {session.userRole}</span>
               </span>
             </div>
-            <p className="text-slate-400 text-xs mt-0.5">Projects, task matrix, client portal, and CRM pipeline</p>
           </div>
         </div>
 
         {/* Global Quick Actions */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleSignOut}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-red-400 border border-white/10 transition-colors"
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-red-400 border border-white/10 transition-colors"
             title="Sign out of Flow HQ"
           >
             <LogOut className="w-4 h-4" />
@@ -1228,9 +1316,97 @@ export default function FlowHQPage() {
 
       </div>
 
+      {/* ================= MOBILE SIDE-PANEL DRAWER ================= */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setMobileNavOpen(false)}
+          />
+          <aside className="relative z-10 w-72 max-w-[82vw] h-full bg-[#0B0F19] border-r border-white/10 p-4 flex flex-col justify-between overflow-y-auto">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <span className="font-mono text-xs text-white font-medium">Flow HQ Navigation</span>
+                <button
+                  type="button"
+                  onClick={() => setMobileNavOpen(false)}
+                  className="p-1.5 rounded-lg bg-white/5 text-slate-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-1 text-xs font-mono">
+                <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-slate-500">Workspace</div>
+                {[
+                  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                  { id: 'projects', label: `Projects (${projects.length})`, icon: Layers },
+                  { id: 'tasks', label: `Tasks (${tasks.length})`, icon: CheckSquare },
+                  { id: 'standups', label: `Standups (${standups.length})`, icon: Clock },
+                  { id: 'timetracking', label: 'Time Tracking', icon: Timer },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => { setActiveTab(item.id as any); setMobileNavOpen(false); }}
+                      className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-left transition-colors ${
+                        activeTab === item.id ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {isFounder && (
+                <div className="space-y-1 text-xs font-mono pt-2 border-t border-white/5">
+                  <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-slate-500">Admin &amp; Clients</div>
+                  {[
+                    { id: 'clients', label: `Clients (${clients.length})`, icon: Building },
+                    { id: 'deliverables', label: 'Deliverables & Tickets', icon: ShieldCheck },
+                    { id: 'finance', label: 'Finance & Invoicing', icon: DollarSign },
+                    { id: 'leads', label: `Leads (${leads.length})`, icon: Target },
+                    { id: 'team', label: `Team (${team.length})`, icon: Users },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => { setActiveTab(item.id as any); setMobileNavOpen(false); }}
+                        className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-left transition-colors ${
+                          activeTab === item.id ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-white/5 text-xs font-mono">
+                <button
+                  onClick={() => { setActiveTab('sops'); setMobileNavOpen(false); }}
+                  className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-left transition-colors ${
+                    activeTab === 'sops' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4 shrink-0" />
+                  <span>SOP Library</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+
       {/* ================= VERTICAL SIDEBAR + WORKSPACE CONTENT ================= */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-        <aside className="w-full lg:w-60 shrink-0 p-2.5 rounded-2xl bg-white/[0.02] border border-white/10 lg:sticky lg:top-6 space-y-3">
+        <aside className="hidden lg:block w-60 shrink-0 p-2.5 rounded-2xl bg-white/[0.02] border border-white/10 lg:sticky lg:top-6 space-y-3">
           <div>
             <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-500">Workspace</div>
             <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible text-xs font-mono mt-1">
@@ -1421,7 +1597,7 @@ export default function FlowHQPage() {
                     <span className="text-cyan-400 font-mono">Assigned</span>
                   </div>
                   <div className="font-display text-3xl font-normal text-white">
-                    {tasks.filter((t) => t.assignee === session.userInitials && t.status !== 'done').length} Active
+                    {tasks.filter((t) => (t.assigneeId ? t.assigneeId === session.userId : t.assignee === session.userInitials) && t.status !== 'done').length} Active
                   </div>
                   <div className="text-[11px] font-mono text-slate-400">
                     Sprint work queue
@@ -1445,13 +1621,9 @@ export default function FlowHQPage() {
 
           </div>
 
-          {/* Quick Creator Bar */}
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="font-display text-base font-normal text-white">Studio operations bar</h2>
-              <p className="text-slate-400 text-xs">Create projects, modules, tasks, onboard clients, or log standup</p>
-            </div>
-            
+          {/* Quick Actions Bar */}
+          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-xs font-mono text-slate-400">Quick Actions</div>
             <div className="flex flex-wrap items-center gap-2">
               {isFounder && (
                 <button
@@ -1469,7 +1641,7 @@ export default function FlowHQPage() {
                 <Plus className="w-3.5 h-3.5" />
                 <span>New task</span>
               </button>
-              {isFounder && (
+              {isFounder ? (
                 <button
                   onClick={() => {
                     setNewTeamRole('client');
@@ -1479,29 +1651,17 @@ export default function FlowHQPage() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-mono text-xs border border-white/10 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>New client</span>
+                  <span>Onboard client</span>
                 </button>
-              )}
-              {isFounder && (
+              ) : (
                 <button
-                  onClick={() => {
-                    setNewTeamRole('member');
-                    setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
-                    setShowAddTeamModal(true);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-mono text-xs border border-white/10 transition-colors"
+                  onClick={() => setShowStandupModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono text-xs border border-emerald-500/20 transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add member</span>
+                  <FileCheck className="w-3.5 h-3.5" />
+                  <span>Log standup</span>
                 </button>
               )}
-              <button
-                onClick={() => setShowStandupModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono text-xs border border-emerald-500/20 transition-colors"
-              >
-                <FileCheck className="w-3.5 h-3.5" />
-                <span>Log standup</span>
-              </button>
             </div>
           </div>
 
@@ -2513,7 +2673,7 @@ export default function FlowHQPage() {
                     className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
                   >
                     {team.map((m) => (
-                      <option key={m.id} value={m.initials} className="bg-[#0E1424]">
+                      <option key={m.id} value={m.id} className="bg-[#0E1424]">
                         {m.name} ({m.initials})
                       </option>
                     ))}
@@ -2594,7 +2754,7 @@ export default function FlowHQPage() {
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none"
                 >
                   {team.map((m) => (
-                    <option key={m.id} value={m.initials} className="bg-[#0E1424]">
+                    <option key={m.id} value={m.id} className="bg-[#0E1424]">
                       {m.name} ({m.initials} - {m.role})
                     </option>
                   ))}
@@ -2876,6 +3036,39 @@ export default function FlowHQPage() {
                   placeholder="Key architecture components and delivery milestones"
                   className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-white/30 resize-none"
                 />
+              </div>
+
+              {/* Assigned Team Members */}
+              <div className="space-y-2 pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between font-mono text-xs">
+                  <span className="text-slate-300">Assigned Team Members ({manageMemberIds.length})</span>
+                  <span className="text-slate-500 text-[11px]">Controls project visibility</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pr-1">
+                  {team.map((m) => {
+                    const checked = manageMemberIds.includes(m.id);
+                    return (
+                      <label
+                        key={m.id}
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-mono cursor-pointer transition-colors ${
+                          checked ? 'bg-white/10 border-white/20 text-white' : 'bg-white/[0.02] border-white/5 text-slate-400'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setManageMemberIds((prev) =>
+                              prev.includes(m.id) ? prev.filter((id) => id !== m.id) : [...prev, m.id]
+                            )
+                          }
+                          className="rounded border-white/20 bg-white/5"
+                        />
+                        <span className="truncate">{m.name} ({m.role})</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Technical Modules Manager */}

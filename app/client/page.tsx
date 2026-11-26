@@ -28,7 +28,9 @@ import {
   UploadCloud,
   Star,
   Send,
-  Plus
+  Plus,
+  Menu,
+  X
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -127,6 +129,7 @@ export default function ClientPortalPage() {
 
   // Portal Navigation Tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'proposals' | 'invoices' | 'deliverables' | 'tickets' | 'onboarding' | 'feedback'>('overview');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Client Data States
   const [updates, setUpdates] = useState<ClientUpdate[]>(DEFAULT_UPDATES);
@@ -510,16 +513,24 @@ export default function ClientPortalPage() {
     <div className="pt-6 sm:pt-8 pb-28 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
       
       {/* Top Bar Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/10 gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between pb-4 border-b border-white/10 gap-3">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="lg:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors"
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors"
           >
-            <span>&larr; Exit to website</span>
+            <span>&larr; Exit</span>
           </Link>
-          <span className="text-slate-600">/</span>
-          <span className="font-mono text-xs text-white font-medium">
+          <span className="hidden sm:inline text-slate-600">/</span>
+          <span className="font-mono text-xs text-white font-medium truncate max-w-[140px] sm:max-w-none">
             {session.companyName}
           </span>
           <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-white/5 border border-white/10 text-slate-400">
@@ -527,8 +538,8 @@ export default function ClientPortalPage() {
           </span>
         </div>
 
-        <div className="flex items-center gap-3.5">
-          <span className="font-mono text-xs text-slate-400">
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:inline font-mono text-xs text-slate-400">
             Client: <strong className="text-white font-normal">{session.clientName}</strong>
           </span>
           <button
@@ -536,10 +547,53 @@ export default function ClientPortalPage() {
             className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-red-400 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Sign out</span>
+            <span className="hidden sm:inline">Sign out</span>
           </button>
         </div>
       </div>
+
+      {/* Mobile Side-Panel Drawer */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileNavOpen(false)} />
+          <aside className="relative z-10 w-72 max-w-[82vw] h-full bg-[#0B0F19] border-r border-white/10 p-4 overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="min-w-0">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Client Portal</div>
+                <div className="text-xs font-medium text-white truncate">{session.projectName}</div>
+              </div>
+              <button type="button" onClick={() => setMobileNavOpen(false)} className="p-1.5 rounded-lg bg-white/5 text-slate-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <nav className="flex flex-col gap-1 text-xs font-mono">
+              {[
+                { id: 'overview', label: 'Sprint Overview', icon: Layers },
+                { id: 'proposals', label: 'Proposals & Contracts', icon: FileText },
+                { id: 'invoices', label: 'Invoices & Billing', icon: DollarSign },
+                { id: 'deliverables', label: 'Deliverables Vault', icon: Shield },
+                { id: 'tickets', label: `Support (${tickets.length})`, icon: HelpCircle },
+                { id: 'onboarding', label: 'Onboarding', icon: CheckCircle2 },
+                { id: 'feedback', label: 'Testimonial', icon: Star },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id as any); setMobileNavOpen(false); }}
+                    className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-left transition-colors ${
+                      activeTab === item.id ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </aside>
+        </div>
+      )}
 
       {actionNotice && (
         <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono flex items-center gap-2">
@@ -550,7 +604,7 @@ export default function ClientPortalPage() {
 
       {/* Vertical Sidebar + Main Content */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-        <aside className="w-full lg:w-60 shrink-0 p-2 rounded-2xl bg-white/[0.02] border border-white/10 lg:sticky lg:top-6">
+        <aside className="hidden lg:block w-60 shrink-0 p-2 rounded-2xl bg-white/[0.02] border border-white/10 lg:sticky lg:top-6">
           <div className="px-3 py-2 mb-1 border-b border-white/5">
             <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Client Portal</div>
             <div className="text-xs font-medium text-white truncate mt-0.5">{session.projectName}</div>
