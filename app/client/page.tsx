@@ -33,6 +33,7 @@ import {
   X
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import NotificationBell from '@/components/flow-hq/NotificationBell';
 
 interface ClientSession {
   userId?: string;
@@ -542,6 +543,7 @@ export default function ClientPortalPage() {
           <span className="hidden sm:inline font-mono text-xs text-slate-400">
             Client: <strong className="text-white font-normal">{session.clientName}</strong>
           </span>
+          <NotificationBell userId={session.userId} />
           <button
             onClick={handleSignOut}
             className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-red-400 transition-colors"
@@ -1008,7 +1010,15 @@ export default function ClientPortalPage() {
                     </a>
                   ) : (
                     <button
-                      onClick={() => alert(`Deliverable: ${doc.name}\nPath: ${doc.url || 'Private Vault'}`)}
+                      onClick={async () => {
+                        if (!doc.url) return;
+                        const { data, error } = await supabase.storage.from('attachments').createSignedUrl(doc.url, 3600);
+                        if (error || !data?.signedUrl) {
+                          alert(error?.message || `Deliverable: ${doc.name}`);
+                          return;
+                        }
+                        window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+                      }}
                       className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-200 border border-white/10 flex items-center gap-1.5 w-fit transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" />

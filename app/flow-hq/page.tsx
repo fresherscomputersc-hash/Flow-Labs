@@ -62,7 +62,8 @@ import {
   AlertTriangle,
   FileCheck2,
   Receipt,
-  Menu
+  Menu,
+  Search
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import LeadsCRM from '@/components/flow-hq/LeadsCRM';
@@ -73,6 +74,9 @@ import SOPLibrary from '@/components/flow-hq/SOPLibrary';
 import QAReviewModal from '@/components/flow-hq/QAReviewModal';
 import BlockerModal from '@/components/flow-hq/BlockerModal';
 import HandoverModal from '@/components/flow-hq/HandoverModal';
+import TaskDetailDrawer from '@/components/flow-hq/TaskDetailDrawer';
+import NotificationBell from '@/components/flow-hq/NotificationBell';
+import CommandPalette from '@/components/flow-hq/CommandPalette';
 
 // ================= DATA MODELS =================
 export interface TeamMember {
@@ -171,8 +175,12 @@ export default function FlowHQPage() {
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Active Navigation Tab
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects' | 'tasks' | 'clients' | 'deliverables' | 'team' | 'leads' | 'standups' | 'finance' | 'timetracking' | 'sops'>('dashboard');
+  // Active Navigation Tab (6 core sections + sub-tabs)
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'projects' | 'tasks' | 'clients' | 'finance' | 'ops'>('dashboard');
+  const [clientSubTab, setClientSubTab] = useState<'accounts' | 'deliverables'>('accounts');
+  const [opsSubTab, setOpsSubTab] = useState<'standups' | 'timetracking' | 'team' | 'leads' | 'sops'>('standups');
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<TaskItem | null>(null);
 
   // QA Review, Blocker, Handover & Templates
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -380,7 +388,7 @@ export default function FlowHQPage() {
     try {
       const { data: dbProjs } = await supabase
         .from('projects')
-        .select('*')
+        .select('*, modules(name)')
         .order('created_at', { ascending: false });
 
       if (dbProjs) {
@@ -393,7 +401,9 @@ export default function FlowHQPage() {
           progress: p.status === 'completed' ? 100 : 0,
           budget: p.budget || '₹0',
           dueDate: p.due_date || 'TBD',
-          modules: ['Core Architecture', 'Frontend Interface', 'API & Database'],
+          modules: Array.isArray(p.modules) && p.modules.length > 0
+            ? p.modules.map((m: any) => m.name)
+            : ['Core Architecture', 'Frontend Interface', 'API & Database'],
         }));
         setProjects(mapped);
         persistState('flow_hq_projects', mapped);
@@ -516,11 +526,57 @@ export default function FlowHQPage() {
     }
   }, [team]);
 
+  const loadLiveStandups = async () => {
+    try {
+      const { data } = await supabase
+        .from('daily_reports')
+        .select('id, summary, blockers, hours, report_date, projects(name), profiles(full_name)')
+        .order('report_date', { ascending: false })
+        .limit(30);
+      if (data) {
+        setStandups(data.map((r: any) => ({
+          id: r.id,
+          engineer: r.profiles?.full_name || 'Engineer',
+          project: r.projects?.name || 'Studio Build',
+          shipped: r.summary,
+          blockers: r.blockers || 'None',
+          hours: Number(r.hours) || 0,
+          date: new Date(r.report_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+        })));
+      }
+    } catch (e) {
+      console.warn('Standups load notice:', e);
+    }
+  };
+
+  const loadLiveActivity = async () => {
+    try {
+      const { data } = await supabase
+        .from('activity')
+        .select('id, kind, summary, created_at, profiles(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(12);
+      if (data) {
+        setActivity(data.map((a: any) => ({
+          id: String(a.id),
+          actor: a.profiles?.full_name?.slice(0, 2)?.toUpperCase() || 'HQ',
+          action: a.kind?.replace('.', ' ') || 'updated',
+          target: a.summary,
+          time: new Date(a.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        })));
+      }
+    } catch (e) {
+      console.warn('Activity load notice:', e);
+    }
+  };
+
   useEffect(() => {
     if (session) {
       loadLiveProjects();
       loadClientsAndTeam();
       loadLiveTasks();
+      loadLiveStandups();
+      loadLiveActivity();
       loadLeads();
     }
   }, [session]);
@@ -643,18 +699,25 @@ export default function FlowHQPage() {
     }
   };
 
-  // Add Module
-  const handleAddModule = (e: React.FormEvent) => {
+  // Add Module (persisted to Supabase)
+  const handleAddModule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newModuleName.trim()) return;
+    if (!newModuleName.trim() || !targetProjectForModule) return;
 
-    const updated = projects.map((p) =>
-      p.id === targetProjectForModule
-        ? { ...p, modules: [...p.modules, newModuleName.trim()] }
-        : p
-    );
-    setProjects(updated);
-    persistState('flow_hq_projects', updated);
+    if (/^[0-9a-f-]{36}$/i.test(targetProjectForModule)) {
+      const { error } = await supabase.from('modules').insert([
+        {
+          project_id: targetProjectForModule,
+          name: newModuleName.trim(),
+          status: 'active',
+        },
+      ]);
+      if (error) {
+        alert(error.message || 'Failed to add module.');
+        return;
+      }
+      await loadLiveProjects();
+    }
 
     logActivityEvent(session?.userInitials || 'SR', 'added module', `${newModuleName.trim()}`);
     setShowAddModuleModal(false);
@@ -1138,27 +1201,35 @@ export default function FlowHQPage() {
     }
   };
 
-  // Submit Daily Standup
-  const handleSubmitStandup = (e: React.FormEvent) => {
+  // Submit Daily Standup (persisted to Supabase)
+  const handleSubmitStandup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!standupShipped.trim()) return;
+    if (!standupShipped.trim() || !standupProject) return;
 
     const proj = projects.find((p) => p.id === standupProject);
-    const newEntry: DailyStandup = {
-      id: `std-${Date.now()}`,
-      engineer: session?.userName || 'Founder',
-      project: proj?.name || 'Studio Architecture',
-      shipped: standupShipped.trim(),
-      blockers: standupBlockers.trim() || 'None',
-      hours: Number(standupHours) || 6,
-      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-    };
 
-    const updated = [newEntry, ...standups];
-    setStandups(updated);
-    persistState('flow_hq_standups', updated);
+    if (/^[0-9a-f-]{36}$/i.test(standupProject) && session?.userId) {
+      const { error } = await supabase.from('daily_reports').upsert(
+        [
+          {
+            project_id: standupProject,
+            author_id: session.userId,
+            report_date: new Date().toISOString().split('T')[0],
+            summary: standupShipped.trim(),
+            blockers: standupBlockers.trim() || 'None',
+            hours: Number(standupHours) || 6,
+          },
+        ],
+        { onConflict: 'project_id,author_id,report_date' }
+      );
+      if (error) {
+        alert(error.message || 'Failed to log standup.');
+        return;
+      }
+      await loadLiveStandups();
+    }
 
-    logActivityEvent(session?.userInitials || 'SR', 'logged daily standup', `${newEntry.hours}h on ${newEntry.project}`);
+    logActivityEvent(session?.userInitials || 'SR', 'logged daily standup', `${Number(standupHours) || 6}h on ${proj?.name || 'Project'}`);
     setShowStandupModal(false);
     setStandupShipped('');
     setStandupBlockers('None');
@@ -1306,6 +1377,17 @@ export default function FlowHQPage() {
         {/* Global Quick Actions */}
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={() => setCmdOpen(true)}
+            className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 text-xs font-mono transition-colors"
+            title="Quick search (Ctrl+K)"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>Search</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-white/5 text-[10px] text-slate-500">⌘K</kbd>
+          </button>
+          <NotificationBell userId={session.userId} />
+          <button
             onClick={handleSignOut}
             className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-red-400 border border-white/10 transition-colors"
             title="Sign out of Flow HQ"
@@ -1337,13 +1419,16 @@ export default function FlowHQPage() {
               </div>
 
               <div className="space-y-1 text-xs font-mono">
-                <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-slate-500">Workspace</div>
+                <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-slate-500">Navigation</div>
                 {[
-                  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                  { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
                   { id: 'projects', label: `Projects (${projects.length})`, icon: Layers },
                   { id: 'tasks', label: `Tasks (${tasks.length})`, icon: CheckSquare },
-                  { id: 'standups', label: `Standups (${standups.length})`, icon: Clock },
-                  { id: 'timetracking', label: 'Time Tracking', icon: Timer },
+                  ...(isFounder ? [
+                    { id: 'clients', label: `Clients (${clients.length})`, icon: Building },
+                    { id: 'finance', label: 'Finance', icon: DollarSign },
+                  ] : []),
+                  { id: 'ops', label: 'Team & Ops', icon: Users },
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
@@ -1360,45 +1445,6 @@ export default function FlowHQPage() {
                   );
                 })}
               </div>
-
-              {isFounder && (
-                <div className="space-y-1 text-xs font-mono pt-2 border-t border-white/5">
-                  <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-slate-500">Admin &amp; Clients</div>
-                  {[
-                    { id: 'clients', label: `Clients (${clients.length})`, icon: Building },
-                    { id: 'deliverables', label: 'Deliverables & Tickets', icon: ShieldCheck },
-                    { id: 'finance', label: 'Finance & Invoicing', icon: DollarSign },
-                    { id: 'leads', label: `Leads (${leads.length})`, icon: Target },
-                    { id: 'team', label: `Team (${team.length})`, icon: Users },
-                  ].map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => { setActiveTab(item.id as any); setMobileNavOpen(false); }}
-                        className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-left transition-colors ${
-                          activeTab === item.id ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                        }`}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="pt-2 border-t border-white/5 text-xs font-mono">
-                <button
-                  onClick={() => { setActiveTab('sops'); setMobileNavOpen(false); }}
-                  className={`w-full px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-left transition-colors ${
-                    activeTab === 'sops' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                  }`}
-                >
-                  <BookOpen className="w-4 h-4 shrink-0" />
-                  <span>SOP Library</span>
-                </button>
-              </div>
             </div>
           </aside>
         </div>
@@ -1406,124 +1452,33 @@ export default function FlowHQPage() {
 
       {/* ================= VERTICAL SIDEBAR + WORKSPACE CONTENT ================= */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
-        <aside className="hidden lg:block w-60 shrink-0 p-2.5 rounded-2xl bg-white/[0.02] border border-white/10 lg:sticky lg:top-6 space-y-3">
-          <div>
-            <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-500">Workspace</div>
-            <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible text-xs font-mono mt-1">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                  activeTab === 'dashboard' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4 shrink-0" />
-                <span>Dashboard</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('projects')}
-                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                  activeTab === 'projects' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                }`}
-              >
-                <Layers className="w-4 h-4 shrink-0" />
-                <span>Projects ({projects.length})</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('tasks')}
-                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                  activeTab === 'tasks' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                }`}
-              >
-                <CheckSquare className="w-4 h-4 shrink-0" />
-                <span>Tasks ({tasks.length})</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('standups')}
-                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                  activeTab === 'standups' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                }`}
-              >
-                <Clock className="w-4 h-4 shrink-0" />
-                <span>Standups ({standups.length})</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('timetracking')}
-                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                  activeTab === 'timetracking' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                }`}
-              >
-                <Timer className="w-4 h-4 shrink-0" />
-                <span>Time Tracking</span>
-              </button>
-            </nav>
-          </div>
-
-          {isFounder && (
-            <div className="pt-2 border-t border-white/5">
-              <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-500">Admin &amp; Clients</div>
-              <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible text-xs font-mono mt-1">
+        <aside className="hidden lg:block w-56 shrink-0 p-2 rounded-2xl bg-white/[0.02] border border-white/10 lg:sticky lg:top-6">
+          <nav className="flex flex-col gap-1 text-xs font-mono">
+            {[
+              { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+              { id: 'projects', label: `Projects (${projects.length})`, icon: Layers },
+              { id: 'tasks', label: `Tasks (${tasks.length})`, icon: CheckSquare },
+              ...(isFounder ? [
+                { id: 'clients', label: `Clients (${clients.length})`, icon: Building },
+                { id: 'finance', label: 'Finance', icon: DollarSign },
+              ] : []),
+              { id: 'ops', label: 'Team & Ops', icon: Users },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
                 <button
-                  onClick={() => setActiveTab('clients')}
-                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                    activeTab === 'clients' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as any)}
+                  className={`w-full px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
+                    activeTab === item.id ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
                   }`}
                 >
-                  <Building className="w-4 h-4 shrink-0" />
-                  <span>Clients ({clients.length})</span>
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{item.label}</span>
                 </button>
-                <button
-                  onClick={() => setActiveTab('deliverables')}
-                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                    activeTab === 'deliverables' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                  }`}
-                >
-                  <ShieldCheck className="w-4 h-4 shrink-0" />
-                  <span>Deliverables &amp; Tickets</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('finance')}
-                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                    activeTab === 'finance' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                  }`}
-                >
-                  <DollarSign className="w-4 h-4 shrink-0" />
-                  <span>Finance &amp; Invoicing</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('leads')}
-                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                    activeTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                  }`}
-                >
-                  <Target className="w-4 h-4 shrink-0" />
-                  <span>Leads &amp; Quotes ({leads.length})</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('team')}
-                  className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                    activeTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                  }`}
-                >
-                  <Users className="w-4 h-4 shrink-0" />
-                  <span>Team ({team.length})</span>
-                </button>
-              </nav>
-            </div>
-          )}
-
-          <div className="pt-2 border-t border-white/5">
-            <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible text-xs font-mono">
-              <button
-                onClick={() => setActiveTab('sops')}
-                className={`w-auto lg:w-full px-3 py-2 rounded-xl transition-colors whitespace-nowrap flex items-center gap-2.5 text-left ${
-                  activeTab === 'sops' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/[0.03]'
-                }`}
-              >
-                <BookOpen className="w-4 h-4 shrink-0" />
-                <span>SOP Library</span>
-              </button>
-            </nav>
-          </div>
+              );
+            })}
+          </nav>
         </aside>
 
         <div className="flex-1 min-w-0 w-full space-y-6">
@@ -2065,7 +2020,13 @@ export default function FlowHQPage() {
               <div className="space-y-2.5">
                 {currentFilteredTasks.filter((t) => t.status === 'todo').map((t) => (
                   <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 space-y-2 text-xs">
-                    <div className="font-medium text-white">{t.title}</div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTaskForDetail(t)}
+                      className="font-medium text-white hover:text-cyan-400 text-left transition-colors block w-full"
+                    >
+                      {t.title}
+                    </button>
                     {t.notes && <p className="text-slate-400 text-[11px] leading-relaxed">{t.notes}</p>}
                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
                       <span className={t.priority === 'urgent' ? 'text-amber-400 font-semibold' : ''}>{t.priority}</span>
@@ -2102,7 +2063,13 @@ export default function FlowHQPage() {
               <div className="space-y-2.5">
                 {currentFilteredTasks.filter((t) => t.status === 'in_progress').map((t) => (
                   <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 space-y-2 text-xs">
-                    <div className="font-medium text-white">{t.title}</div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTaskForDetail(t)}
+                      className="font-medium text-white hover:text-cyan-400 text-left transition-colors block w-full"
+                    >
+                      {t.title}
+                    </button>
                     {t.notes && <p className="text-slate-400 text-[11px] leading-relaxed">{t.notes}</p>}
                     {t.is_blocked && (
                       <div
@@ -2162,7 +2129,13 @@ export default function FlowHQPage() {
               <div className="space-y-2.5">
                 {currentFilteredTasks.filter((t) => t.status === 'review').map((t) => (
                   <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.03] border border-white/5 space-y-2 text-xs">
-                    <div className="font-medium text-white">{t.title}</div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTaskForDetail(t)}
+                      className="font-medium text-white hover:text-cyan-400 text-left transition-colors block w-full"
+                    >
+                      {t.title}
+                    </button>
                     {t.notes && <p className="text-slate-400 text-[11px] leading-relaxed">{t.notes}</p>}
                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-400">
                       <span>{t.priority}</span>
@@ -2191,7 +2164,13 @@ export default function FlowHQPage() {
                 <div className="space-y-2.5">
                   {currentFilteredTasks.filter((t) => t.status === 'done').map((t) => (
                     <div key={t.id} className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-2 text-xs opacity-75">
-                      <div className="font-medium text-slate-300 line-through">{t.title}</div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTaskForDetail(t)}
+                        className="font-medium text-slate-300 hover:text-cyan-400 line-through text-left transition-colors block w-full"
+                      >
+                        {t.title}
+                      </button>
                       <div className="flex justify-between items-center text-[10px] font-mono text-slate-500">
                         <span>Shipped</span>
                         <span>{t.assignee}</span>
@@ -2207,22 +2186,45 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= TAB 4: CLIENTS & PORTAL MANAGEMENT ================= */}
-      {activeTab === 'clients' && (
+      {/* ================= TAB 4: CLIENTS & DELIVERABLES ================= */}
+      {activeTab === 'clients' && isFounder && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
-            <div>
-              <h2 className="font-display text-xl font-normal text-white">Client accounts and portal access</h2>
-              <p className="text-slate-400 text-xs">Onboard clients, link builds, and issue unique portal telemetry keys</p>
-            </div>
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.02] border border-white/10 w-fit text-xs font-mono">
             <button
-              onClick={() => {
-                setNewTeamRole('client');
-                setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
-                setShowAddTeamModal(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors w-fit"
+              onClick={() => setClientSubTab('accounts')}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                clientSubTab === 'accounts' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
             >
+              Client Accounts ({clients.length})
+            </button>
+            <button
+              onClick={() => setClientSubTab('deliverables')}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                clientSubTab === 'deliverables' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Deliverables &amp; Tickets
+            </button>
+          </div>
+
+          {clientSubTab === 'deliverables' ? (
+            <DeliverablesManager projects={projects} team={team} />
+          ) : (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                <div>
+                  <h2 className="font-display text-xl font-normal text-white">Client accounts and portal access</h2>
+                  <p className="text-slate-400 text-xs">Onboard clients, link builds, and manage portal credentials</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setNewTeamRole('client');
+                    setNewMemberPassword(`Flow${Math.floor(1000 + Math.random() * 9000)}!`);
+                    setShowAddTeamModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors w-fit"
+                >
               <Plus className="w-3.5 h-3.5" />
               <span>Onboard client</span>
             </button>
@@ -2281,11 +2283,67 @@ export default function FlowHQPage() {
               </div>
             ))}
           </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ================= TAB 5: STUDIO TEAM DIRECTORY ================= */}
-      {activeTab === 'team' && (
+      {/* ================= TAB 5: FINANCE & INVOICING ================= */}
+      {activeTab === 'finance' && isFounder && (
+        <FinanceManager projects={projects} clients={clients} team={team} />
+      )}
+
+      {/* ================= TAB 6: TEAM & OPS (STANDUPS, TIME, TEAM, LEADS, SOPS) ================= */}
+      {activeTab === 'ops' && (
+        <div className="space-y-6">
+          <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-white/[0.02] border border-white/10 w-fit text-xs font-mono">
+            <button
+              onClick={() => setOpsSubTab('standups')}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                opsSubTab === 'standups' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Standups ({standups.length})
+            </button>
+            <button
+              onClick={() => setOpsSubTab('timetracking')}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                opsSubTab === 'timetracking' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Time Tracking
+            </button>
+            {isFounder && (
+              <button
+                onClick={() => setOpsSubTab('team')}
+                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                  opsSubTab === 'team' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Team ({team.length})
+              </button>
+            )}
+            {isFounder && (
+              <button
+                onClick={() => setOpsSubTab('leads')}
+                className={`px-3 py-1.5 rounded-lg transition-colors ${
+                  opsSubTab === 'leads' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Leads &amp; Quotes ({leads.length})
+              </button>
+            )}
+            <button
+              onClick={() => setOpsSubTab('sops')}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                opsSubTab === 'sops' ? 'bg-white/10 text-white font-medium' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              SOP Library
+            </button>
+          </div>
+
+          {opsSubTab === 'team' && isFounder && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
             <div>
@@ -2342,8 +2400,8 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= TAB 6: DAILY STANDUPS ================= */}
-      {activeTab === 'standups' && (
+      {/* ================= SUB-TAB: DAILY STANDUPS ================= */}
+      {opsSubTab === 'standups' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
             <div>
@@ -2389,8 +2447,8 @@ export default function FlowHQPage() {
         </div>
       )}
 
-      {/* ================= TAB 7: LEADS CRM & PROPOSALS ================= */}
-      {activeTab === 'leads' && (
+      {/* ================= SUB-TAB: LEADS CRM & PROPOSALS ================= */}
+      {opsSubTab === 'leads' && isFounder && (
         <LeadsCRM
           onOnboardCustomer={(lead) => {
             setNewTeamName(lead.name);
@@ -2404,28 +2462,50 @@ export default function FlowHQPage() {
         />
       )}
 
-      {/* ================= TAB 8: FINANCE & INVOICING ================= */}
-      {activeTab === 'finance' && isFounder && (
-        <FinanceManager projects={projects} clients={clients} team={team} />
-      )}
-
-      {/* ================= TAB 9: TIME TRACKING ================= */}
-      {activeTab === 'timetracking' && (
+      {/* ================= SUB-TAB: TIME TRACKING ================= */}
+      {opsSubTab === 'timetracking' && (
         <TimeTracker tasks={tasks} projects={projects} currentUser={session!} />
       )}
 
-      {/* ================= TAB: DELIVERABLES & TICKETS ================= */}
-      {activeTab === 'deliverables' && isFounder && (
-        <DeliverablesManager projects={projects} team={team} />
-      )}
-
-      {/* ================= TAB 10: SOP LIBRARY ================= */}
-      {activeTab === 'sops' && (
+      {/* ================= SUB-TAB: SOP LIBRARY ================= */}
+      {opsSubTab === 'sops' && (
         <SOPLibrary />
+      )}
+        </div>
       )}
 
         </div>
       </div>
+
+      {/* ================= TASK DETAIL DRAWER & COMMAND PALETTE ================= */}
+      <TaskDetailDrawer
+        task={selectedTaskForDetail}
+        onClose={() => setSelectedTaskForDetail(null)}
+        team={team}
+        currentUserId={session.userId}
+        canDelete={isFounder}
+        onUpdated={loadLiveTasks}
+      />
+
+      <CommandPalette
+        isOpen={cmdOpen}
+        onClose={() => setCmdOpen(false)}
+        projects={projects}
+        tasks={tasks}
+        clients={clients}
+        isFounder={isFounder}
+        onNavigateTab={(tab) => {
+          if (tab === '__toggle_cmd__') {
+            setCmdOpen((v) => !v);
+            return;
+          }
+          setActiveTab(tab as any);
+        }}
+        onSelectTask={(taskId) => {
+          const found = tasks.find((t) => t.id === taskId);
+          if (found) setSelectedTaskForDetail(found);
+        }}
+      />
 
       {/* ================= MODAL: ADD PROJECT ================= */}
       {showAddProjectModal && (

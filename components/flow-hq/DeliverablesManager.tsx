@@ -12,7 +12,9 @@ import {
   FileText,
   HelpCircle,
   MessageSquare,
-  CheckCircle2
+  CheckCircle2,
+  UploadCloud,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -68,6 +70,8 @@ export default function DeliverablesManager({ projects, team }: DeliverablesMana
   const [delName, setDelName] = useState('');
   const [delType, setDelType] = useState('PDF Specification');
   const [delUrl, setDelUrl] = useState('');
+  const [delFile, setDelFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [delVisible, setDelVisible] = useState(true);
 
   // Client update form
@@ -111,31 +115,68 @@ export default function DeliverablesManager({ projects, team }: DeliverablesMana
 
   const handleAddDeliverable = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!delProject || !delName.trim() || !delUrl.trim()) {
-      alert('Please select a project, enter a deliverable name, and provide a URL or path.');
+    if (!delProject || (!delName.trim() && !delFile) || (!delUrl.trim() && !delFile)) {
+      alert('Please select a project and provide either a file upload or a URL.');
       return;
     }
 
+    setUploading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
+      let storagePath = delUrl.trim();
+      let sizeBytes: number | null = null;
+      let mimeType = delType.trim() || 'Deliverable';
+      const finalName = delName.trim() || delFile?.name || 'Deliverable';
+
+      if (delFile) {
+        const cleanName = delFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const objectPath = `${delProject}/${Date.now()}_${cleanName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('attachments')
+          .upload(objectPath, delFile, { upsert: false });
+        if (uploadError) throw uploadError;
+        storagePath = objectPath;
+        sizeBytes = delFile.size;
+        mimeType = delFile.type || mimeType;
+      }
+
       const { error } = await supabase.from('attachments').insert([
         {
           project_id: delProject,
           uploaded_by: userData?.user?.id || null,
-          file_name: delName.trim(),
-          storage_path: delUrl.trim(),
-          mime_type: delType.trim() || 'Deliverable',
+          file_name: finalName,
+          storage_path: storagePath,
+          mime_type: mimeType,
+          size_bytes: sizeBytes,
           client_visible: delVisible,
         },
       ]);
       if (error) throw error;
-      setNotice(`Deliverable "${delName.trim()}" added.`);
+      setNotice(`Deliverable "${finalName}" published.`);
       setDelName('');
       setDelUrl('');
+      setDelFile(null);
       await loadData();
     } catch (err: any) {
       alert(err.message || 'Failed to add deliverable.');
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const handleOpenDeliverable = async (d: DeliverableRow) => {
+    if (d.storage_path?.startsWith('http')) {
+      window.open(d.storage_path, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    const { data, error } = await supabase.storage
+      .from('attachments')
+      .createSignedUrl(d.storage_path, 3600);
+    if (error || !data?.signedUrl) {
+      alert(error?.message || 'Could not generate download link.');
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleToggleVisibility = async (row: DeliverableRow) => {
@@ -342,10 +383,27 @@ export default function DeliverablesManager({ projects, team }: DeliverablesMana
             </div>
 
             <div className="space-y-1.5">
-              <label className="block font-mono text-[11px] text-slate-400">Download / Resource URL</label>
+              <label className="block font-mono text-[11px] text-slate-400">Upload File (Optional, up to 50MB)</label>
+              <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-dashed border-white/20 text-xs font-mono text-slate-300 cursor-pointer hover:border-cyan-400 transition-colors">
+                <UploadCloud className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span className="truncate">{delFile ? delFile.name : 'Choose file from device...'}</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] || null;
+                    setDelFile(f);
+                    if (f && !delName.trim()) setDelName(f.name);
+                  }}
+                />
+              </label>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block font-mono text-[11px] text-slate-400">Or Resource URL</label>
               <input
                 type="text"
-                required
+                required={!delFile}
                 placeholder="https://..."
                 value={delUrl}
                 onChange={(e) => setDelUrl(e.target.value)}
@@ -365,10 +423,11 @@ export default function DeliverablesManager({ projects, team }: DeliverablesMana
 
             <button
               type="submit"
-              className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors"
+              disabled={uploading}
+              className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200 transition-colors disabled:opacity-50"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Publish Deliverable</span>
+              <span>{uploading ? 'Uploading...' : 'Publish Deliverable'}</span>
             </button>
           </form>
 
@@ -400,17 +459,13 @@ export default function DeliverablesManager({ projects, team }: DeliverablesMana
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  {d.storage_path?.startsWith('http') && (
-                    <a
-                      href={d.storage_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10"
-                      title="Open URL"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+                  <button
+                    onClick={() => handleOpenDeliverable(d)}
+                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10"
+                    title={d.storage_path?.startsWith('http') ? 'Open URL' : 'Download file'}
+                  >
+                    {d.storage_path?.startsWith('http') ? <ExternalLink className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
+                  </button>
                   <button
                     onClick={() => handleToggleVisibility(d)}
                     className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10"
