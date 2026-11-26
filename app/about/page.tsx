@@ -96,6 +96,27 @@ export default function AboutPage() {
           </div>
 
         </div>
+
+        {/* Legal Team */}
+        <div className="rounded-2xl bg-white/[0.02] border border-white/10 p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-mono text-sm text-white font-medium shrink-0">
+              KK
+            </div>
+            <div className="space-y-2">
+              <div>
+                <h3 className="font-display text-xl font-medium text-white">Kamal Kant Nayak</h3>
+                <div className="font-mono text-xs text-slate-400 mt-0.5">Legal Team</div>
+              </div>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-2xl">
+                Supports studio contracts, NDA and IP assignment documentation, privacy compliance reviews, and client agreement governance.
+              </p>
+            </div>
+          </div>
+          <div className="font-mono text-[11px] text-slate-500 sm:text-right shrink-0">
+            Contracts, NDA &amp; IP, Compliance, SOW Review
+          </div>
+        </div>
       </section>
 
       {/* ================= STUDIO PRINCIPLES ================= */}
