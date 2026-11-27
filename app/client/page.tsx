@@ -239,7 +239,12 @@ export default function ClientPortalPage() {
           progress: proj?.status === 'completed' ? 100 : progress,
           activePhase: proj?.status === 'completed' ? 'Completed & Deployed' : 'Active Sprint Delivery',
           assignedFounders: 'Flow Labs Engineering',
-          stagingUrl: proj?.github_repo ? (proj.github_repo.startsWith('http') ? proj.github_repo : `https://github.com/${proj.github_repo}`) : '',
+          stagingUrl:
+            proj?.key === 'DRV' || proj?.slug === 'droovee'
+              ? 'https://droovee.com'
+              : proj?.github_repo && proj.github_repo.startsWith('http') && !proj.github_repo.includes('github.com')
+              ? proj.github_repo
+              : '',
         });
 
         await loadClientData(userId, pc.project_id);
@@ -777,9 +782,9 @@ export default function ClientPortalPage() {
                 <div className="text-white font-medium">{session.activePhase}</div>
               </div>
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                <div className="text-slate-500 text-[10px]">Repository &amp; delivery</div>
+                <div className="text-slate-500 text-[10px]">Live deployment</div>
                 <div className="text-white font-medium">
-                  {session.projectStatus === 'completed' ? 'Shipped & Verified' : 'Live sandbox environment'}
+                  {session.stagingUrl ? session.stagingUrl.replace(/^https?:\/\//, '') : session.projectStatus === 'completed' ? 'Shipped & Verified' : 'Live sandbox environment'}
                 </div>
               </div>
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
@@ -805,7 +810,7 @@ export default function ClientPortalPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white font-mono text-xs px-4 py-2.5 rounded-lg border border-white/10 transition-colors"
                 >
-                  <span>View repository / build</span>
+                  <span>Open live site</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}
