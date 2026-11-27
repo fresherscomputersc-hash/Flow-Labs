@@ -43,6 +43,7 @@ interface ClientSession {
   projectId?: string;
   projectName: string;
   projectKey: string;
+  projectStatus?: string;
   accessKey?: string;
   progress: number;
   activePhase: string;
@@ -145,6 +146,10 @@ export default function ClientPortalPage() {
   const [ticketTitle, setTicketTitle] = useState('');
   const [ticketDesc, setTicketDesc] = useState('');
   const [ticketType, setTicketType] = useState('bug');
+  const [showAddonModal, setShowAddonModal] = useState(false);
+  const [addonTitle, setAddonTitle] = useState('');
+  const [addonDesc, setAddonDesc] = useState('');
+  const [addonType, setAddonType] = useState<'feature_request' | 'change_request'>('feature_request');
 
   // Testimonial Form States
   const [rating, setRating] = useState(5);
@@ -230,10 +235,11 @@ export default function ClientPortalPage() {
           projectId: pc.project_id,
           projectName: proj?.name || 'Studio Build Project',
           projectKey: proj?.key || 'FLW',
-          progress,
+          projectStatus: proj?.status || 'active',
+          progress: proj?.status === 'completed' ? 100 : progress,
           activePhase: proj?.status === 'completed' ? 'Completed & Deployed' : 'Active Sprint Delivery',
           assignedFounders: 'Flow Labs Engineering',
-          stagingUrl: proj?.github_repo || '',
+          stagingUrl: proj?.github_repo ? (proj.github_repo.startsWith('http') ? proj.github_repo : `https://github.com/${proj.github_repo}`) : '',
         });
 
         await loadClientData(userId, pc.project_id);
@@ -378,6 +384,41 @@ export default function ClientPortalPage() {
       }
     } catch (e: any) {
       alert(e.message || 'Failed to submit ticket.');
+    }
+  };
+
+  // Submit Add-on / Update Request
+  const handleRequestAddon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addonTitle.trim() || !addonDesc.trim()) return;
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const clientId = session?.userId || userData?.user?.id || null;
+
+      const { error } = await supabase.from('tickets').insert([
+        {
+          project_id: session?.projectId || null,
+          client_id: clientId,
+          title: addonTitle.trim(),
+          description: addonDesc.trim(),
+          type: addonType,
+          priority: 'normal',
+          status: 'open',
+        },
+      ]);
+
+      if (error) throw error;
+      setActionNotice('Your add-on / update request has been sent to our engineering team.');
+      setAddonTitle('');
+      setAddonDesc('');
+      setShowAddonModal(false);
+      if (session?.projectId) {
+        const { data } = await supabase.from('tickets').select('*').eq('project_id', session.projectId).order('created_at', { ascending: false });
+        if (data) setTickets(data);
+      }
+    } catch (e: any) {
+      alert(e.message || 'Failed to submit add-on request.');
     }
   };
 
@@ -700,7 +741,9 @@ export default function ClientPortalPage() {
               </div>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono w-fit">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                Active Sprint (On Schedule)
+                {session.projectStatus === 'completed' || session.progress === 100
+                  ? 'Completed & Delivered'
+                  : 'Active Sprint (On Schedule)'}
               </span>
             </div>
 
@@ -708,40 +751,64 @@ export default function ClientPortalPage() {
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-mono">
                 <span className="text-slate-400">Sprint completion</span>
-                <span className="text-white font-medium">{session.progress}% completed</span>
+                <span className="text-white font-medium">
+                  {session.progress}% completed{session.progress === 100 ? '*' : ''}
+                </span>
               </div>
               <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
-                <div className="bg-white h-full rounded-full transition-all duration-500" style={{ width: `${session.progress}%` }}></div>
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    session.progress === 100 ? 'bg-emerald-400' : 'bg-white'
+                  }`}
+                  style={{ width: `${session.progress}%` }}
+                ></div>
               </div>
+              {session.progress === 100 && (
+                <div className="text-[11px] font-mono text-slate-400">
+                  * Completed according to the agreed plans &amp; client requirements.
+                </div>
+              )}
             </div>
 
             {/* Milestone Telemetry */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-3 border-t border-white/5 font-mono text-xs">
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                <div className="text-slate-500 text-[10px]">Active sprint phase</div>
+                <div className="text-slate-500 text-[10px]">Build status</div>
                 <div className="text-white font-medium">{session.activePhase}</div>
               </div>
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                <div className="text-slate-500 text-[10px]">Staging review</div>
-                <div className="text-white font-medium">Live sandbox environment</div>
+                <div className="text-slate-500 text-[10px]">Repository &amp; delivery</div>
+                <div className="text-white font-medium">
+                  {session.projectStatus === 'completed' ? 'Shipped & Verified' : 'Live sandbox environment'}
+                </div>
               </div>
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                <div className="text-slate-500 text-[10px]">Assigned founding engineers</div>
+                <div className="text-slate-500 text-[10px]">Assigned engineering team</div>
                 <div className="text-white font-medium">{session.assignedFounders}</div>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a
-                href={session.stagingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowAddonModal(true)}
                 className="inline-flex items-center gap-2 bg-white text-[#07090E] font-medium text-xs px-5 py-2.5 rounded-lg hover:bg-slate-200 transition-colors"
               >
-                <span>Open live staging app</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Request New Add-on / Update</span>
+              </button>
+              {session.stagingUrl && (
+                <a
+                  href={session.stagingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white font-mono text-xs px-4 py-2.5 rounded-lg border border-white/10 transition-colors"
+                >
+                  <span>View repository / build</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
               <button
                 type="button"
                 onClick={() => setApprovedMilestone(true)}
@@ -1236,6 +1303,77 @@ export default function ClientPortalPage() {
 
         </div>
       </div>
+
+      {/* Request New Add-on / Update Modal */}
+      {showAddonModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 rounded-2xl bg-[#0E1424] border border-white/20 shadow-2xl space-y-5">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-display text-lg font-normal text-white">Request New Add-on or Update</h3>
+                <p className="text-slate-400 text-xs">Sent directly to your Flow Labs engineering team</p>
+              </div>
+              <button type="button" onClick={() => setShowAddonModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRequestAddon} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Request Type</label>
+                <select
+                  value={addonType}
+                  onChange={(e) => setAddonType(e.target.value as 'feature_request' | 'change_request')}
+                  className="w-full px-3 py-2 rounded-lg bg-[#090D16] border border-white/10 text-white font-mono text-xs focus:outline-none"
+                >
+                  <option value="feature_request">New Feature / Add-on</option>
+                  <option value="change_request">Scope Update / Enhancement</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Add driver live tracking map"
+                  value={addonTitle}
+                  onChange={(e) => setAddonTitle(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-mono text-xs text-slate-300">Details &amp; Requirements</label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="Describe the add-on, update, or timeline you have in mind..."
+                  value={addonDesc}
+                  onChange={(e) => setAddonDesc(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-cyan-400 resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowAddonModal(false)}
+                  className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-white text-[#07090E] font-medium text-xs font-mono hover:bg-slate-200"
+                >
+                  Submit Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

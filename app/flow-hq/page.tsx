@@ -388,23 +388,34 @@ export default function FlowHQPage() {
     try {
       const { data: dbProjs } = await supabase
         .from('projects')
-        .select('*, modules(name)')
+        .select('*, modules(name), tasks(status)')
         .order('created_at', { ascending: false });
 
       if (dbProjs) {
-        const mapped: Project[] = dbProjs.map((p: any) => ({
-          id: p.id,
-          name: p.name || 'Studio Project',
-          key: p.key || 'FLW',
-          client: p.summary || 'Client Build',
-          status: p.status === 'completed' ? 'completed' : 'active',
-          progress: p.status === 'completed' ? 100 : 0,
-          budget: p.budget || '₹0',
-          dueDate: p.due_date || 'TBD',
-          modules: Array.isArray(p.modules) && p.modules.length > 0
-            ? p.modules.map((m: any) => m.name)
-            : ['Core Architecture', 'Frontend Interface', 'API & Database'],
-        }));
+        const mapped: Project[] = dbProjs.map((p: any) => {
+          const projTasks = Array.isArray(p.tasks) ? p.tasks : [];
+          const doneCount = projTasks.filter((t: any) => t.status === 'done').length;
+          const computedProgress =
+            p.status === 'completed'
+              ? 100
+              : projTasks.length > 0
+              ? Math.round((doneCount / projTasks.length) * 100)
+              : 0;
+
+          return {
+            id: p.id,
+            name: p.name || 'Studio Project',
+            key: p.key || 'FLW',
+            client: p.summary || 'Client Build',
+            status: p.status === 'completed' ? 'completed' : 'active',
+            progress: computedProgress,
+            budget: p.budget || '₹0',
+            dueDate: p.due_date || 'TBD',
+            modules: Array.isArray(p.modules) && p.modules.length > 0
+              ? p.modules.map((m: any) => m.name)
+              : ['Core Architecture', 'Frontend Interface', 'API & Database'],
+          };
+        });
         setProjects(mapped);
         persistState('flow_hq_projects', mapped);
       }
@@ -1656,11 +1667,16 @@ export default function FlowHQPage() {
                     <div className="space-y-1">
                       <div className="flex justify-between text-[11px] font-mono text-slate-400">
                         <span>Sprint milestone progress</span>
-                        <span className="text-white font-medium">{p.progress}%</span>
+                        <span className="text-white font-medium">{p.progress}%{p.progress === 100 ? '*' : ''}</span>
                       </div>
                       <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                        <div className="bg-white h-full rounded-full" style={{ width: `${p.progress}%` }}></div>
+                        <div className={`h-full rounded-full ${p.progress === 100 ? 'bg-emerald-400' : 'bg-white'}`} style={{ width: `${p.progress}%` }}></div>
                       </div>
+                      {p.progress === 100 && (
+                        <div className="text-[10px] font-mono text-slate-500">
+                          * According to the agreed plans &amp; client requirements
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
