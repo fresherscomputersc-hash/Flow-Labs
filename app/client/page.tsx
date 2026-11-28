@@ -214,14 +214,12 @@ export default function ClientPortalPage() {
         let progress = 0;
 
         if (pc.project_id) {
-          const { data: tasks } = await supabase
-            .from('tasks')
-            .select('status')
-            .eq('project_id', pc.project_id);
+          const { data: progData } = await supabase.rpc('project_progress', {
+            p_project: pc.project_id,
+          });
 
-          if (tasks && tasks.length > 0) {
-            const done = tasks.filter((t: any) => t.status === 'done').length;
-            progress = Math.round((done / tasks.length) * 100);
+          if (progData && typeof progData.percent === 'number') {
+            progress = proj?.status === 'completed' ? 100 : progData.percent;
           } else if (proj?.status === 'completed') {
             progress = 100;
           }
