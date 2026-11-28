@@ -673,6 +673,9 @@ export default function FlowHQPage() {
     const rawKey = newProjectKey.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     const newKey = /^[A-Z][A-Z0-9]{1,7}$/.test(rawKey) ? rawKey : `FLW${Math.floor(10 + Math.random() * 89)}`;
 
+    const slugBase = newProjectName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'project';
+    const slug = `${slugBase}-${Math.floor(100 + Math.random() * 899)}`;
+
     try {
       const { data: insertedProj, error } = await supabase
         .from('projects')
@@ -680,6 +683,7 @@ export default function FlowHQPage() {
           {
             name: newProjectName.trim(),
             key: newKey,
+            slug,
             summary: newProjectClient.trim() || 'Direct Client',
             status: 'active',
             due_date: /^\d{4}-\d{2}-\d{2}$/.test(newProjectDue.trim()) ? newProjectDue.trim() : null,
@@ -693,7 +697,7 @@ export default function FlowHQPage() {
 
       if (insertedProj && session?.userId) {
         await supabase.from('project_members').upsert(
-          [{ project_id: insertedProj.id, user_id: session.userId, role: 'lead' }],
+          [{ project_id: insertedProj.id, user_id: session.userId, role: 'manager' }],
           { onConflict: 'project_id,user_id' }
         );
       }
