@@ -242,6 +242,8 @@ export default function ClientPortalPage() {
           stagingUrl:
             proj?.key === 'DRV' || proj?.slug === 'droovee'
               ? 'https://droovee.com'
+              : proj?.key === 'VLP' || proj?.slug === 'valeous' || proj?.name?.toLowerCase().includes('valeous')
+              ? 'https://valueous.onrender.com/'
               : proj?.github_repo && proj.github_repo.startsWith('http') && !proj.github_repo.includes('github.com')
               ? proj.github_repo
               : '',
